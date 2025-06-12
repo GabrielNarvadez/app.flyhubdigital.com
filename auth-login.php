@@ -21,7 +21,7 @@
                         <!-- Logo -->
                         <div class="card-header py-4 text-center bg-primary">
                             <a href="index.php">
-                                <span><img src="assets/images/logo.png" alt="logo" height="22"></span>
+                                <span><img src="assets/images/flyhub_logo.webp" alt="logo" height="50"></span>
                             </a>
                         </div>
 
@@ -85,7 +85,7 @@
         <span class="bg-body">
             <script>
                 document.write(new Date().getFullYear())
-            </script> © Attex - Coderthemes.com
+            </script> © Flyhhub Digital Inc.
         </span>
     </footer>
     <?php include 'layouts/footer-scripts.php'; ?>

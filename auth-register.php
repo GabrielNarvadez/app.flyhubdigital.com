@@ -20,22 +20,26 @@
                         <!-- Logo-->
                         <div class="card-header py-4 text-center bg-primary">
                             <a href="index.php">
-                                <span><img src="assets/images/logo.png" alt="logo" height="22"></span>
+                                <span><img src="assets/images/flyhub_logo.webp" alt="logo" height="50"></span>
                             </a>
                         </div>
 
                         <div class="card-body p-4">
 
                             <div class="text-center w-75 m-auto">
-                                <h4 class="text-dark-50 text-center mt-0 fw-bold">Free Sign Up</h4>
-                                <p class="text-muted mb-4">Don't have an account? Create your account, it takes less than a minute </p>
+                                <h4 class="text-dark-50 text-center mt-0 fw-bold">Register a new user</h4>
                             </div>
 
                             <form action="#">
 
                                 <div class="mb-3">
-                                    <label for="fullname" class="form-label">Full Name</label>
-                                    <input class="form-control" type="text" id="fullname" placeholder="Enter your name" required>
+                                    <label for="fullname" class="form-label">First Name</label>
+                                    <input class="form-control" type="text" id="firstname" placeholder="Enter your first name" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="fullname" class="form-label">Last Name</label>
+                                    <input class="form-control" type="text" id="lastname" placeholder="Enter your last name" required>
                                 </div>
 
                                 <div class="mb-3">
@@ -88,7 +92,7 @@
         <span class="bg-body">
             <script>
                 document.write(new Date().getFullYear())
-            </script> © Attex - Coderthemes.com
+            </script> © Flyhhub Digital Inc.
         </span>
     </footer>
 
