@@ -204,12 +204,12 @@ mysqli_free_result($res);
               <td><input type="checkbox" class="row-checkbox"></td>
               <td><?= $c['id'] ?></td>
               <td data-field="name">
-                <a href="contact-profile.php?id=<?= $c['id'] ?>">
+                <a href="contacts-profile.php?id=<?= $c['id'] ?>">
                   <?= htmlspecialchars($c['first_name'].' '.$c['last_name']) ?>
                 </a>
               </td>
               <td data-field="email">
-                <a href="contact-profile.php?id=<?= $c['id'] ?>">
+                <a href="contacts-profile.php?id=<?= $c['id'] ?>">
                   <?= htmlspecialchars($c['email']) ?>
                 </a>
               </td>
