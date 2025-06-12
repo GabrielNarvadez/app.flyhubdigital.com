@@ -99,7 +99,7 @@
 
                         </div> <!-- end col-->
 
-                        <div class="col-xl-9 col-lg-7">
+                        <div class="col-xl-6 col-lg-7">
                             <!-- Chart-->
                             <!-- <div class="card">
                                 <div class="card-body">
@@ -117,18 +117,13 @@
                                 <div class="card-body">
                                     <ul class="nav nav-pills bg-nav-pills nav-justified mb-3">
                                         <li class="nav-item">
-                                            <a href="#aboutme" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-start rounded-0 active">
+                                            <a href="#aboutme" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-start rounded-0">
                                                 Overview
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="#timeline" data-bs-toggle="tab" aria-expanded="true" class="nav-link rounded-0">
+                                            <a href="#timeline" data-bs-toggle="tab" aria-expanded="true" class="nav-link rounded-0 active">
                                                 Timeline
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a href="#settings" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-end rounded-0">
-                                                Associations
                                             </a>
                                         </li>
                                     </ul>
@@ -138,11 +133,11 @@
                                             <div class="accordion" id="accordionExample">
                                         <div class="accordion-item">
                                             <h2 class="accordion-header" id="headingOne">
-                                                <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                                <button class="accordion-button fw-medium collapse" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                                                     <h4><strong>Invoices</strong></h4>
                                                 </button>
                                             </h2>
-                                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample" style="">
+                                            <div id="collapseOne" class="accordion-collapse collapsed" aria-labelledby="headingOne" data-bs-parent="#accordionExample" style="">
                                                 <div class="accordion-body">
                                                     
                                                     <div class="table-responsive-sm">
@@ -227,7 +222,7 @@
                                         </div> <!-- end tab-pane -->
                                         <!-- end about me section content -->
 
-                                        <div class="tab-pane" id="timeline">
+                                        <div class="tab-pane " id="timeline">
 
                                             <!-- comment box -->
                                             <div class="border rounded mt-2 mb-3">
@@ -399,7 +394,7 @@
                                         <!-- end settings content-->
 
                                     </div> <!-- end tab-content -->
-                                </div> <!-- end card body -->
+                                </div> 
                             </div> <!-- end card -->
                         </div> <!-- end col -->
                     </div>
