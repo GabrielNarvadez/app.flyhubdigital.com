@@ -55,7 +55,7 @@
                                             <button type="button" class="btn btn-success">Send Message</button>
                                             <div class="btn-group">
                                                 <button type="button" class="btn btn-light dropdown-toggle show" data-bs-toggle="dropdown" aria-expanded="true"> Actions <span class="caret"></span> </button>
-                                                <div class="dropdown-menu show" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 39px);" data-popper-placement="bottom-start">
+                                                <div class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 39px);" data-popper-placement="bottom-start">
                                                     <a class="dropdown-item" href="#">Customize Properties</a>
                                                     <a class="dropdown-item" href="#">View All Properties</a>
                                                 </div>
