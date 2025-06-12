@@ -17,6 +17,9 @@ if (empty($_SESSION['flash'])) {
 // 4) Handle Create / Update / Delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action       = $_POST['action']            ?? '';
+    $flash        = '';
+
+    // collect common fields
     $first_name   = mysqli_real_escape_string($link, trim($_POST['first_name']   ?? ''));
     $last_name    = mysqli_real_escape_string($link, trim($_POST['last_name']    ?? ''));
     $country      = mysqli_real_escape_string($link, trim($_POST['country']      ?? ''));
@@ -25,16 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone_number = mysqli_real_escape_string($link, trim($_POST['phone_number'] ?? ''));
     $address      = mysqli_real_escape_string($link, trim($_POST['address']      ?? ''));
     $raw_cid      = trim($_POST['company_id'] ?? '');
-    // treat empty or zero as NULL
     $company_id   = ($raw_cid !== '' && intval($raw_cid) > 0) ? intval($raw_cid) : null;
-    $flash        = '';
 
     // CREATE
     if ($action === 'create') {
         if ($first_name && $last_name && $email) {
-            // build fields & placeholders dynamically so we can omit company_id if null
             $fields       = ['first_name','last_name','country','age','email','phone_number','address'];
-            $placeholders = ['?','?','?','?','?','?','?'];
+            $placeholders = array_fill(0, count($fields), '?');
             $types        = 'sssisss';
             $params       = [ $first_name, $last_name, $country, $age, $email, $phone_number, $address ];
 
@@ -49,21 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      VALUES (" . implode(',', $placeholders) . ")";
             $stmt = mysqli_prepare($link, $sql);
             mysqli_stmt_bind_param($stmt, $types, ...$params);
-            $flash = mysqli_stmt_execute($stmt)
+            $ok    = mysqli_stmt_execute($stmt);
+            $flash = $ok
                    ? 'Contact added successfully.'
                    : 'Error adding contact: ' . mysqli_error($link);
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'First name, last name and email are required.';
         }
-    }
 
     // UPDATE
-    elseif ($action === 'update') {
+    } elseif ($action === 'update') {
         $id = intval($_POST['id'] ?? 0);
         if ($id && $first_name && $last_name && $email) {
-            // dynamically handle company_id null
-            $sets  = [
+            // prepare update
+            $sets   = [
                 'first_name = ?',
                 'last_name    = ?',
                 'country      = ?',
@@ -72,38 +72,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'phone_number = ?',
                 'address      = ?'
             ];
-            $types = 'sssisss';
+            $types  = 'sssisss';
             $params = [ $first_name, $last_name, $country, $age, $email, $phone_number, $address ];
-
             if ($company_id !== null) {
-                $sets[]  = 'company_id   = ?';
-                $types  .= 'i';
+                $sets[]   = 'company_id   = ?';
+                $types   .= 'i';
                 $params[] = $company_id;
             } else {
                 $sets[] = 'company_id = NULL';
             }
-
-            $sets[] = 'updated_at   = NOW()';
-            $sql = "UPDATE contacts SET " . implode(',', $sets) . " WHERE id = ?";
-            $types .= 'i';
-            $params[] = $id;
-
-            $stmt = mysqli_prepare($link, $sql);
+            $sets[]      = 'updated_at   = NOW()';
+            $types      .= 'i';
+            $params[]    = $id;
+            $sql         = "UPDATE contacts SET " . implode(',', $sets) . " WHERE id = ?";
+            $stmt        = mysqli_prepare($link, $sql);
             mysqli_stmt_bind_param($stmt, $types, ...$params);
-            $flash = mysqli_stmt_execute($stmt)
-                   ? 'Contact updated successfully.'
-                   : 'Error updating contact: ' . mysqli_error($link);
+            $ok          = mysqli_stmt_execute($stmt);
+            $flash       = $ok
+                         ? 'Contact updated successfully.'
+                         : 'Error updating contact: ' . mysqli_error($link);
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'All required fields must be filled out.';
         }
-    }
 
     // DELETE
-    elseif ($action === 'delete' && !empty($_POST['ids'])) {
+    } elseif ($action === 'delete' && !empty($_POST['ids'])) {
         $ids = array_map('intval', explode(',', $_POST['ids']));
         $in  = implode(',', $ids);
-        $flash = mysqli_query($link, "DELETE FROM contacts WHERE id IN ($in)")
+        $ok   = mysqli_query($link, "DELETE FROM contacts WHERE id IN ($in)");
+        $flash = $ok
                ? 'Selected contact(s) deleted.'
                : 'Error deleting contacts: ' . mysqli_error($link);
     }
@@ -115,18 +113,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// 5) Fetch contacts
+// 5) Fetch contacts with company name
 $contacts = [];
-$sql = "SELECT
-          id, first_name, last_name, country, age,
-          email, phone_number, address, company_id,
-          created_at, updated_at
-        FROM contacts
-        ORDER BY first_name";
-$res = mysqli_query($link, $sql);
-if (!$res) {
-    die("Query failed: " . mysqli_error($link));
-}
+$sql = "
+  SELECT
+    c.id, c.first_name, c.last_name, c.country, c.age,
+    c.email, c.phone_number, c.address, c.company_id,
+    comp.name AS company_name,
+    c.created_at, c.updated_at
+  FROM contacts c
+  LEFT JOIN companies comp
+    ON c.company_id = comp.id
+  ORDER BY c.first_name
+";
+$res = mysqli_query($link, $sql) or die("Query failed: " . mysqli_error($link));
 while ($row = mysqli_fetch_assoc($res)) {
     $contacts[] = $row;
 }
@@ -156,127 +156,128 @@ mysqli_free_result($res);
   <div class="col-12">
     <div class="card">
       <div class="card-body">
+
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h4 class="header-title mb-0">Contacts List</h4>
           <button id="btn-add" class="btn btn-success">+ Add Contact</button>
         </div>
+
         <!-- Bulk panel -->
         <div id="bulk-panel"
              class="d-flex align-items-center bg-light border rounded px-3 py-2 mb-3"
-             style="display: none;">
-          <small id="selected-count" class="me-3">0 contacts selected</small>
+             style="display:none;">
+          <small id="selected-count" class="me-3">0 selected</small>
           <a href="#" id="select-all-link" class="me-3">
-            Select all <span id="total-count"><?= count($contacts) ?></span> contacts
+            Select all <span id="total-count"><?= count($contacts) ?></span>
           </a>
-          <a href="#" id="bulk-edit" class="me-3">Edit</a>
+          <a href="#" id="bulk-save" class="me-3">Save</a>
           <a href="#" id="bulk-delete" class="me-3 text-danger">Delete</a>
         </div>
+
         <!-- Bulk-delete form -->
         <form id="bulk-form" method="POST" style="display:none;">
           <input type="hidden" name="action" value="delete">
           <input type="hidden" name="ids" id="bulk-ids">
         </form>
+
         <!-- DataTable -->
         <table id="contacts-table" class="table table-striped dt-responsive nowrap w-100">
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
               <th>ID</th>
-              <th>First</th>
-              <th>Last</th>
-              <th>Country</th>
-              <th>Age</th>
+              <th>Name</th>
               <th>Email</th>
+              <th>Age</th>
+              <th>Country</th>
               <th>Phone</th>
               <th>Address</th>
-              <th>Company ID</th>
-              <th>Created</th>
-              <th>Updated</th>
+              <th>Company</th>
+              <th>Created At</th>
+              <th>Updated At</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($contacts as $c): ?>
-            <tr
-              data-id="<?= $c['id'] ?>"
-              data-first_name="<?= htmlspecialchars($c['first_name'], ENT_QUOTES) ?>"
-              data-last_name="<?= htmlspecialchars($c['last_name'], ENT_QUOTES) ?>"
-              data-country="<?= htmlspecialchars($c['country'], ENT_QUOTES) ?>"
-              data-age="<?= $c['age'] ?>"
-              data-email="<?= htmlspecialchars($c['email'], ENT_QUOTES) ?>"
-              data-phone_number="<?= htmlspecialchars($c['phone_number'], ENT_QUOTES) ?>"
-              data-address="<?= htmlspecialchars($c['address'], ENT_QUOTES) ?>"
-              data-company_id="<?= $c['company_id'] ?>"
-            >
+            <tr data-id="<?= $c['id'] ?>" data-company-id="<?= $c['company_id'] ?>">
               <td><input type="checkbox" class="row-checkbox"></td>
               <td><?= $c['id'] ?></td>
-              <td><?= htmlspecialchars($c['first_name']) ?></td>
-              <td><?= htmlspecialchars($c['last_name']) ?></td>
-              <td><?= htmlspecialchars($c['country']) ?></td>
-              <td><?= $c['age'] ?></td>
-              <td><?= htmlspecialchars($c['email']) ?></td>
-              <td><?= htmlspecialchars($c['phone_number']) ?></td>
-              <td><?= htmlspecialchars($c['address']) ?></td>
-              <td><?= $c['company_id'] ?></td>
+              <td data-field="name">
+                <a href="contact-profile.php?id=<?= $c['id'] ?>">
+                  <?= htmlspecialchars($c['first_name'].' '.$c['last_name']) ?>
+                </a>
+              </td>
+              <td data-field="email">
+                <a href="contact-profile.php?id=<?= $c['id'] ?>">
+                  <?= htmlspecialchars($c['email']) ?>
+                </a>
+              </td>
+              <td data-field="age" contenteditable="true"><?= $c['age'] ?></td>
+              <td data-field="country" contenteditable="true"><?= htmlspecialchars($c['country']) ?></td>s
+              <td data-field="phone_number" contenteditable="true"><?= htmlspecialchars($c['phone_number']) ?></td>
+              <td data-field="address" contenteditable="true"><?= htmlspecialchars($c['address']) ?></td>
+              <td><?= htmlspecialchars($c['company_name'] ?? '—') ?></td>
               <td><?= $c['created_at'] ?></td>
               <td><?= $c['updated_at'] ?></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- Offcanvas form -->
+<!-- Offcanvas form for Add -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="userCanvas">
   <div class="offcanvas-header">
     <h5 id="canvas-title">Add Contact</h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
   </div>
   <div class="offcanvas-body">
     <form id="user-form" method="POST">
       <input type="hidden" name="action" id="form-action" value="create">
       <input type="hidden" name="id"     id="form-id">
       <div class="mb-3">
-        <label for="form-first_name" class="form-label">First Name</label>
-        <input type="text" class="form-control" id="form-first_name" name="first_name" required>
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control" name="first_name" required>
       </div>
       <div class="mb-3">
-        <label for="form-last_name" class="form-label">Last Name</label>
-        <input type="text" class="form-control" id="form-last_name" name="last_name" required>
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-control" name="last_name" required>
       </div>
       <div class="mb-3">
-        <label for="form-country" class="form-label">Country</label>
-        <input type="text" class="form-control" id="form-country" name="country">
+        <label class="form-label">Country</label>
+        <input type="text" class="form-control" name="country">
       </div>
       <div class="mb-3">
-        <label for="form-age" class="form-label">Age</label>
-        <input type="number" class="form-control" id="form-age" name="age" min="0">
+        <label class="form-label">Age</label>
+        <input type="number" class="form-control" name="age" min="0">
       </div>
       <div class="mb-3">
-        <label for="form-email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="form-email" name="email" required>
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" required>
       </div>
       <div class="mb-3">
-        <label for="form-phone_number" class="form-label">Phone Number</label>
-        <input type="text" class="form-control" id="form-phone_number" name="phone_number">
+        <label class="form-label">Phone Number</label>
+        <input type="text" class="form-control" name="phone_number">
       </div>
       <div class="mb-3">
-        <label for="form-address" class="form-label">Address</label>
-        <textarea class="form-control" id="form-address" name="address" rows="2"></textarea>
+        <label class="form-label">Address</label>
+        <textarea class="form-control" name="address" rows="2"></textarea>
       </div>
       <div class="mb-3">
-        <label for="form-company_id" class="form-label">Company ID</label>
-        <input type="number" class="form-control" id="form-company_id" name="company_id" min="0">
+        <label class="form-label">Company (ID)</label>
+        <input type="number" class="form-control" name="company_id" min="0" placeholder="leave blank for none">
       </div>
-      <button type="submit" class="btn btn-primary" id="canvas-submit">Save</button>
+      <button type="submit" class="btn btn-primary">Save</button>
     </form>
   </div>
 </div>
 
-<!-- Include CSS/JS -->
+<!-- CSS/JS includes -->
 <link rel="stylesheet" href="assets/vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
 <script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/datatables.net/js/jquery.dataTables.min.js"></script>
@@ -284,18 +285,15 @@ mysqli_free_result($res);
 <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
   const bulkPanel         = document.getElementById('bulk-panel');
   const selectedCount     = document.getElementById('selected-count');
   const selectAllLink     = document.getElementById('select-all-link');
   const bulkForm          = document.getElementById('bulk-form');
   const bulkIds           = document.getElementById('bulk-ids');
   const selectAllCheckbox = document.getElementById('select-all');
-
-  const table = $('#contacts-table').DataTable({
-    responsive: true,
-    order: [[2, 'asc']]
-  });
+  const btnSave           = document.getElementById('bulk-save');
+  const table             = $('#contacts-table').DataTable({ responsive: true, order: [[2,'asc']] });
 
   function getSelectedIds() {
     return Array.from(document.querySelectorAll('.row-checkbox:checked'))
@@ -305,12 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateBulkPanel() {
     const ids = getSelectedIds();
     if (ids.length) {
-      bulkPanel.style.display     = 'flex';
-      selectedCount.textContent   = `${ids.length} contacts selected`;
-      bulkIds.value               = ids.join(',');
+      bulkPanel.style.display = 'flex';
+      selectedCount.textContent = `${ids.length} selected`;
+      bulkIds.value = ids.join(',');
     } else {
-      bulkPanel.style.display     = 'none';
-      selectedCount.textContent   = '0 contacts selected';
+      bulkPanel.style.display = 'none';
+      selectedCount.textContent = '0 selected';
     }
   }
 
@@ -321,8 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   selectAllCheckbox.addEventListener('change', () => {
-    document.querySelectorAll('.row-checkbox')
-      .forEach(cb => cb.checked = selectAllCheckbox.checked);
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = selectAllCheckbox.checked);
     updateBulkPanel();
   });
 
@@ -333,6 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateBulkPanel();
   });
 
+  // Delete
   document.getElementById('bulk-delete').addEventListener('click', e => {
     e.preventDefault();
     const ids = getSelectedIds();
@@ -340,34 +338,53 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirm('Delete selected contact(s)?')) bulkForm.submit();
   });
 
-  document.getElementById('bulk-edit').addEventListener('click', e => {
+  // Save (inline update)
+  btnSave.addEventListener('click', e => {
     e.preventDefault();
     const ids = getSelectedIds();
-    if (ids.length !== 1) return alert('Please select exactly one contact to edit.');
-    const tr = document.querySelector(`tr[data-id="${ids[0]}"]`);
-    const offcanvas = new bootstrap.Offcanvas(document.getElementById('userCanvas'));
+    if (ids.length !== 1) return alert('Please select exactly one contact to save.');
+    const row = document.querySelector(`tr[data-id="${ids[0]}"]`);
+    const id  = row.dataset.id;
 
-    document.getElementById('canvas-title').textContent      = 'Edit Contact';
-    document.getElementById('form-action').value            = 'update';
-    document.getElementById('form-id').value                = tr.dataset.id;
-    ['first_name','last_name','country','age','email','phone_number','address','company_id']
-      .forEach(field => {
-        document.getElementById('form-' + field).value = tr.dataset[field];
-      });
-    document.getElementById('canvas-submit').textContent = 'Update';
-    offcanvas.show();
+    // collect edited values
+    const fullName = row.querySelector('td[data-field="name"]').innerText.trim();
+    const [first, ...rest] = fullName.split(' ');
+    const last = rest.join(' ');
+    const country      = row.querySelector('td[data-field="country"]').innerText.trim();
+    const age          = row.querySelector('td[data-field="age"]').innerText.trim();
+    const email        = row.querySelector('td[data-field="email"]').innerText.trim();
+    const phone_number = row.querySelector('td[data-field="phone_number"]').innerText.trim();
+    const address      = row.querySelector('td[data-field="address"]').innerText.trim();
+    const company_id   = row.dataset.companyId || '';
+
+    // build and submit form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+    [
+      ['action','update'],
+      ['id', id],
+      ['first_name', first],
+      ['last_name', last],
+      ['country', country],
+      ['age', age],
+      ['email', email],
+      ['phone_number', phone_number],
+      ['address', address],
+      ['company_id', company_id]
+    ].forEach(([name,val]) => {
+      const inp = document.createElement('input');
+      inp.name  = name;
+      inp.value = val;
+      form.appendChild(inp);
+    });
+    document.body.appendChild(form);
+    form.submit();
   });
 
+  // Add new
   document.getElementById('btn-add').addEventListener('click', () => {
     const offcanvas = new bootstrap.Offcanvas(document.getElementById('userCanvas'));
-    document.getElementById('canvas-title').textContent      = 'Add Contact';
-    document.getElementById('form-action').value             = 'create';
-    document.getElementById('form-id').value                 = '';
-    // Clear only visible inputs & textarea & selects, leaving hidden 'action'/'id' intact
-    document.querySelectorAll(
-      '#user-form input:not([type="hidden"]), #user-form textarea, #user-form select'
-    ).forEach(el => el.value = '');
-    document.getElementById('canvas-submit').textContent     = 'Add';
     offcanvas.show();
   });
 });
