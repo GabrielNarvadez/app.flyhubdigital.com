@@ -1,16 +1,8 @@
-<<<<<<< Updated upstream
 <?php
 // modules/product-table.php
 
-<<<<<<< Updated upstream
 // 2) Database config
 require_once __DIR__ . '/../layouts/config.php';
-=======
-                                    <h4 class="header-title">Here are all your products and services are stored in a dynamic data table, making them easy to manage and readily available for selling, creating deals, quotes, and proposals, while allowing for flexible expansion based on what works best for your business.</h4>
-                                    <p class="text-muted fs-14">
-                                      
-                                    </p>
->>>>>>> Stashed changes
 
 // 3) Initialize flash
 if (empty($_SESSION['flash'])) {
