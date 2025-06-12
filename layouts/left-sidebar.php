@@ -104,7 +104,7 @@
         <span> Products </span>
       </a>
     </li>
-    <li class="side-nav-item">
+    <!-- <li class="side-nav-item">
       <a href="invoicing.php" class="side-nav-link">
         <i class="ri-file-text-line"></i>
         <span> Invoicing </span>
@@ -115,7 +115,7 @@
         <i class="ri-user-shared-line"></i>
         <span> Customer Portal </span>
       </a>
-    </li>
+    </li> -->
     <li class="side-nav-item">
       <a href="apps.php" class="side-nav-link">
         <i class="ri-plug-line"></i>

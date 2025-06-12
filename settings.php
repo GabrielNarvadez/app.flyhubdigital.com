@@ -33,6 +33,10 @@
                                     </ol>
                                 </div>
                                 <h4 class="page-title">Settings</h4>
+
+                                <?php include 'settings-main.php'; ?>
+
+
                             </div>
                         </div>
                     </div>
