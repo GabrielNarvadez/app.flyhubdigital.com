@@ -1,504 +1,337 @@
-                    <!-- start page title -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="page-title-box">
-                                <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Attex</a></li>
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Tables </a></li>
-                                        <li class="breadcrumb-item active">Datatables</li>
-                                    </ol>
-                                </div>
-                                <h4 class="page-title">Product Datatables</h4>
-                            </div>
-                        </div>
-                    </div>
+<?php
+// modules/product-table.php
 
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-body">
+// 1) Ensure session
+session_start();
 
-                                    <h4 class="header-title">Buttons example</h4>
-                                    <p class="text-muted fs-14">
-                                        The Buttons extension for DataTables provides a common set of options, API methods and styling to display buttons on a page
-                                        that will interact with a DataTable. The core library provides the based framework upon which plug-ins can built.
-                                    </p>
+// 2) Database config
+require_once __DIR__ . '/../layouts/config.php';
 
-                                    <table id="datatable-buttons" class="table table-striped dt-responsive nowrap w-100">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Position</th>
-                                                <th>Office</th>
-                                                <th>Age</th>
-                                                <th>Start date</th>
-                                                <th>Salary</th>
-                                            </tr>
-                                        </thead>
+// 3) Initialize flash
+if (empty($_SESSION['flash'])) {
+    $_SESSION['flash'] = '';
+}
 
+// 4) Handle Create / Update / Delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action      = $_POST['action']                         ?? '';
+    $name        = mysqli_real_escape_string($link, trim($_POST['name']        ?? ''));
+    $sku         = mysqli_real_escape_string($link, trim($_POST['sku']         ?? ''));
+    $description = mysqli_real_escape_string($link, trim($_POST['description'] ?? ''));
+    $price       = floatval($_POST['price']                 ?? 0.00);
+    $stock       = intval($_POST['stock']                   ?? 0);
+    $flash       = '';
 
-                                        <tbody>
-                                            <tr>
-                                                <td>Tiger Nixon</td>
-                                                <td>System Architect</td>
-                                                <td>Edinburgh</td>
-                                                <td>61</td>
-                                                <td>2011/04/25</td>
-                                                <td>$320,800</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Garrett Winters</td>
-                                                <td>Accountant</td>
-                                                <td>Tokyo</td>
-                                                <td>63</td>
-                                                <td>2011/07/25</td>
-                                                <td>$170,750</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Ashton Cox</td>
-                                                <td>Junior Technical Author</td>
-                                                <td>San Francisco</td>
-                                                <td>66</td>
-                                                <td>2009/01/12</td>
-                                                <td>$86,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Cedric Kelly</td>
-                                                <td>Senior Javascript Developer</td>
-                                                <td>Edinburgh</td>
-                                                <td>22</td>
-                                                <td>2012/03/29</td>
-                                                <td>$433,060</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Airi Satou</td>
-                                                <td>Accountant</td>
-                                                <td>Tokyo</td>
-                                                <td>33</td>
-                                                <td>2008/11/28</td>
-                                                <td>$162,700</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Brielle Williamson</td>
-                                                <td>Integration Specialist</td>
-                                                <td>New York</td>
-                                                <td>61</td>
-                                                <td>2012/12/02</td>
-                                                <td>$372,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Herrod Chandler</td>
-                                                <td>Sales Assistant</td>
-                                                <td>San Francisco</td>
-                                                <td>59</td>
-                                                <td>2012/08/06</td>
-                                                <td>$137,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Rhona Davidson</td>
-                                                <td>Integration Specialist</td>
-                                                <td>Tokyo</td>
-                                                <td>55</td>
-                                                <td>2010/10/14</td>
-                                                <td>$327,900</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Colleen Hurst</td>
-                                                <td>Javascript Developer</td>
-                                                <td>San Francisco</td>
-                                                <td>39</td>
-                                                <td>2009/09/15</td>
-                                                <td>$205,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Sonya Frost</td>
-                                                <td>Software Engineer</td>
-                                                <td>Edinburgh</td>
-                                                <td>23</td>
-                                                <td>2008/12/13</td>
-                                                <td>$103,600</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jena Gaines</td>
-                                                <td>Office Manager</td>
-                                                <td>London</td>
-                                                <td>30</td>
-                                                <td>2008/12/19</td>
-                                                <td>$90,560</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Quinn Flynn</td>
-                                                <td>Support Lead</td>
-                                                <td>Edinburgh</td>
-                                                <td>22</td>
-                                                <td>2013/03/03</td>
-                                                <td>$342,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Charde Marshall</td>
-                                                <td>Regional Director</td>
-                                                <td>San Francisco</td>
-                                                <td>36</td>
-                                                <td>2008/10/16</td>
-                                                <td>$470,600</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Haley Kennedy</td>
-                                                <td>Senior Marketing Designer</td>
-                                                <td>London</td>
-                                                <td>43</td>
-                                                <td>2012/12/18</td>
-                                                <td>$313,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Tatyana Fitzpatrick</td>
-                                                <td>Regional Director</td>
-                                                <td>London</td>
-                                                <td>19</td>
-                                                <td>2010/03/17</td>
-                                                <td>$385,750</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Michael Silva</td>
-                                                <td>Marketing Designer</td>
-                                                <td>London</td>
-                                                <td>66</td>
-                                                <td>2012/11/27</td>
-                                                <td>$198,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Paul Byrd</td>
-                                                <td>Chief Financial Officer (CFO)</td>
-                                                <td>New York</td>
-                                                <td>64</td>
-                                                <td>2010/06/09</td>
-                                                <td>$725,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Gloria Little</td>
-                                                <td>Systems Administrator</td>
-                                                <td>New York</td>
-                                                <td>59</td>
-                                                <td>2009/04/10</td>
-                                                <td>$237,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Bradley Greer</td>
-                                                <td>Software Engineer</td>
-                                                <td>London</td>
-                                                <td>41</td>
-                                                <td>2012/10/13</td>
-                                                <td>$132,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Dai Rios</td>
-                                                <td>Personnel Lead</td>
-                                                <td>Edinburgh</td>
-                                                <td>35</td>
-                                                <td>2012/09/26</td>
-                                                <td>$217,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jenette Caldwell</td>
-                                                <td>Development Lead</td>
-                                                <td>New York</td>
-                                                <td>30</td>
-                                                <td>2011/09/03</td>
-                                                <td>$345,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Yuri Berry</td>
-                                                <td>Chief Marketing Officer (CMO)</td>
-                                                <td>New York</td>
-                                                <td>40</td>
-                                                <td>2009/06/25</td>
-                                                <td>$675,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Caesar Vance</td>
-                                                <td>Pre-Sales Support</td>
-                                                <td>New York</td>
-                                                <td>21</td>
-                                                <td>2011/12/12</td>
-                                                <td>$106,450</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Doris Wilder</td>
-                                                <td>Sales Assistant</td>
-                                                <td>Sidney</td>
-                                                <td>23</td>
-                                                <td>2010/09/20</td>
-                                                <td>$85,600</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Angelica Ramos</td>
-                                                <td>Chief Executive Officer (CEO)</td>
-                                                <td>London</td>
-                                                <td>47</td>
-                                                <td>2009/10/09</td>
-                                                <td>$1,200,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Gavin Joyce</td>
-                                                <td>Developer</td>
-                                                <td>Edinburgh</td>
-                                                <td>42</td>
-                                                <td>2010/12/22</td>
-                                                <td>$92,575</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jennifer Chang</td>
-                                                <td>Regional Director</td>
-                                                <td>Singapore</td>
-                                                <td>28</td>
-                                                <td>2010/11/14</td>
-                                                <td>$357,650</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Brenden Wagner</td>
-                                                <td>Software Engineer</td>
-                                                <td>San Francisco</td>
-                                                <td>28</td>
-                                                <td>2011/06/07</td>
-                                                <td>$206,850</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Fiona Green</td>
-                                                <td>Chief Operating Officer (COO)</td>
-                                                <td>San Francisco</td>
-                                                <td>48</td>
-                                                <td>2010/03/11</td>
-                                                <td>$850,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Shou Itou</td>
-                                                <td>Regional Marketing</td>
-                                                <td>Tokyo</td>
-                                                <td>20</td>
-                                                <td>2011/08/14</td>
-                                                <td>$163,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Michelle House</td>
-                                                <td>Integration Specialist</td>
-                                                <td>Sidney</td>
-                                                <td>37</td>
-                                                <td>2011/06/02</td>
-                                                <td>$95,400</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Suki Burks</td>
-                                                <td>Developer</td>
-                                                <td>London</td>
-                                                <td>53</td>
-                                                <td>2009/10/22</td>
-                                                <td>$114,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Prescott Bartlett</td>
-                                                <td>Technical Author</td>
-                                                <td>London</td>
-                                                <td>27</td>
-                                                <td>2011/05/07</td>
-                                                <td>$145,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Gavin Cortez</td>
-                                                <td>Team Leader</td>
-                                                <td>San Francisco</td>
-                                                <td>22</td>
-                                                <td>2008/10/26</td>
-                                                <td>$235,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Martena Mccray</td>
-                                                <td>Post-Sales support</td>
-                                                <td>Edinburgh</td>
-                                                <td>46</td>
-                                                <td>2011/03/09</td>
-                                                <td>$324,050</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Unity Butler</td>
-                                                <td>Marketing Designer</td>
-                                                <td>San Francisco</td>
-                                                <td>47</td>
-                                                <td>2009/12/09</td>
-                                                <td>$85,675</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Howard Hatfield</td>
-                                                <td>Office Manager</td>
-                                                <td>San Francisco</td>
-                                                <td>51</td>
-                                                <td>2008/12/16</td>
-                                                <td>$164,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Hope Fuentes</td>
-                                                <td>Secretary</td>
-                                                <td>San Francisco</td>
-                                                <td>41</td>
-                                                <td>2010/02/12</td>
-                                                <td>$109,850</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Vivian Harrell</td>
-                                                <td>Financial Controller</td>
-                                                <td>San Francisco</td>
-                                                <td>62</td>
-                                                <td>2009/02/14</td>
-                                                <td>$452,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Timothy Mooney</td>
-                                                <td>Office Manager</td>
-                                                <td>London</td>
-                                                <td>37</td>
-                                                <td>2008/12/11</td>
-                                                <td>$136,200</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jackson Bradshaw</td>
-                                                <td>Director</td>
-                                                <td>New York</td>
-                                                <td>65</td>
-                                                <td>2008/09/26</td>
-                                                <td>$645,750</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Olivia Liang</td>
-                                                <td>Support Engineer</td>
-                                                <td>Singapore</td>
-                                                <td>64</td>
-                                                <td>2011/02/03</td>
-                                                <td>$234,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Bruno Nash</td>
-                                                <td>Software Engineer</td>
-                                                <td>London</td>
-                                                <td>38</td>
-                                                <td>2011/05/03</td>
-                                                <td>$163,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Sakura Yamamoto</td>
-                                                <td>Support Engineer</td>
-                                                <td>Tokyo</td>
-                                                <td>37</td>
-                                                <td>2009/08/19</td>
-                                                <td>$139,575</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Thor Walton</td>
-                                                <td>Developer</td>
-                                                <td>New York</td>
-                                                <td>61</td>
-                                                <td>2013/08/11</td>
-                                                <td>$98,540</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Finn Camacho</td>
-                                                <td>Support Engineer</td>
-                                                <td>San Francisco</td>
-                                                <td>47</td>
-                                                <td>2009/07/07</td>
-                                                <td>$87,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Serge Baldwin</td>
-                                                <td>Data Coordinator</td>
-                                                <td>Singapore</td>
-                                                <td>64</td>
-                                                <td>2012/04/09</td>
-                                                <td>$138,575</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Zenaida Frank</td>
-                                                <td>Software Engineer</td>
-                                                <td>New York</td>
-                                                <td>63</td>
-                                                <td>2010/01/04</td>
-                                                <td>$125,250</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Zorita Serrano</td>
-                                                <td>Software Engineer</td>
-                                                <td>San Francisco</td>
-                                                <td>56</td>
-                                                <td>2012/06/01</td>
-                                                <td>$115,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jennifer Acosta</td>
-                                                <td>Junior Javascript Developer</td>
-                                                <td>Edinburgh</td>
-                                                <td>43</td>
-                                                <td>2013/02/01</td>
-                                                <td>$75,650</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Cara Stevens</td>
-                                                <td>Sales Assistant</td>
-                                                <td>New York</td>
-                                                <td>46</td>
-                                                <td>2011/12/06</td>
-                                                <td>$145,600</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Hermione Butler</td>
-                                                <td>Regional Director</td>
-                                                <td>London</td>
-                                                <td>47</td>
-                                                <td>2011/03/21</td>
-                                                <td>$356,250</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Lael Greer</td>
-                                                <td>Systems Administrator</td>
-                                                <td>London</td>
-                                                <td>21</td>
-                                                <td>2009/02/27</td>
-                                                <td>$103,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Jonas Alexander</td>
-                                                <td>Developer</td>
-                                                <td>San Francisco</td>
-                                                <td>30</td>
-                                                <td>2010/07/14</td>
-                                                <td>$86,500</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Shad Decker</td>
-                                                <td>Regional Director</td>
-                                                <td>Edinburgh</td>
-                                                <td>51</td>
-                                                <td>2008/11/13</td>
-                                                <td>$183,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Michael Bruce</td>
-                                                <td>Javascript Developer</td>
-                                                <td>Singapore</td>
-                                                <td>29</td>
-                                                <td>2011/06/27</td>
-                                                <td>$183,000</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Donna Snider</td>
-                                                <td>Customer Support</td>
-                                                <td>New York</td>
-                                                <td>27</td>
-                                                <td>2011/01/25</td>
-                                                <td>$112,000</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+    // CREATE
+    if ($action === 'create') {
+        if ($name !== '' && $sku !== '') {
+            $stmt = mysqli_prepare($link, "
+                INSERT INTO products
+                  (name, sku, description, price, stock)
+                VALUES (?,    ?,   ?,           ?,     ?)
+            ");
+            mysqli_stmt_bind_param($stmt,
+                'ssdii',
+                $name, $sku, $description, $price, $stock
+            );
+            $flash = mysqli_stmt_execute($stmt)
+                   ? 'Product added successfully.'
+                   : 'Error adding product: ' . mysqli_error($link);
+            mysqli_stmt_close($stmt);
+        } else {
+            $flash = 'Name and SKU are required.';
+        }
 
-                                </div> <!-- end card body-->
-                            </div> <!-- end card -->
-                        </div><!-- end col-->
-                    </div> <!-- end row-->
+    // UPDATE
+    } elseif ($action === 'update') {
+        $id = intval($_POST['id'] ?? 0);
+        if ($id && $name !== '' && $sku !== '') {
+            $stmt = mysqli_prepare($link, "
+                UPDATE products SET
+                  name        = ?,
+                  sku         = ?,
+                  description = ?,
+                  price       = ?,
+                  stock       = ?,
+                  updated_at  = NOW()
+                WHERE id = ?
+            ");
+            mysqli_stmt_bind_param($stmt,
+                'ssdiii',
+                $name, $sku, $description, $price, $stock, $id
+            );
+            $flash = mysqli_stmt_execute($stmt)
+                   ? 'Product updated successfully.'
+                   : 'Error updating product: ' . mysqli_error($link);
+            mysqli_stmt_close($stmt);
+        } else {
+            $flash = 'ID, Name and SKU are required.';
+        }
+
+    // DELETE
+    } elseif ($action === 'delete' && !empty($_POST['ids'])) {
+        $ids = array_map('intval', explode(',', $_POST['ids']));
+        $in  = implode(',', $ids);
+        $sql = "DELETE FROM products WHERE id IN ($in)";
+        if (mysqli_query($link, $sql)) {
+            $flash = 'Selected product(s) deleted.';
+        } else {
+            $flash = 'Error deleting products: ' . mysqli_error($link);
+        }
+    }
+
+    $_SESSION['flash'] = $flash;
+
+    // JS redirect avoids header issues
+    $self = htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES);
+    echo "<script>window.location.replace('{$self}');</script>";
+    exit;
+}
+
+// 5) Fetch products for display
+$products = [];
+$sql = "
+    SELECT
+      id, name, sku, description,
+      price, stock, created_at, updated_at
+    FROM products
+    ORDER BY name
+";
+$res = mysqli_query($link, $sql);
+if (!$res) {
+    die("Fetch failed: " . mysqli_error($link));
+}
+while ($row = mysqli_fetch_assoc($res)) {
+    $products[] = $row;
+}
+mysqli_free_result($res);
+?>
+<!-- Page Title & Flash -->
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box">
+      <div class="page-title-right">
+        <ol class="breadcrumb m-0">
+          <li class="breadcrumb-item"><a href="index.php">Flyhub Digital</a></li>
+          <li class="breadcrumb-item active">Products</li>
+        </ol>
+      </div>
+      <h4 class="page-title">Product Management</h4>
+    </div>
+  </div>
+</div>
+
+<?php if ($_SESSION['flash']): ?>
+  <div class="alert alert-info"><?= $_SESSION['flash'] ?></div>
+  <?php $_SESSION['flash'] = '' ?>
+<?php endif; ?>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h4 class="header-title mb-0">Products List</h4>
+          <button id="btn-add" class="btn btn-success">+ Add Product</button>
+        </div>
+
+        <!-- Bulk panel -->
+        <div id="bulk-panel"
+             class="d-flex align-items-center bg-light border rounded px-3 py-2 mb-3"
+             style="display: none;">
+          <small id="selected-count" class="me-3">0 selected</small>
+          <a href="#" id="select-all-link" class="me-3">
+            Select all <span id="total-count"><?= count($products) ?></span>
+          </a>
+          <a href="#" id="bulk-edit" class="me-3">Edit</a>
+          <a href="#" id="bulk-delete" class="me-3 text-danger">Delete</a>
+        </div>
+
+        <!-- Bulk-delete form -->
+        <form id="bulk-form"
+              method="POST"
+              action="<?= htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES) ?>"
+              style="display: none;">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="ids" id="bulk-ids">
+        </form>
+
+        <!-- DataTable -->
+        <table id="products-table" class="table table-striped dt-responsive nowrap w-100">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all"></th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Description</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Created At</th>
+              <th>Updated At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($products as $p): ?>
+              <tr
+                data-id="<?= $p['id'] ?>"
+                data-name="<?= htmlspecialchars($p['name'], ENT_QUOTES) ?>"
+                data-sku="<?= htmlspecialchars($p['sku'], ENT_QUOTES) ?>"
+                data-description="<?= htmlspecialchars($p['description'], ENT_QUOTES) ?>"
+                data-price="<?= $p['price'] ?>"
+                data-stock="<?= $p['stock'] ?>"
+              >
+                <td><input type="checkbox" class="row-checkbox"></td>
+                <td><?= $p['id'] ?></td>
+                <td><?= htmlspecialchars($p['name']) ?></td>
+                <td><?= htmlspecialchars($p['sku']) ?></td>
+                <td><?= htmlspecialchars($p['description']) ?></td>
+                <td><?= number_format($p['price'],2) ?></td>
+                <td><?= $p['stock'] ?></td>
+                <td><?= $p['created_at'] ?></td>
+                <td><?= $p['updated_at'] ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Offcanvas form for Add / Edit -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="productCanvas">
+  <div class="offcanvas-header">
+    <h5 id="canvas-title">Add Product</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form id="product-form"
+          method="POST"
+          action="<?= htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES) ?>">
+      <input type="hidden" name="action" id="form-action" value="create">
+      <input type="hidden" name="id"     id="form-id">
+
+      <div class="mb-3">
+        <label for="form-name" class="form-label">Name *</label>
+        <input type="text" class="form-control" id="form-name" name="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="form-sku" class="form-label">SKU *</label>
+        <input type="text" class="form-control" id="form-sku" name="sku" required>
+      </div>
+      <div class="mb-3">
+        <label for="form-description" class="form-label">Description</label>
+        <textarea class="form-control" id="form-description" name="description" rows="2"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="form-price" class="form-label">Price</label>
+        <input type="number" step="0.01" class="form-control" id="form-price" name="price" value="0.00">
+      </div>
+      <div class="mb-3">
+        <label for="form-stock" class="form-label">Stock</label>
+        <input type="number" class="form-control" id="form-stock" name="stock" value="0">
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="canvas-submit">Save</button>
+    </form>
+  </div>
+</div>
+
+<!-- CSS / JS includes -->
+<link rel="stylesheet" href="assets/vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+<script src="assets/vendor/jquery/jquery.min.js"></script>
+<script src="assets/vendor/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="assets/vendor/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const bulkPanel         = document.getElementById('bulk-panel');
+  const selectedCount     = document.getElementById('selected-count');
+  const selectAllLink     = document.getElementById('select-all-link');
+  const bulkForm          = document.getElementById('bulk-form');
+  const bulkIds           = document.getElementById('bulk-ids');
+  const selectAllCheckbox = document.getElementById('select-all');
+  const table             = $('#products-table').DataTable({ responsive: true, order: [[2,'asc']] });
+
+  function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked'))
+      .map(cb => cb.closest('tr').dataset.id);
+  }
+
+  function updateBulkPanel() {
+    const ids = getSelectedIds();
+    if (ids.length) {
+      bulkPanel.style.display   = 'flex';
+      selectedCount.textContent = `${ids.length} selected`;
+      bulkIds.value             = ids.join(',');
+    } else {
+      bulkPanel.style.display   = 'none';
+      selectedCount.textContent = '0 selected';
+    }
+  }
+
+  $('#products-table tbody').on('change', '.row-checkbox', updateBulkPanel);
+  table.on('draw', () => {
+    selectAllCheckbox.checked = false;
+    updateBulkPanel();
+  });
+
+  selectAllCheckbox.addEventListener('change', () => {
+    document.querySelectorAll('.row-checkbox')
+      .forEach(cb => cb.checked = selectAllCheckbox.checked);
+    updateBulkPanel();
+  });
+
+  selectAllLink.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = true);
+    selectAllCheckbox.checked = true;
+    updateBulkPanel();
+  });
+
+  document.getElementById('bulk-delete').addEventListener('click', function(e) {
+    e.preventDefault();
+    const ids = getSelectedIds();
+    if (!ids.length) return alert('No products selected.');
+    if (confirm('Delete selected product(s)?')) {
+      bulkIds.value = ids.join(',');
+      bulkForm.submit();
+    }
+  });
+
+  document.getElementById('bulk-edit').addEventListener('click', function(e) {
+    e.preventDefault();
+    const ids = getSelectedIds();
+    if (ids.length !== 1) return alert('Please select exactly one product to edit.');
+    const tr = document.querySelector(`tr[data-id="${ids[0]}"]`);
+    const offcanvas = new bootstrap.Offcanvas(document.getElementById('productCanvas'));
+
+    document.getElementById('canvas-title').textContent = 'Edit Product';
+    document.getElementById('form-action').value        = 'update';
+    document.getElementById('form-id').value            = tr.dataset.id;
+    ['name','sku','description','price','stock'].forEach(field => {
+      document.getElementById('form-' + field).value = tr.dataset[field];
+    });
+    document.getElementById('canvas-submit').textContent = 'Update';
+    offcanvas.show();
+  });
+
+  document.getElementById('btn-add').addEventListener('click', function() {
+    const offcanvas = new bootstrap.Offcanvas(document.getElementById('productCanvas'));
+    document.getElementById('canvas-title').textContent = 'Add Product';
+    document.getElementById('form-action').value        = 'create';
+    document.getElementById('form-id').value            = '';
+    ['name','sku','description','price','stock'].forEach(field => {
+      const el = document.getElementById('form-' + field);
+      el.value = (field === 'price' ? '0.00' : field === 'stock' ? '0' : '');
+    });
+    document.getElementById('canvas-submit').textContent = 'Add';
+    offcanvas.show();
+  });
+});
+</script>
