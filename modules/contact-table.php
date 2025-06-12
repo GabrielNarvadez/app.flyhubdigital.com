@@ -214,7 +214,7 @@ mysqli_free_result($res);
                 </a>
               </td>
               <td data-field="age" contenteditable="true"><?= $c['age'] ?></td>
-              <td data-field="country" contenteditable="true"><?= htmlspecialchars($c['country']) ?></td>s
+              <td data-field="country" contenteditable="true"><?= htmlspecialchars($c['country']) ?></td>
               <td data-field="phone_number" contenteditable="true"><?= htmlspecialchars($c['phone_number']) ?></td>
               <td data-field="address" contenteditable="true"><?= htmlspecialchars($c['address']) ?></td>
               <td><?= htmlspecialchars($c['company_name'] ?? '—') ?></td>
