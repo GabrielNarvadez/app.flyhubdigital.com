@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Datatables | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <title>Datatables | Flyhub </title>
     <?php include 'layouts/title-meta.php'; ?>
     <!-- Datatables css -->
     <link href="assets/vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" type="text/css" />
@@ -49,7 +49,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-12">
+                        <!-- <div class="col-12">
                             <div class="card">
                                 <div class="card-body">
                                     <h4 class="header-title">Basic Data Table</h4>
