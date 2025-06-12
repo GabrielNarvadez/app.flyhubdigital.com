@@ -3,20 +3,20 @@
   <!-- Brand Logo Light -->
   <a href="index.php" class="logo logo-light">
     <span class="logo-lg">
-      <img src="assets/images/logo.png" alt="logo" />
+      <img src="assets/images/flyhub_logo.webp" alt="logo" height="50px"/>
     </span>
     <span class="logo-sm">
-      <img src="assets/images/logo-sm.png" alt="small logo" />
+      <img src="assets/images/flyhub_logo.webp" alt="small logo" height="50px"/>
     </span>
   </a>
 
   <!-- Brand Logo Dark -->
   <a href="index.php" class="logo logo-dark">
     <span class="logo-lg">
-      <img src="assets/images/logo-dark.png" alt="dark logo" />
+      <img src="assets/images/flyhub_logo.webp" alt="dark logo" height="50px"/>
     </span>
     <span class="logo-sm">
-      <img src="assets/images/logo-sm.png" alt="small logo" />
+      <img src="assets/images/flyhub_logo.webp" alt="small logo" height="50px"/>
     </span>
   </a>
 
@@ -52,9 +52,9 @@
 
     <!--- Sidemenu -->
     <ul class="side-nav">
-      <li class="side-nav-title">Navigation</li>
+      <!-- <li class="side-nav-title">Navigation</li> -->
 
-      <li class="side-nav-item">
+      <!-- <li class="side-nav-item">
         <a
           data-bs-toggle="collapse"
           href="#sidebarDashboards"
@@ -64,7 +64,7 @@
         >
           <i class="ri-home-4-line"></i>
           <span class="badge bg-success float-end">2</span>
-          <span> Dashboards </span>
+          <span> Dashboard</span>
         </a>
         <div class="collapse" id="sidebarDashboards">
           <ul class="side-nav-second-level">
@@ -76,18 +76,60 @@
             </li>
           </ul>
         </div>
-      </li>
+      </li> -->
 
-      <li class="side-nav-title">Apps</li>
+      <!-- <li class="side-nav-title">Apps</li> -->
 
-      <li class="side-nav-item">
-        <a href="apps-calendar.php" class="side-nav-link">
-          <i class="ri-calendar-event-line"></i>
-          <span> Calendar </span>
-        </a>
-      </li>
+     <li class="side-nav-item">
+      <a href="index.php" class="side-nav-link">
+        <i class="ri-dashboard-line"></i>
+        <span> Dashboard </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="contacts.php" class="side-nav-link">
+        <i class="ri-user-line"></i>
+        <span> Contacts </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="companies.php" class="side-nav-link">
+        <i class="ri-building-line"></i>
+        <span> Companies </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="products.php" class="side-nav-link">
+        <i class="ri-shopping-bag-line"></i>
+        <span> Products </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="invoicing.php" class="side-nav-link">
+        <i class="ri-file-text-line"></i>
+        <span> Invoicing </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="customer-portal.php" class="side-nav-link">
+        <i class="ri-user-shared-line"></i>
+        <span> Customer Portal </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="apps.php" class="side-nav-link">
+        <i class="ri-plug-line"></i>
+        <span> Apps </span>
+      </a>
+    </li>
+    <li class="side-nav-item">
+      <a href="settings.php" class="side-nav-link">
+        <i class="ri-settings-3-line"></i>
+        <span> Settings </span>
+      </a>
+    </li>
 
-      <li class="side-nav-item">
+<!--       <li class="side-nav-item">
         <a href="apps-chat.php" class="side-nav-link">
           <i class="ri-message-3-line"></i>
           <span> Chat </span>
@@ -755,7 +797,7 @@
             </li>
           </ul>
         </div>
-      </li>
+      </li> -->
     </ul>
     <!--- End Sidemenu -->
 

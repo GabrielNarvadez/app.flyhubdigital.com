@@ -7,20 +7,20 @@
                 
                 <a href="index.php" class="logo-light">
                     <span class="logo-lg">
-                        <img src="assets/images/logo.png" alt="logo">
+                        <img src="assets/images/flyhub_logo.webp" alt="logo">
                     </span>
                     <span class="logo-sm">
-                        <img src="assets/images/logo-sm.png" alt="small logo">
+                        <img src="assets/images/flyhub_logo.webp" alt="small logo">
                     </span>
                 </a>
 
                 
                 <a href="index.php" class="logo-dark">
                     <span class="logo-lg">
-                        <img src="assets/images/logo-dark.png" alt="dark logo">
+                        <span><img src="assets/images/flyhub_logo.webp" alt="logo"></span>
                     </span>
                     <span class="logo-sm">
-                        <img src="assets/images/logo-sm.png" alt="small logo">
+                        <img src="assets/images/flyhub_logo.webp" alt="small logo">
                     </span>
                 </a>
             </div>
@@ -116,7 +116,7 @@
                 </div>
             </li>
 
-            <li class="dropdown">
+           <!--  <li class="dropdown">
                 <a class="nav-link dropdown-toggle arrow-none" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                     <img src="assets/images/flags/us.jpg" alt="user-image" class="me-0 me-sm-1" height="12">
                     <span class="align-middle d-none d-lg-inline-block">English</span> <i class="ri-arrow-down-s-line d-none d-sm-inline-block align-middle"></i>
@@ -144,7 +144,7 @@
                     </a>
 
                 </div>
-            </li>
+            </li> -->
 
             <li class="dropdown notification-list">
                 <a class="nav-link dropdown-toggle arrow-none" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
