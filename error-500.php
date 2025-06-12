@@ -1,10 +1,27 @@
-<?php include 'layouts/session.php'; ?>
-<?php include 'layouts/main.php'; ?>
+<?php
+// index.php (project root)
+
+// 1. App init
+require __DIR__ . '/bootstrap.php';
+
+// 2. Database connection
+require __DIR__ . '/config/db.php';
+
+// 3. Auth guard
+if (empty($_SESSION['user'])) {
+    header('Location: auth/login.php');
+    exit;
+}
+
+$activePage = 'dashboard';
+
+
+?>
     <head>
         <title>Error 500 | Attex - Bootstrap 5 Admin & Dashboard Template</title>
-    <?php include 'layouts/title-meta.php'; ?>
+    <?php include __DIR__ . '/includes/title-meta.php'; ?>
 
-    <?php include 'layouts/head-css.php'; ?>
+    <?php include __DIR__ . '/includes/head-css.php'; ?>
     </head>
 
     <body class="authentication-bg">
@@ -50,7 +67,7 @@
         <footer class="footer footer-alt fw-medium">
             <span class="bg-body"><script>document.write(new Date().getFullYear())</script> © Attex - Coderthemes.com</span>
         </footer>
-        <?php include 'layouts/footer-scripts.php'; ?>
+        <?php include __DIR__ . '/includes/footer-scripts.php'; ?>
         
         <!-- App js -->
         <script src="assets/js/app.min.js"></script>

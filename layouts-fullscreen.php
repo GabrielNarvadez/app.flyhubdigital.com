@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-sidenav-size="compact">
+<html lang="en" data-sidenav-size="fullscreen">
 
 <head>
-    <title>Layout Compact | Attex - Bootstrap 5 Admin & Dashboard Template</title>
-    <?php include 'layouts/title-meta.php'; ?>
+    <title>Layout Fullscreen | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <?php include __DIR__ . '/includes/title-meta.php'; ?>
 
     <!-- Daterangepicker css -->
     <link rel="stylesheet" href="assets/vendor/daterangepicker/daterangepicker.css">
@@ -11,7 +11,7 @@
     <!-- Vector Map css -->
     <link rel="stylesheet" href="assets/vendor/admin-resources/jquery.vectormap/jquery-jvectormap-1.2.2.css">
 
-    <?php include 'layouts/head-css.php'; ?>
+    <?php include __DIR__ . '/includes/head-css.php'; ?>
 </head>
 
 <body>
@@ -47,7 +47,7 @@
                                         </a>
                                     </form>
                                 </div>
-                                <h4 class="page-title">Compact Layout</h4>
+                                <h4 class="page-title">Full Screen Layout</h4>
                             </div>
                         </div>
                     </div>
@@ -380,7 +380,7 @@
             </div>
             <!-- content -->
 
-            <?php include 'layouts/footer.php'; ?>
+            <?php include __DIR__ . '/includes/footer.php'; ?>
 
         </div>
 
@@ -391,9 +391,9 @@
     </div>
     <!-- END wrapper -->
 
-    <?php include 'layouts/right-sidebar.php'; ?>
+    <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
 
-    <?php include 'layouts/footer-scripts.php'; ?>
+    <?php include __DIR__ . '/includes/footer-scripts.php'; ?>
 
     <!-- Daterangepicker js -->
     <script src="assets/vendor/daterangepicker/moment.min.js"></script>

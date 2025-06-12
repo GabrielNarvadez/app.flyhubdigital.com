@@ -3,13 +3,13 @@
 
 <head>
     <title>Horizontal Layout | Attex - Bootstrap 5 Admin & Dashboard Template</title>
-    <?php include 'layouts/title-meta.php'; ?>
+    <?php include __DIR__ . '/includes/title-meta.php'; ?>
 
     <!-- Plugin css -->
     <link rel="stylesheet" href="assets/vendor/daterangepicker/daterangepicker.css">
     <link href="assets/vendor/admin-resources/jquery.vectormap/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
 
-    <?php include 'layouts/head-css.php'; ?>
+    <?php include __DIR__ . '/includes/head-css.php'; ?>
 </head>
 
 <body>
@@ -375,7 +375,7 @@
             </div>
             <!-- content -->
 
-            <?php include 'layouts/footer.php'; ?>
+            <?php include __DIR__ . '/includes/footer.php'; ?>
 
         </div>
 
@@ -386,9 +386,9 @@
     </div>
     <!-- END wrapper -->
 
-    <?php include 'layouts/right-sidebar.php'; ?>
+    <?php include __DIR__ . '/includes/right-sidebar.php'; ?>
 
-    <?php include 'layouts/footer-scripts.php'; ?>
+    <?php include __DIR__ . '/includes/footer-scripts.php'; ?>
 
     <!-- Daterangepicker js -->
     <script src="assets/vendor/daterangepicker/moment.min.js"></script>
