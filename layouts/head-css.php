@@ -6,3 +6,6 @@
 
 <!-- Icons css -->
 <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+
+<!-- Custom css -->
+<link href="assets/css/custom.css" rel="stylesheet" type="text/css" />
