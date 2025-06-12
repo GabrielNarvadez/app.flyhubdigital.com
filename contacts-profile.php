@@ -28,20 +28,21 @@
                         <div class="col-12">
                             <div class="page-title-box">
                                 <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Attex</a></li>
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Pages</a></li>
-                                        <li class="breadcrumb-item active">Profile</li>
-                                    </ol>
+                                   
                                 </div>
-                                <h4 class="page-title">Contact Profile</h4>
+                                <h3 class="page-title">
+                                  <a href="contacts.php" style="text-decoration: none; color: inherit;">
+                                    &#60; Contacts
+                                  </a>
+                                </h3>
+
                             </div>
                         </div>
                     </div>
 
 
                     <div class="row">
-                        <div class="col-xl-4 col-lg-5">
+                        <div class="col-xl-3 col-lg-5">
                             <div class="card text-center">
                                 <div class="card-body">
                                     <img src="assets/images/users/avatar-1.jpg" class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
@@ -49,16 +50,21 @@
                                     <h4 class="mb-1 mt-2">Tosha Minner</h4>
                                     <p class="text-muted">Founder at ABC Company</p>
 
-                                    <button type="button" class="btn btn-success btn-sm mb-2">Edit</button>
-                                    <button type="button" class="btn btn-danger btn-sm mb-2">Message</button>
+                                    <div class="btn-group mb-2">
+                                            <button type="button" class="btn btn-primary">Edit Profile</button>
+                                            <button type="button" class="btn btn-success">Send Message</button>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-light dropdown-toggle show" data-bs-toggle="dropdown" aria-expanded="true"> Actions <span class="caret"></span> </button>
+                                                <div class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 39px);" data-popper-placement="bottom-start">
+                                                    <a class="dropdown-item" href="#">Customize Properties</a>
+                                                    <a class="dropdown-item" href="#">View All Properties</a>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                     <div class="text-start mt-3">
-                                        <h4 class="fs-13 text-uppercase">About This Contact :</h4>
-                                        <p class="text-muted mb-3">
-                                            Hi I'm Tosha Minner,has been the industry's standard dummy text ever since the
-                                            1500s, when an unknown printer took a galley of type.
-                                        </p>
-                                        <p class="text-muted mb-2"><strong>Full Name :</strong> <span class="ms-2">Tosha K. Minner</span></p>
+
+                                        <h4 class="text-primary mb-2"><strong>About this contact</strong><span class="ms-2"></span></h4>
 
                                         <p class="text-muted mb-2"><strong>Mobile :</strong><span class="ms-2">(123)
                                                 123 1234</span></p>
@@ -88,54 +94,12 @@
 
                             <!-- Messages-->
                             <div class="card">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="header-title">Associations</h4>
-                                        <div class="dropdown">
-                                            <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="ri-more-2-fill"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <!-- item-->
-                                                <a href="javascript:void(0);" class="dropdown-item">Add Associations</a>
-                                                <!-- item-->
-                                                <a href="javascript:void(0);" class="dropdown-item">Action</a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="inbox-widget">
-                                        <div class="inbox-item">
-                                            <div class="inbox-item-img"><img src="assets/images/users/avatar-2.jpg" class="rounded-circle" alt=""></div>
-                                            <p class="inbox-item-author">Tomaslau</p>
-                                            <p class="inbox-item-text">I've finished it! See you so...</p>
-                                            <p class="inbox-item-date">
-                                                <a href="#" class="btn btn-sm btn-link text-info fs-13"> Edit | Remove </a>
-                                            </p>
-                                        </div>
-                                        <div class="inbox-item">
-                                            <div class="inbox-item-img"><img src="assets/images/users/avatar-3.jpg" class="rounded-circle" alt=""></div>
-                                            <p class="inbox-item-author">Stillnotdavid</p>
-                                            <p class="inbox-item-text">This theme is awesome!</p>
-                                            <p class="inbox-item-date">
-                                                <a href="#" class="btn btn-sm btn-link text-info fs-13"> Edit | Remove </a>
-                                            </p>
-                                        </div>
-                                        <div class="inbox-item">
-                                            <div class="inbox-item-img"><img src="assets/images/users/avatar-4.jpg" class="rounded-circle" alt=""></div>
-                                            <p class="inbox-item-author">Kurafire</p>
-                                            <p class="inbox-item-text">Nice to meet you</p>
-                                            <p class="inbox-item-date">
-                                                <a href="#" class="btn btn-sm btn-link text-info fs-13"> Edit | Remove </a>
-                                            </p>
-                                        </div>
-                                    </div> <!-- end inbox-widget -->
-                                </div> <!-- end card-body-->
+                                 <!-- end card-body-->
                             </div> <!-- end card-->
 
                         </div> <!-- end col-->
 
-                        <div class="col-xl-8 col-lg-7">
+                        <div class="col-xl-9 col-lg-7">
                             <!-- Chart-->
                             <!-- <div class="card">
                                 <div class="card-body">
@@ -164,7 +128,7 @@
                                         </li>
                                         <li class="nav-item">
                                             <a href="#settings" data-bs-toggle="tab" aria-expanded="false" class="nav-link rounded-end rounded-0">
-                                                Edit Profile
+                                                Associations
                                             </a>
                                         </li>
                                     </ul>
@@ -175,7 +139,7 @@
                                         <div class="accordion-item">
                                             <h2 class="accordion-header" id="headingOne">
                                                 <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                                                    Invoices
+                                                    <h4><strong>Invoices</strong></h4>
                                                 </button>
                                             </h2>
                                             <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample" style="">
@@ -226,7 +190,7 @@
                                         <div class="accordion-item">
                                             <h2 class="accordion-header" id="headingTwo">
                                                 <button class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                                                    Tickets
+                                                    <h4><strong>Tickets</strong></h4>
                                                 </button>
                                             </h2>
                                             <div id="collapseTwo" class="accordion-collapse collapse show" aria-labelledby="headingTwo" data-bs-parent="#accordionExample" style="">
@@ -242,7 +206,7 @@
                                         <div class="accordion-item">
                                             <h2 class="accordion-header" id="headingThree">
                                                 <button class="accordion-button fw-medium collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                                    Recent Activities
+                                                    <h4><strong>Deals</strong></h4>
                                                 </button>
                                             </h2>
                                             <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
@@ -269,15 +233,24 @@
                                             <div class="border rounded mt-2 mb-3">
                                                 <form action="#" class="comment-area-box">
                                                     <textarea rows="3" class="form-control border-0 resize-none" placeholder="Write something...."></textarea>
+                                                    
                                                     <div class="p-2 bg-light d-flex justify-content-between align-items-center">
                                                         <div>
-                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light"><i class="ri-contacts-book-2-line"></i></a>
-                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light"><i class="ri-map-pin-line"></i></a>
-                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light"><i class="ri-camera-3-line"></i></a>
-                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light"><i class="ri-emoji-sticker-line"></i></a>
+                                                            <!-- Notes -->
+                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light active" title="Add Note"><i class="ri-sticky-note-line"></i></a>
+                                                            <!-- Calls -->
+                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light" title="Log Call"><i class="ri-phone-line"></i></a>
+                                                            <!-- Meetings -->
+                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light" title="Schedule Meeting"><i class="ri-calendar-event-line"></i></a>
+                                                            <!-- Tasks -->
+                                                            <a href="#" class="btn btn-sm px-2 fs-16 btn-light" title="Create Task"><i class="ri-task-line"></i></a>
                                                         </div>
                                                         <button type="submit" class="btn btn-sm btn-dark">Add Activity</button>
                                                     </div>
+
+
+
+
                                                 </form>
                                             </div> <!-- end .border-->
                                             <!-- end comment box -->
@@ -381,133 +354,47 @@
                                         <!-- end timeline content-->
 
                                         <div class="tab-pane" id="settings">
-                                            <form>
-                                                <h5 class="mb-4 text-uppercase"><i class="ri-contacts-book-2-line me-1"></i> Personal Info</h5>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="firstname" class="form-label">First Name</label>
-                                                            <input type="text" class="form-control" id="firstname" placeholder="Enter first name">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="lastname" class="form-label">Last Name</label>
-                                                            <input type="text" class="form-control" id="lastname" placeholder="Enter last name">
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
+                                            
+                                            <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
 
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <div class="mb-3">
-                                                            <label for="userbio" class="form-label">Bio</label>
-                                                            <textarea class="form-control" id="userbio" rows="4" placeholder="Write something..."></textarea>
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
+                                            <div class="card mb-3 shadow-sm" style="max-width: 480px;">
+                                              <div class="row g-0 align-items-center">
+                                                <!-- Logo preview -->
+                                                <div class="col-auto">
 
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="useremail" class="form-label">Email Address</label>
-                                                            <input type="email" class="form-control" id="useremail" placeholder="Enter email">
-                                                            <span class="form-text text-muted"><small>If you want to change email please <a href="javascript: void(0);">click</a> here.</small></span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="userpassword" class="form-label">Password</label>
-                                                            <input type="password" class="form-control" id="userpassword" placeholder="Enter password">
-                                                            <span class="form-text text-muted"><small>If you want to change password please <a href="javascript: void(0);">click</a> here.</small></span>
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
-
-                                                <h5 class="mb-3 text-uppercase bg-light p-2"><i class="ri-building-line me-1"></i> Company Info</h5>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="companyname" class="form-label">Company Name</label>
-                                                            <input type="text" class="form-control" id="companyname" placeholder="Enter company name">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="cwebsite" class="form-label">Website</label>
-                                                            <input type="text" class="form-control" id="cwebsite" placeholder="Enter website url">
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
-
-                                                <h5 class="mb-3 text-uppercase bg-light p-2"><i class="ri-global-line me-1"></i> Social</h5>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-fb" class="form-label">Facebook</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-facebook-fill"></i></span>
-                                                                <input type="text" class="form-control" id="social-fb" placeholder="Url">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-tw" class="form-label">Twitter</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-twitter-line"></i></span>
-                                                                <input type="text" class="form-control" id="social-tw" placeholder="Username">
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
-
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-insta" class="form-label">Instagram</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-instagram-line"></i></span>
-                                                                <input type="text" class="form-control" id="social-insta" placeholder="Url">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-lin" class="form-label">Linkedin</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-linkedin-fill"></i></span>
-                                                                <input type="text" class="form-control" id="social-lin" placeholder="Url">
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
-
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-sky" class="form-label">Skype</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-skype-line"></i></span>
-                                                                <input type="text" class="form-control" id="social-sky" placeholder="@username">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="social-gh" class="form-label">Github</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><i class="ri-github-line"></i></span>
-                                                                <input type="text" class="form-control" id="social-gh" placeholder="Username">
-                                                            </div>
-                                                        </div>
-                                                    </div> <!-- end col -->
-                                                </div> <!-- end row -->
-
-                                                <div class="text-end">
-                                                    <button type="submit" class="btn btn-success mt-2"><i class="ri-save-line"></i> Save</button>
+                                                  <img src="assets/images/brands/slack.png" class="rounded-start" alt="Flyhub Logo" style="width:50px; height:50px; object-fit:cover;">
                                                 </div>
-                                            </form>
+                                                <div class="col">
+                                                  <div class="card-body py-2 px-3">
+                                                    <!-- Contact Name & Phone -->
+                                                    <div class="d-flex align-items-center mb-1">
+                                                      <span class="badge bg-light text-secondary"><i class="ri-phone-line me-1"></i>+63 912 345 6789</span>
+                                                    </div>
+                                                    <!-- Company association (clickable) -->
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                      <a href="company-profile.php?id=1" class="text-decoration-none fw-semibold text-primary" target="_blank">
+                                                        <i class="ri-building-line me-1"></i>Flyhub Digital
+                                                      </a>
+                                                    </div>
+                                                    <!-- City & State -->
+                                                    <p class="mb-1 text-muted fs-14"><i class="ri-map-pin-line me-1"></i>Quezon City, Metro Manila</p>
+                                                    
+                                                    <!-- Deals (as icons, example) -->
+                                                    <div class="d-flex align-items-center gap-2">
+                                                      <span class="text-success" title="Deal: Website Redesign">
+                                                        <i class="ri-briefcase-line fs-18 align-middle"></i> Website Redesign
+                                                      </span>
+                                                      <!-- Add more deals as needed -->
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+
+
+
+                                             <!-- end inbox-widget -->
+
                                         </div>
                                         <!-- end settings content-->
 

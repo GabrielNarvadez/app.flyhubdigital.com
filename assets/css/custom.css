@@ -1,0 +1,4 @@
+.text-muted {
+    --ct-text-opacity: 1;
+    color: #263238 !important;
+}
