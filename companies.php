@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Datatables | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <title>Companies | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
     <!-- Datatables css -->
     <link href="assets/vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css" rel="stylesheet" type="text/css" />
