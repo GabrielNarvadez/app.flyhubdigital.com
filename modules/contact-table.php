@@ -1,55 +1,57 @@
 <?php
 // modules/contact-table.php
 
-// Ensure session
+// 1) Ensure session
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+// 2) Database config
 require_once __DIR__ . '/../layouts/config.php';
 
-// Initialize flash
+// 3) Initialize flash
 if (empty($_SESSION['flash'])) {
     $_SESSION['flash'] = '';
 }
 
-// Handle form submissions
+// 4) Handle Create / Update / Delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $flash = '';
+    $action       = $_POST['action']            ?? '';
+    $first_name   = mysqli_real_escape_string($link, trim($_POST['first_name']   ?? ''));
+    $last_name    = mysqli_real_escape_string($link, trim($_POST['last_name']    ?? ''));
+    $country      = mysqli_real_escape_string($link, trim($_POST['country']      ?? ''));
+    $age          = intval($_POST['age']                                   ?? 0);
+    $email        = mysqli_real_escape_string($link, trim($_POST['email']        ?? ''));
+    $phone_number = mysqli_real_escape_string($link, trim($_POST['phone_number'] ?? ''));
+    $address      = mysqli_real_escape_string($link, trim($_POST['address']      ?? ''));
+    $raw_cid      = trim($_POST['company_id'] ?? '');
+    // treat empty or zero as NULL
+    $company_id   = ($raw_cid !== '' && intval($raw_cid) > 0) ? intval($raw_cid) : null;
+    $flash        = '';
 
     // CREATE
     if ($action === 'create') {
-        $first_name   = mysqli_real_escape_string($link, trim($_POST['first_name']   ?? ''));
-        $last_name    = mysqli_real_escape_string($link, trim($_POST['last_name']    ?? ''));
-        $country      = mysqli_real_escape_string($link, trim($_POST['country']      ?? ''));
-        $age          = intval($_POST['age']                                   ?? 0);
-        $email        = mysqli_real_escape_string($link, trim($_POST['email']        ?? ''));
-        $phone_number = mysqli_real_escape_string($link, trim($_POST['phone_number'] ?? ''));
-        $address      = mysqli_real_escape_string($link, trim($_POST['address']      ?? ''));
-        $company_id   = intval($_POST['company_id']                           ?? 0);
-
         if ($first_name && $last_name && $email) {
-            $stmt = mysqli_prepare($link,
-                "INSERT INTO contacts
-                  (first_name,last_name,country,age,email,phone_number,address,company_id)
-                 VALUES (?,?,?,?,?,?,?,?)"
-            );
-            mysqli_stmt_bind_param(
-                $stmt,
-                'sssisssi',
-                $first_name,
-                $last_name,
-                $country,
-                $age,
-                $email,
-                $phone_number,
-                $address,
-                $company_id
-            );
+            // build fields & placeholders dynamically so we can omit company_id if null
+            $fields       = ['first_name','last_name','country','age','email','phone_number','address'];
+            $placeholders = ['?','?','?','?','?','?','?'];
+            $types        = 'sssisss';
+            $params       = [ $first_name, $last_name, $country, $age, $email, $phone_number, $address ];
+
+            if ($company_id !== null) {
+                $fields[]       = 'company_id';
+                $placeholders[] = '?';
+                $types         .= 'i';
+                $params[]       = $company_id;
+            }
+
+            $sql  = "INSERT INTO contacts (" . implode(',', $fields) . ")
+                     VALUES (" . implode(',', $placeholders) . ")";
+            $stmt = mysqli_prepare($link, $sql);
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
             $flash = mysqli_stmt_execute($stmt)
                    ? 'Contact added successfully.'
-                   : 'Error adding contact.';
+                   : 'Error adding contact: ' . mysqli_error($link);
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'First name, last name and email are required.';
@@ -57,47 +59,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // UPDATE
-    if ($action === 'update') {
-        $id           = intval($_POST['id']                                    ?? 0);
-        $first_name   = mysqli_real_escape_string($link, trim($_POST['first_name']   ?? ''));
-        $last_name    = mysqli_real_escape_string($link, trim($_POST['last_name']    ?? ''));
-        $country      = mysqli_real_escape_string($link, trim($_POST['country']      ?? ''));
-        $age          = intval($_POST['age']                                   ?? 0);
-        $email        = mysqli_real_escape_string($link, trim($_POST['email']        ?? ''));
-        $phone_number = mysqli_real_escape_string($link, trim($_POST['phone_number'] ?? ''));
-        $address      = mysqli_real_escape_string($link, trim($_POST['address']      ?? ''));
-        $company_id   = intval($_POST['company_id']                           ?? 0);
-
+    elseif ($action === 'update') {
+        $id = intval($_POST['id'] ?? 0);
         if ($id && $first_name && $last_name && $email) {
-            $stmt = mysqli_prepare($link,
-                "UPDATE contacts SET
-                  first_name   = ?,
-                  last_name    = ?,
-                  country      = ?,
-                  age          = ?,
-                  email        = ?,
-                  phone_number = ?,
-                  address      = ?,
-                  company_id   = ?,
-                  updated_at   = NOW()
-                 WHERE id = ?"
-            );
-            mysqli_stmt_bind_param(
-                $stmt,
-                'sssisssii',
-                $first_name,
-                $last_name,
-                $country,
-                $age,
-                $email,
-                $phone_number,
-                $address,
-                $company_id,
-                $id
-            );
+            // dynamically handle company_id null
+            $sets  = [
+                'first_name = ?',
+                'last_name    = ?',
+                'country      = ?',
+                'age          = ?',
+                'email        = ?',
+                'phone_number = ?',
+                'address      = ?'
+            ];
+            $types = 'sssisss';
+            $params = [ $first_name, $last_name, $country, $age, $email, $phone_number, $address ];
+
+            if ($company_id !== null) {
+                $sets[]  = 'company_id   = ?';
+                $types  .= 'i';
+                $params[] = $company_id;
+            } else {
+                $sets[] = 'company_id = NULL';
+            }
+
+            $sets[] = 'updated_at   = NOW()';
+            $sql = "UPDATE contacts SET " . implode(',', $sets) . " WHERE id = ?";
+            $types .= 'i';
+            $params[] = $id;
+
+            $stmt = mysqli_prepare($link, $sql);
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
             $flash = mysqli_stmt_execute($stmt)
                    ? 'Contact updated successfully.'
-                   : 'Error updating contact.';
+                   : 'Error updating contact: ' . mysqli_error($link);
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'All required fields must be filled out.';
@@ -105,20 +100,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // DELETE
-    if ($action === 'delete' && !empty($_POST['ids'])) {
+    elseif ($action === 'delete' && !empty($_POST['ids'])) {
         $ids = array_map('intval', explode(',', $_POST['ids']));
         $in  = implode(',', $ids);
         $flash = mysqli_query($link, "DELETE FROM contacts WHERE id IN ($in)")
                ? 'Selected contact(s) deleted.'
-               : 'Error deleting contacts.';
+               : 'Error deleting contacts: ' . mysqli_error($link);
     }
 
     $_SESSION['flash'] = $flash;
-    echo "<script>window.location.replace('".htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES)."');</script>";
+    // JS redirect to avoid header issues
+    $self = htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES);
+    echo "<script>window.location.replace('{$self}');</script>";
     exit;
 }
 
-// Fetch contacts
+// 5) Fetch contacts
 $contacts = [];
 $sql = "SELECT
           id, first_name, last_name, country, age,
@@ -135,8 +132,7 @@ while ($row = mysqli_fetch_assoc($res)) {
 }
 mysqli_free_result($res);
 ?>
-
-<!-- Page title and flash -->
+<!-- Page title & flash -->
 <div class="row">
   <div class="col-12">
     <div class="page-title-box">
@@ -151,22 +147,20 @@ mysqli_free_result($res);
   </div>
 </div>
 
-<?php if (!empty($_SESSION['flash'])): ?>
-  <div class="alert alert-info"><?= $_SESSION['flash']; ?></div>
-  <?php $_SESSION['flash'] = ''; ?>
+<?php if ($_SESSION['flash']): ?>
+  <div class="alert alert-info"><?= $_SESSION['flash'] ?></div>
+  <?php $_SESSION['flash'] = '' ?>
 <?php endif; ?>
 
 <div class="row">
   <div class="col-12">
     <div class="card">
       <div class="card-body">
-
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h4 class="header-title mb-0">Contacts List</h4>
           <button id="btn-add" class="btn btn-success">+ Add Contact</button>
         </div>
-
         <!-- Bulk panel -->
         <div id="bulk-panel"
              class="d-flex align-items-center bg-light border rounded px-3 py-2 mb-3"
@@ -177,69 +171,59 @@ mysqli_free_result($res);
           </a>
           <a href="#" id="bulk-edit" class="me-3">Edit</a>
           <a href="#" id="bulk-delete" class="me-3 text-danger">Delete</a>
-          <a href="#" id="bulk-create-tasks" class="me-3">Create tasks</a>
-          <div class="dropdown">
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Export</a></li>
-              <li><a class="dropdown-item" href="#">Other</a></li>
-            </ul>
-          </div>
         </div>
-
         <!-- Bulk-delete form -->
         <form id="bulk-form" method="POST" style="display:none;">
           <input type="hidden" name="action" value="delete">
           <input type="hidden" name="ids" id="bulk-ids">
         </form>
-
         <!-- DataTable -->
         <table id="contacts-table" class="table table-striped dt-responsive nowrap w-100">
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
               <th>ID</th>
-              <th>First Name</th>
-              <th>Last Name</th>
+              <th>First</th>
+              <th>Last</th>
               <th>Country</th>
               <th>Age</th>
               <th>Email</th>
               <th>Phone</th>
               <th>Address</th>
               <th>Company ID</th>
-              <th>Created At</th>
-              <th>Updated At</th>
+              <th>Created</th>
+              <th>Updated</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($contacts as $c): ?>
-              <tr
-                data-id="<?= $c['id'] ?>"
-                data-first_name="<?= htmlspecialchars($c['first_name'],   ENT_QUOTES) ?>"
-                data-last_name  ="<?= htmlspecialchars($c['last_name'],    ENT_QUOTES) ?>"
-                data-country    ="<?= htmlspecialchars($c['country'],      ENT_QUOTES) ?>"
-                data-age        ="<?= $c['age'] ?>"
-                data-email      ="<?= htmlspecialchars($c['email'],        ENT_QUOTES) ?>"
-                data-phone_number="<?= htmlspecialchars($c['phone_number'], ENT_QUOTES) ?>"
-                data-address    ="<?= htmlspecialchars($c['address'],      ENT_QUOTES) ?>"
-                data-company_id ="<?= $c['company_id'] ?>"
-              >
-                <td><input type="checkbox" class="row-checkbox"></td>
-                <td><?= $c['id'] ?></td>
-                <td><?= htmlspecialchars($c['first_name']) ?></td>
-                <td><?= htmlspecialchars($c['last_name'])  ?></td>
-                <td><?= htmlspecialchars($c['country'])    ?></td>
-                <td><?= $c['age'] ?></td>
-                <td><?= htmlspecialchars($c['email'])      ?></td>
-                <td><?= htmlspecialchars($c['phone_number'])?></td>
-                <td><?= htmlspecialchars($c['address'])    ?></td>
-                <td><?= $c['company_id'] ?></td>
-                <td><?= $c['created_at'] ?></td>
-                <td><?= $c['updated_at'] ?></td>
-              </tr>
+            <tr
+              data-id="<?= $c['id'] ?>"
+              data-first_name="<?= htmlspecialchars($c['first_name'], ENT_QUOTES) ?>"
+              data-last_name="<?= htmlspecialchars($c['last_name'], ENT_QUOTES) ?>"
+              data-country="<?= htmlspecialchars($c['country'], ENT_QUOTES) ?>"
+              data-age="<?= $c['age'] ?>"
+              data-email="<?= htmlspecialchars($c['email'], ENT_QUOTES) ?>"
+              data-phone_number="<?= htmlspecialchars($c['phone_number'], ENT_QUOTES) ?>"
+              data-address="<?= htmlspecialchars($c['address'], ENT_QUOTES) ?>"
+              data-company_id="<?= $c['company_id'] ?>"
+            >
+              <td><input type="checkbox" class="row-checkbox"></td>
+              <td><?= $c['id'] ?></td>
+              <td><?= htmlspecialchars($c['first_name']) ?></td>
+              <td><?= htmlspecialchars($c['last_name']) ?></td>
+              <td><?= htmlspecialchars($c['country']) ?></td>
+              <td><?= $c['age'] ?></td>
+              <td><?= htmlspecialchars($c['email']) ?></td>
+              <td><?= htmlspecialchars($c['phone_number']) ?></td>
+              <td><?= htmlspecialchars($c['address']) ?></td>
+              <td><?= $c['company_id'] ?></td>
+              <td><?= $c['created_at'] ?></td>
+              <td><?= $c['updated_at'] ?></td>
+            </tr>
             <?php endforeach; ?>
           </tbody>
         </table>
-
       </div>
     </div>
   </div>
@@ -255,7 +239,6 @@ mysqli_free_result($res);
     <form id="user-form" method="POST">
       <input type="hidden" name="action" id="form-action" value="create">
       <input type="hidden" name="id"     id="form-id">
-
       <div class="mb-3">
         <label for="form-first_name" class="form-label">First Name</label>
         <input type="text" class="form-control" id="form-first_name" name="first_name" required>
@@ -288,7 +271,6 @@ mysqli_free_result($res);
         <label for="form-company_id" class="form-label">Company ID</label>
         <input type="number" class="form-control" id="form-company_id" name="company_id" min="0">
       </div>
-
       <button type="submit" class="btn btn-primary" id="canvas-submit">Save</button>
     </form>
   </div>
@@ -303,11 +285,11 @@ mysqli_free_result($res);
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const bulkPanel        = document.getElementById('bulk-panel');
-  const selectedCount    = document.getElementById('selected-count');
-  const selectAllLink    = document.getElementById('select-all-link');
-  const bulkForm         = document.getElementById('bulk-form');
-  const bulkIds          = document.getElementById('bulk-ids');
+  const bulkPanel         = document.getElementById('bulk-panel');
+  const selectedCount     = document.getElementById('selected-count');
+  const selectAllLink     = document.getElementById('select-all-link');
+  const bulkForm          = document.getElementById('bulk-form');
+  const bulkIds           = document.getElementById('bulk-ids');
   const selectAllCheckbox = document.getElementById('select-all');
 
   const table = $('#contacts-table').DataTable({
@@ -323,12 +305,12 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateBulkPanel() {
     const ids = getSelectedIds();
     if (ids.length) {
-      bulkPanel.style.display = 'flex';
-      selectedCount.textContent = `${ids.length} contacts selected`;
-      bulkIds.value = ids.join(',');
+      bulkPanel.style.display     = 'flex';
+      selectedCount.textContent   = `${ids.length} contacts selected`;
+      bulkIds.value               = ids.join(',');
     } else {
-      bulkPanel.style.display = 'none';
-      selectedCount.textContent = `0 contacts selected`;
+      bulkPanel.style.display     = 'none';
+      selectedCount.textContent   = '0 contacts selected';
     }
   }
 
@@ -346,8 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   selectAllLink.addEventListener('click', e => {
     e.preventDefault();
-    document.querySelectorAll('.row-checkbox')
-      .forEach(cb => cb.checked = true);
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = true);
     selectAllCheckbox.checked = true;
     updateBulkPanel();
   });
@@ -366,29 +347,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const tr = document.querySelector(`tr[data-id="${ids[0]}"]`);
     const offcanvas = new bootstrap.Offcanvas(document.getElementById('userCanvas'));
 
-    document.getElementById('canvas-title').textContent = 'Edit Contact';
-    document.getElementById('form-action').value   = 'update';
-    document.getElementById('form-id').value       = tr.dataset.id;
-    document.getElementById('form-first_name').value   = tr.dataset.first_name;
-    document.getElementById('form-last_name').value    = tr.dataset.last_name;
-    document.getElementById('form-country').value      = tr.dataset.country;
-    document.getElementById('form-age').value          = tr.dataset.age;
-    document.getElementById('form-email').value        = tr.dataset.email;
-    document.getElementById('form-phone_number').value = tr.dataset.phone_number;
-    document.getElementById('form-address').value      = tr.dataset.address;
-    document.getElementById('form-company_id').value   = tr.dataset.company_id;
+    document.getElementById('canvas-title').textContent      = 'Edit Contact';
+    document.getElementById('form-action').value            = 'update';
+    document.getElementById('form-id').value                = tr.dataset.id;
+    ['first_name','last_name','country','age','email','phone_number','address','company_id']
+      .forEach(field => {
+        document.getElementById('form-' + field).value = tr.dataset[field];
+      });
     document.getElementById('canvas-submit').textContent = 'Update';
-
     offcanvas.show();
   });
 
   document.getElementById('btn-add').addEventListener('click', () => {
     const offcanvas = new bootstrap.Offcanvas(document.getElementById('userCanvas'));
-    document.getElementById('canvas-title').textContent = 'Add Contact';
-    document.getElementById('form-action').value   = 'create';
-    document.getElementById('form-id').value       = '';
-    document.querySelectorAll('#user-form input, #user-form textarea').forEach(el => el.value = '');
-    document.getElementById('canvas-submit').textContent = 'Add';
+    document.getElementById('canvas-title').textContent      = 'Add Contact';
+    document.getElementById('form-action').value             = 'create';
+    document.getElementById('form-id').value                 = '';
+    // Clear only visible inputs & textarea & selects, leaving hidden 'action'/'id' intact
+    document.querySelectorAll(
+      '#user-form input:not([type="hidden"]), #user-form textarea, #user-form select'
+    ).forEach(el => el.value = '');
+    document.getElementById('canvas-submit').textContent     = 'Add';
     offcanvas.show();
   });
 });

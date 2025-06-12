@@ -1,9 +1,6 @@
 <?php
 // modules/product-table.php
 
-// 1) Ensure session
-session_start();
-
 // 2) Database config
 require_once __DIR__ . '/../layouts/config.php';
 
