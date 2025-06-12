@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Customer Portal | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <title>Customer Portal | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <?php include 'layouts/head-css.php'; ?>

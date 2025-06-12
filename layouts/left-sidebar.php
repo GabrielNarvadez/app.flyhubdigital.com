@@ -3,20 +3,20 @@
   <!-- Brand Logo Light -->
   <a href="index.php" class="logo logo-light">
     <span class="logo-lg">
-      <img src="assets/images/flyhub_logo.webp" alt="logo" height="50px"/>
+      <img src="assets/images/flyhub_logo.webp" alt="logo" style="height: 42px;"/>
     </span>
     <span class="logo-sm">
-      <img src="assets/images/flyhub_logo.webp" alt="small logo" height="50px"/>
+      <img src="assets/images/flyhub_logo.webp" alt="small logo" style="height: 42px;"/>
     </span>
   </a>
 
   <!-- Brand Logo Dark -->
   <a href="index.php" class="logo logo-dark">
     <span class="logo-lg">
-      <img src="assets/images/flyhub_logo.webp" alt="dark logo" height="50px"/>
+      <img src="assets/images/flyhub_logo.webp" alt="dark logo" style="height: 42px;"/>
     </span>
     <span class="logo-sm">
-      <img src="assets/images/flyhub_logo.webp" alt="small logo" height="50px"/>
+      <img src="assets/images/flyhub_logo.webp" alt="small logo" style="height: 42px;"/>
     </span>
   </a>
 
