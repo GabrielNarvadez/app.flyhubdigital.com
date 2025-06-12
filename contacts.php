@@ -1028,7 +1028,7 @@
                         </div><!-- end col-->
                     </div> <!-- end row-->
 
-
+        <div class="d-none">
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
@@ -5791,6 +5791,8 @@
                             </div> <!-- end card -->
                         </div><!-- end col-->
                     </div> <!-- end row-->
+
+        </div> <!-- hidden tables -->
                 </div> <!-- container -->
 
             </div> <!-- content -->
