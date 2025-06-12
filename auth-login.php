@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Log In | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <title>Log| Attex - Bootstrap 5 Admin & Dashboard Template</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <?php include 'layouts/head-css.php'; ?>
