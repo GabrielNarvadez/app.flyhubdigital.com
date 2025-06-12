@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Settings | Flyhub Business Apps</title>
+    <title>Property Maps | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <?php include 'layouts/head-css.php'; ?>
@@ -29,14 +29,10 @@
                             <div class="page-title-box">
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Settings</a></li>
                                     </ol>
                                 </div>
-                                <h4 class="page-title">Settings</h4>
-
-                                <?php include 'settings-main.php'; ?>
-
-
+                                <h4 class="page-title">Property Maps</h4>
+                                <?php include 'property-map-template.php'; ?>
                             </div>
                         </div>
                     </div>

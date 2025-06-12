@@ -3,7 +3,7 @@
 
 <head>
 
-    <title>Dashboard | Attex - Bootstrap 5 Admin & Dashboard Template</title>
+    <title>Dashboard | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <!-- Daterangepicker css -->

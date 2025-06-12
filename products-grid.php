@@ -36,25 +36,26 @@
                         <div class="col-12">
                             <div class="page-title-box">
                                 
-                                  <div class="page-title-left" style="margin-top: 30px;">
+                                <div class="page-title-left" style="margin-top: 30px;">
                                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                                       <h3 class="mb-0">Products</h3>
                                       <div class="d-flex gap-2">
-                                        <a href="products-list.php" class="btn btn-outline-primary active">
+                                        <a href="products.php" class="btn btn-outline-primary">
                                           <i class="ri-list-unordered"></i>
                                         </a>
-                                        <a href="products-grid.php" class="btn btn-outline-primary">
+                                        <a href="products-grid.php" class="btn btn-outline-primary active">
                                           <i class="ri-grid-fill"></i>
                                         </a>
                                       </div>
                                     </div>                                
-                                </div>                           
+                                </div>
+                            </div>                            
 
                             </div>
                         </div>
                     </div>
 
-                <?php include 'modules/product-table.php'; ?>
+                <?php include 'modules/products-grid-table.php'; ?>
 
 
 

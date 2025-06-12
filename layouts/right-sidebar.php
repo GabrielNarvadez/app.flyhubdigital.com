@@ -168,7 +168,7 @@
                 <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
             </div>
             <div class="col-6">
-                <a href="#" role="button" class="btn btn-primary w-100">Buy Now</a>
+                <a href="#" role="button" class="btn btn-primary w-100">Save</a>
             </div>
         </div>
     </div>

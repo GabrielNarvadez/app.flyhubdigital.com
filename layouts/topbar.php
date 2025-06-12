@@ -7,7 +7,7 @@
                 
                 <a href="index.php" class="logo-light">
                     <span class="logo-lg">
-                        <img src="assets/images/flyhub_logo.webp" alt="logo">
+                        <img src="assets/images/flyhub_logo.webp" alt="logo" style="height: 42px;">
                     </span>
                     <span class="logo-sm">
                         <img src="assets/images/flyhub_logo.webp" alt="small logo">
