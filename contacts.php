@@ -43,7 +43,7 @@
                                         <li class="breadcrumb-item active">Datatables</li>
                                     </ol>
                                 </div>
-                                <h4 class="page-title">Datatables</h4>
+                                <h4 class="page-title">Contacts</h4>
                             </div>
                         </div>
                     </div>
@@ -1520,7 +1520,7 @@
 
 
                     <div class="row">
-                        <div class="col-12">
+                      <!--   <div class="col-12">
                             <div class="card">
                                 <div class="card-body">
                                     <h4 class="header-title">Alternative Pagination</h4>
@@ -2005,7 +2005,7 @@
 
                                 </div> <!-- end card body-->
                             </div> <!-- end card -->
-                        </div><!-- end col-->
+                        </div><!-- end col--> -->
                     </div> <!-- end row-->
 
 
