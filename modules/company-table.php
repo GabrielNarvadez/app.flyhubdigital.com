@@ -194,7 +194,6 @@ mysqli_free_result($res);
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
-              <th>ID</th>
               <th>Name</th>
               <th>Address</th>
               <th>City</th>
@@ -223,9 +222,12 @@ mysqli_free_result($res);
                 data-employee_count="<?= $c['employee_count'] ?>"
               >
                 <td><input type="checkbox" class="row-checkbox"></td>
-                <td><?= $c['id'] ?></td>
-                <td><?= htmlspecialchars($c['name']) ?></td>
-                <td><?= htmlspecialchars($c['address']) ?></td>
+                <td>
+                    <a href="company-profile.php?id=<?= $c['id'] ?>" >
+                        <?= htmlspecialchars($c['name']) ?>
+                    </a>
+                </td>
+                <td><?= htmlspecialchars($c['address']) ?></a></td>
                 <td><?= htmlspecialchars($c['city']) ?></td>
                 <td><?= htmlspecialchars($c['country']) ?></td>
                 <td><?= htmlspecialchars($c['email']) ?></td>

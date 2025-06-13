@@ -186,7 +186,6 @@ mysqli_free_result($res);
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
-              <th>ID</th>
               <th>Name</th>
               <th>Email</th>
               <th>Age</th>
@@ -202,7 +201,6 @@ mysqli_free_result($res);
             <?php foreach ($contacts as $c): ?>
             <tr data-id="<?= $c['id'] ?>" data-company-id="<?= $c['company_id'] ?>">
               <td><input type="checkbox" class="row-checkbox"></td>
-              <td><?= $c['id'] ?></td>
               <td data-field="name">
                 <a href="contacts-profile.php?id=<?= $c['id'] ?>">
                   <?= htmlspecialchars($c['first_name'].' '.$c['last_name']) ?>
