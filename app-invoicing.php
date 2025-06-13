@@ -34,7 +34,9 @@
                                         <li class="breadcrumb-item active">Invoice</li>
                                     </ol>
                                 </div>
-                                <h3 class="page-title">Invoice</h3>
+                                <a href="invoicing.php" style="text-decoration: none; color: inherit;">
+  <h3 class="page-title">Invoice</h3>
+</a>
                             </div>
                         </div>
                     </div>
