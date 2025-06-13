@@ -345,7 +345,7 @@
                         <img src="assets/images/users/avatar-1.jpg" alt="user-image" width="32" class="rounded-circle">
                     </span>
                     <span class="d-lg-flex flex-column gap-1 d-none">
-                        <h5 class="my-0">Tosha Minner</h5>
+                        <h5 class="my-0">Lester Caraan</h5>
                         <h6 class="my-0 fw-normal">Founder</h6>
                     </span>
                 </a>

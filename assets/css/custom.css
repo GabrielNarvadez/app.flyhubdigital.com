@@ -2,3 +2,20 @@
     --ct-text-opacity: 1;
     color: #263238 !important;
 }
+
+
+.logo-img {
+  min-height: 42px;
+  max-height: 42px;
+  width: auto;
+  height: 42px;
+  display: block;
+}
+
+/* Hide small logo by default, show large logo */
+.logo-lg { display: inline-block; }
+.logo-sm { display: none; }
+
+/* When sidebar is collapsed, swap visibility */
+.leftside-menu.collapsed .logo-lg { display: none !important; }
+.leftside-menu.collapsed .logo-sm { display: inline-block !important; }

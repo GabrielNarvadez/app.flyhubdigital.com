@@ -39,8 +39,63 @@ $stmt->close();
 
 <div class="card text-center mx-auto" style="max-width:400px">
   <div class="card-body">
-    <img src="assets/images/users/avatar-<?= $contact_id ?>.jpg"
-         class="rounded-circle avatar-lg img-thumbnail" alt="profile-image">
+    <style>
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 56px;
+  height: 56px;
+}
+
+.avatar-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #444;
+  font-weight: 600;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  display: none; /* hidden by default */
+}
+.avatar-fallback svg {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+}
+</style>
+
+<div class="avatar-wrapper">
+  <img
+    src="assets/images/users/avatar-1.jpg"
+    alt="profile-image"
+    class="avatar-img"
+    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+  >
+  <span class="avatar-fallback">
+    <!-- Example icon (Bootstrap person icon SVG) -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
+      <path fill-rule="evenodd" d="M14 14s-1-1.5-6-1.5S2 14 2 14s1-4 6-4 6 4 6 4zm-1-.995c-.001-.25-.26-.49-.782-.784C11.048 11.553 9.663 11 8 11c-1.663 0-3.048.553-4.218 1.221-.522.293-.781.533-.782.783C2.001 13.563 3.236 14 8 14s5.999-.437 5.999-.995z"/>
+    </svg>
+    <span>AB</span>
+  </span>
+</div>
+
 
     <h4 class="mb-1 mt-2">
       <?= htmlspecialchars($ct['first_name'].' '.$ct['last_name']) ?>

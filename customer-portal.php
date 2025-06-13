@@ -12,7 +12,7 @@
     <!-- Begin page -->
     <div class="wrapper">
 
-        <?php include 'layouts/menu.php'; ?>
+        <?php include 'layouts/portal-menu.php'; ?>
 
         <!-- ============================================================== -->
         <!-- Start Page Content here -->
@@ -52,7 +52,7 @@
     </div>
     <!-- END wrapper -->
 
-    <?php include 'layouts/right-sidebar.php'; ?>
+    <?php include 'layouts/customer-portal-sidebar.php'; ?>
 
     <?php include 'layouts/footer-scripts.php'; ?>
 

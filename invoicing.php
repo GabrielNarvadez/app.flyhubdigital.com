@@ -28,30 +28,14 @@
                         <div class="col-12">
                             <div class="page-title-box">
                                 <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Attex</a></li>
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Pages</a></li>
-                                        <li class="breadcrumb-item active">Invoice</li>
-                                    </ol>
                                 </div>
                                 <h3 class="page-title">Invoice</h3>
                             </div>
                         </div>
                     </div>
 
-
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="grid-container">
-                                col-lg-6
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="grid-container">
-                                <?php include 'app-invoicing.php'; ?>
-                            </div>
-                        </div>
-                    </div>
+                    <?php include 'modules/all-invoices.php'; ?>
+                   
 
                 </div> <!-- container -->
 

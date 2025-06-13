@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Invoicing | Flyhub Business Apps</title>
+    <title>Customer Portal Billing | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <?php include 'layouts/head-css.php'; ?>
@@ -12,7 +12,7 @@
     <!-- Begin page -->
     <div class="wrapper">
 
-        <?php include 'layouts/menu.php'; ?>
+        <?php include 'layouts/portal-menu.php'; ?>
 
         <!-- ============================================================== -->
         <!-- Start Page Content here -->
@@ -28,19 +28,12 @@
                         <div class="col-12">
                             <div class="page-title-box">
                                 <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Attex</a></li>
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Pages</a></li>
-                                        <li class="breadcrumb-item active">Invoice</li>
-                                    </ol>
                                 </div>
-                                <h3 class="page-title">Invoice</h3>
+                                <h4 class="page-title">Billing</h4>
+                                <?php include 'modules/portal-invoices.php'; ?>
                             </div>
                         </div>
                     </div>
-
-                    <?php include 'modules/invoice-editor.php'; ?>
-                   
 
                 </div> <!-- container -->
 
@@ -56,7 +49,8 @@
 
     </div>
     <!-- END wrapper -->
-    <?php include 'layouts/right-sidebar.php'; ?>
+
+    <?php include 'layouts/customer-portal-sidebar.php'; ?>
 
     <?php include 'layouts/footer-scripts.php'; ?>
 
