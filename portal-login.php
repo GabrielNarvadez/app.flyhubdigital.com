@@ -50,7 +50,7 @@ Easily view your Statements of Account, invoices, and update your personal detai
                             </div>
                         </div>
                         <div class="d-grid mb-0 text-center">
-                            <a href="customer-portal.php" class="btn btn-primary" role="button">
+                            <a href="portal-profile.php" class="btn btn-primary" role="button">
                                 <i class="ri-login-box-line"></i> Log In
                             </a>
 
@@ -87,38 +87,7 @@ Easily view your Statements of Account, invoices, and update your personal detai
         <!-- end auth-fluid-form-box-->
 
         <!-- Auth fluid right content -->
-        <div class="auth-fluid-right text-center">
-            <div class="auth-user-testimonial">
-                <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <h2 class="mb-3">I love the color!</h2>
-                            <p class="lead"><i class="ri-double-quotes-l"></i> Everything you need is in this template. Love the overall look and feel. Not too flashy, and still very professional and smart.
-                            </p>
-                            <p>
-                                - Admin User
-                            </p>
-                        </div>
-                        <div class="carousel-item">
-                            <h2 class="mb-3">Flexibility !</h2>
-                            <p class="lead"><i class="ri-double-quotes-l"></i> Pretty nice theme, hoping you guys could add more features to this. Keep up the good work.
-                            </p>
-                            <p>
-                                - Admin User
-                            </p>
-                        </div>
-                        <div class="carousel-item">
-                            <h2 class="mb-3">Feature Availability!</h2>
-                            <p class="lead"><i class="ri-double-quotes-l"></i> This is a great product, helped us a lot and very quick to work with and implement.
-                            </p>
-                            <p>
-                                - Admin User
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- end auth-user-testimonial-->
-        </div>
+       
         <!-- end Auth fluid right content -->
     </div>
     <!-- end auth-fluid-->

@@ -32,172 +32,165 @@
                                                 <div class="row mx-n1 g-0">
 
                                                 <!-- Customer Portal -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-user-shared-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="customer-portal.php" class="text-muted fw-bold">Customer Portal</a>
-                                    <p class="mb-0 fs-13">Secure client access to services and transactions.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-user-shared-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="portal-login.php" class="text-muted fw-bold">Customer Portal</a>
+                                                                    <p class="mb-0 fs-13">Secure client access to services and transactions.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- Invoicing -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-file-list-3-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="invoicing.php" class="text-muted fw-bold">Invoicing</a>
-                                    <p class="mb-0 fs-13">Manage bills, payments, and generate invoices.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- Invoicing -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-file-list-3-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="invoicing.php" class="text-muted fw-bold">Invoicing</a>
+                                                                    <p class="mb-0 fs-13">Manage bills, payments, and generate invoices.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- Property Maps -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-primary-subtle text-primary rounded">
-                                            <i class="ri-map-pin-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="javascript:void(0);" class="text-muted fw-bold">Property Maps</a>
-                                    <p class="mb-0 fs-13">Visualize property locations and geodata.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- Property Maps -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-primary-subtle text-primary rounded">
+                                                                            <i class="ri-map-pin-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="javascript:void(0);" class="text-muted fw-bold">Property Maps</a>
+                                                                    <p class="mb-0 fs-13">Visualize property locations and geodata.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- Commissions -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-currency-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="javascript:void(0);" class="text-muted fw-bold">Commissions</a>
-                                    <p class="mb-0 fs-13">Track earnings and agent commissions.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- Commissions -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-currency-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="javascript:void(0);" class="text-muted fw-bold">Commissions</a>
+                                                                    <p class="mb-0 fs-13">Track earnings and agent commissions.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- AR Tracker -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-bar-chart-box-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="javascript:void(0);" class="text-muted fw-bold">AR Tracker</a>
-                                    <p class="mb-0 fs-13">Monitor accounts receivable and collections.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- AR Tracker -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-bar-chart-box-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="javascript:void(0);" class="text-muted fw-bold">AR Tracker</a>
+                                                                    <p class="mb-0 fs-13">Monitor accounts receivable and collections.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- SEO Tracker -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-line-chart-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="javascript:void(0);" class="text-muted fw-bold">SEO Tracker</a>
-                                    <p class="mb-0 fs-13">Track keyword rankings and site visibility.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- SEO Tracker -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-line-chart-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="javascript:void(0);" class="text-muted fw-bold">SEO Tracker</a>
+                                                                    <p class="mb-0 fs-13">Track keyword rankings and site visibility.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <!-- Attendance Tracker -->
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card m-1 shadow-none border">
-                        <div class="p-2">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-light text-secondary rounded">
-                                            <i class="ri-time-line fs-20 fw-normal"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="col ps-0">
-                                    <a href="javascript:void(0);" class="text-muted fw-bold">Attendance Tracker</a>
-                                    <p class="mb-0 fs-13">Log and manage staff attendance records.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                                <!-- Attendance Tracker -->
+                                                <div class="col-xxl-3 col-lg-6">
+                                                    <div class="card m-1 shadow-none border">
+                                                        <div class="p-2">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-auto">
+                                                                    <div class="avatar-sm">
+                                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                                            <i class="ri-time-line fs-20 fw-normal"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col ps-0">
+                                                                    <a href="javascript:void(0);" class="text-muted fw-bold">Attendance Tracker</a>
+                                                                    <p class="mb-0 fs-13">Log and manage staff attendance records.</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                                 </div>
                                                 <div class="tab-pane fade" id="v-pills-marketing" role="tabpanel" aria-labelledby="v-pills-marketing-tab">
-                                                    <p class="mb-0">Culpa dolor voluptate do laboris laboris irure reprehenderit id incididunt duis pariatur mollit aute magna
-                                                        pariatur consectetur. Eu veniam duis non ut dolor deserunt commodo et minim in quis laboris ipsum velit
-                                                        id veniam. Quis ut consectetur adipisicing officia excepteur non sit. Ut et elit aliquip labore Leggings
-                                                        enim eu. Ullamco mollit occaecat dolore ipsum id officia mollit qui esse anim eiusmod do sint minim consectetur
-                                                        qui.</p>
+                                                   
+
                                                 </div>
                                                 <div class="tab-pane fade" id="v-pills-sales" role="tabpanel" aria-labelledby="v-pills-sales-tab">
-                                                    <p class="mb-0">Food truck quinoa dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis
-                                                        natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque
-                                                        eu, pretium quis, sem. Nulla consequat massa quis enim. Cillum ad ut irure tempor velit nostrud occaecat ullamco
-                                                        aliqua anim Leggings sint. Veniam sint duis incididunt do esse magna mollit excepteur laborum qui.</p>
+                                                   
+
                                                 </div>
                                                 <div class="tab-pane fade" id="v-pills-finance" role="tabpanel" aria-labelledby="v-pills-finance-tab">
-                                                    <p class="mb-0">Food truck quinoa dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis
-                                                        natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque
-                                                        eu, pretium quis, sem. Nulla consequat massa quis enim. Cillum ad ut irure tempor velit nostrud occaecat ullamco
-                                                        aliqua anim Leggings sint. Veniam sint duis incididunt do esse magna mollit excepteur laborum qui.</p>
+                                                    
+
                                                 </div>
                                                 <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
                                                     
