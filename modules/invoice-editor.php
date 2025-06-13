@@ -245,7 +245,7 @@ function renderInvoicePreview() {
         data.inv_status === "Unpaid" ? "bg-warning" : "bg-secondary";
     $('#invoice-preview').html(`
         <div class="clearfix mb-2">
-            <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="28"></div>
+            <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="40"></div>
             <div class="float-end"><h3 class="m-0">Invoice</h3></div>
         </div>
         <div class="row">

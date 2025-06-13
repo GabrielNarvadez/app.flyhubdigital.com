@@ -31,10 +31,10 @@
               </a>
             </div>
             <div class="col">
-              <a href="#" class="text-decoration-none">
+              <a href="sales.php" class="text-decoration-none">
                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                   <div class="mb-2 display-6 text-warning"><i class="ri-cash-line"></i></div>
-                  <div class="fw-semibold small">Commissions</div>
+                  <div class="fw-semibold small">Sales</div>
                 </div>
               </a>
             </div>

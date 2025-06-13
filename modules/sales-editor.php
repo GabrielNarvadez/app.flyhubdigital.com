@@ -47,7 +47,7 @@
               </div>
               <div class="col">
                 <label for="reservationAmount" class="form-label fw-semibold">Reservation Amount (₱)</label>
-                <input type="number" class="form-control" id="reservationAmount" value="20000" min="0" step="1000">
+                <input type="number" class="form-control" id="reservationAmount" value="" min="0" step="1000">
               </div>
             </div>
             <!-- Terms & Misc Row -->
