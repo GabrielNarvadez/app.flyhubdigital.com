@@ -160,7 +160,6 @@ mysqli_free_result($res);
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
-              <th>ID</th>
               <th>Name</th>
               <th>SKU</th>
               <th>Description</th>
@@ -181,7 +180,6 @@ mysqli_free_result($res);
                 data-stock="<?= $p['stock'] ?>"
               >
                 <td><input type="checkbox" class="row-checkbox"></td>
-                <td><?= $p['id'] ?></td>
                 <td><?= htmlspecialchars($p['name']) ?></td>
                 <td><?= htmlspecialchars($p['sku']) ?></td>
                 <td><?= htmlspecialchars($p['description']) ?></td>
