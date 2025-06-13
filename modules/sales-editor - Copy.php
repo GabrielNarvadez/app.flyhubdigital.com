@@ -1,96 +1,4 @@
-<?php
-// --- DB CONNECTION ---
-$host = 'localhost';
-$db   = 'apps-flyhub'; // example: 'crm_db'
-$user = 'root';
-$pass = '';
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-} catch (PDOException $e) {
-    die("Database Connection Failed: " . $e->getMessage());
-}
-
-// --- FETCH CONTACTS ---
-try {
-    $contacts = $pdo->query("SELECT id, first_name, last_name, email, phone_number FROM contacts ORDER BY first_name, last_name")->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    $contacts = [];
-    echo "<div class='alert alert-danger'>Could not load customers: " . htmlspecialchars($e->getMessage()) . "</div>";
-}
-
-// --- FETCH UNITS (all columns) ---
-$units = $pdo->query("
-    SELECT
-        id, unit_status, project_title, project_site,
-        phase, block, lot, lot_class, lot_area, price_per_sqm, view_360_link
-    FROM units
-    WHERE unit_status = 'Available'
-    ORDER BY project_title, block, lot
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// --- FETCH PROJECT TITLES ---
-$projects = $pdo->query("
-    SELECT DISTINCT project_title
-    FROM units
-    WHERE project_title IS NOT NULL AND project_title <> ''
-    ORDER BY project_title
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// --- HANDLE FORM SUBMISSION ---
-$success = $error = "";
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
-    $customer_id        = $_POST['customer_id'] ?? null;
-    $project_title      = $_POST['project_title'] ?? '';
-    $unit_id            = $_POST['unit_id'] ?? null;
-    $reservation_date   = $_POST['reservationDate'] ?? null;
-    $reservation_amount = $_POST['reservationAmount'] ?? 0;
-    $payment_terms      = $_POST['terms'] ?? 12;
-    $misc_option        = $_POST['miscOption'] ?? 'upfront';
-
-    if ($customer_id && $project_title && $unit_id) {
-        // Save sale
-        $stmt = $pdo->prepare("INSERT INTO sales 
-            (customer_id, project_title, unit_id, reservation_date, reservation_amount, payment_terms, misc_option)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $customer_id,
-            $project_title,
-            $unit_id,
-            $reservation_date,
-            $reservation_amount,
-            $payment_terms,
-            $misc_option
-        ]);
-        // Update unit status to Sold
-        $pdo->prepare("UPDATE units SET unit_status = 'Sold' WHERE id = ?")->execute([$unit_id]);
-        $success = "Sale recorded successfully! Unit status set to Sold.";
-        // Optionally, reload page so unit is not shown anymore
-        echo "<script>setTimeout(()=>location.reload(),1200);</script>";
-    } else {
-        $error = "Missing required information. Please fill in all fields.";
-    }
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>New Real Estate Sale</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-</head>
-<body>
 <div class="container-fluid py-4">
-  <?php if (!empty($success)): ?>
-    <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-  <?php endif; ?>
-  <?php if (!empty($error)): ?>
-    <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-  <?php endif; ?>
   <div class="row g-4">
     <!-- Left: Sales Entry Form -->
     <div class="col-lg-6">
@@ -98,24 +6,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
         <div class="card-header bg-white d-flex align-items-center justify-content-between">
           <span class="fw-bold">New Real Estate Sale</span>
           <div id="actionButtons">
-            <!-- Confirm button here -->
+            <button class="btn btn-success" id="confirmSaleBtn"><i class="ri-checkbox-circle-line"></i> Confirm Sale</button>
           </div>
         </div>
         <div class="card-body">
-          <form id="saleForm" method="POST" autocomplete="off">
+          <form id="saleForm" autocomplete="off">
             <!-- Customer -->
             <div class="mb-3">
               <label for="customer" class="form-label fw-semibold">Customer Name</label>
-              <select class="form-select" id="customer" name="customer_id" required>
-                <option value="" disabled selected>Select customer</option>
-                <?php foreach ($contacts as $c): ?>
-                  <option value="<?= htmlspecialchars($c['id']) ?>"
-                    data-email="<?= htmlspecialchars($c['email']) ?>"
-                    data-phone="<?= htmlspecialchars($c['phone_number']) ?>"
-                  >
-                    <?= htmlspecialchars($c['first_name'] . ' ' . $c['last_name']) ?>
-                  </option>
-                <?php endforeach; ?>
+              <select class="form-select" id="customer" required>
+                <!-- Populated by JS -->
               </select>
               <div id="newCustomerArea" class="mt-2 d-none">
                 <input type="text" class="form-control mb-1" id="newCustomerName" placeholder="Full Name">
@@ -128,34 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
             <div class="row g-2 mb-3">
               <div class="col">
                 <label for="project" class="form-label fw-semibold">Project</label>
-                <select class="form-select" id="project" name="project_title" required>
-                  <option value="" disabled selected>Select project</option>
-                  <?php foreach ($projects as $p): ?>
-                    <option value="<?= htmlspecialchars($p['project_title']) ?>">
-                      <?= htmlspecialchars($p['project_title']) ?>
-                    </option>
-                  <?php endforeach; ?>
+                <select class="form-select" id="project" required>
+                  <!-- Populated by JS -->
                 </select>
               </div>
               <div class="col">
                 <label for="unit" class="form-label fw-semibold">Unit</label>
-                <select class="form-select" id="unit" name="unit_id" required>
-                  <option value="" disabled selected>Select unit</option>
-                  <?php foreach ($units as $u): ?>
-                    <option 
-                      value="<?= htmlspecialchars($u['id']) ?>"
-                      data-project="<?= htmlspecialchars($u['project_title']) ?>"
-                      data-site="<?= htmlspecialchars($u['project_site']) ?>"
-                      data-block="<?= htmlspecialchars($u['block']) ?>"
-                      data-lot="<?= htmlspecialchars($u['lot']) ?>"
-                      data-phase="<?= htmlspecialchars($u['phase']) ?>"
-                      data-class="<?= htmlspecialchars($u['lot_class']) ?>"
-                      data-area="<?= htmlspecialchars($u['lot_area']) ?>"
-                      data-ppsqm="<?= htmlspecialchars($u['price_per_sqm']) ?>"
-                    >
-                      Blk <?= htmlspecialchars($u['block']) ?> Lot <?= htmlspecialchars($u['lot']) ?>
-                    </option>
-                  <?php endforeach; ?>
+                <select class="form-select" id="unit" required>
+                  <!-- Populated by JS -->
                 </select>
               </div>
             </div>
@@ -163,18 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
             <div class="row g-2 mb-3">
               <div class="col">
                 <label for="reservationDate" class="form-label fw-semibold">Date of Reservation</label>
-                <input type="date" class="form-control" id="reservationDate" name="reservationDate" required>
+                <input type="date" class="form-control" id="reservationDate" required>
               </div>
               <div class="col">
                 <label for="reservationAmount" class="form-label fw-semibold">Reservation Amount (₱)</label>
-                <input type="number" class="form-control" id="reservationAmount" name="reservationAmount" value="" min="0" step="1000">
+                <input type="number" class="form-control" id="reservationAmount" value="" min="0" step="1000">
               </div>
             </div>
             <!-- Terms & Misc Row -->
             <div class="row g-2 mb-4 align-items-end">
               <div class="col">
                 <label for="terms" class="form-label fw-semibold">Payment Terms (months)</label>
-                <select class="form-select" id="terms" name="terms" required>
+                <select class="form-select" id="terms" required>
                   <option value="12">12 months</option>
                   <option value="24">24 months</option>
                   <option value="36">36 months</option>
@@ -221,14 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
                 </div>
               </div>
             </div>
-            <!-- The real submit button for PHP POST (hidden, auto-triggered by Confirm button) -->
-            <button class="d-none" type="submit" id="phpRealSubmit" name="confirm_sale"></button>
           </form>
-        </div>
-        <div class="card-footer bg-white border-0">
-          <button class="btn btn-success w-100" id="confirmSaleBtn">
-            <i class="ri-checkbox-circle-line"></i> Confirm Sale
-          </button>
         </div>
       </div>
     </div>
@@ -254,79 +127,172 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
 <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-function peso(val) { return "₱" + (parseFloat(val) || 0).toLocaleString(); }
-function fmt(val) { return val || ""; }
+// DUMMY DATA FOR DEMO
+const contacts = [
+  { id:1, name:"Ana Del Rosario", email:"ana@email.com", phone:"09171234567" },
+  { id:2, name:"Benser Partoza", email:"benser@email.com", phone:"09174567891" },
+  { id:3, name:"Maria Santos", email:"maria@email.com", phone:"09178912345" },
+];
+const projects = [
+  { 
+    id:1, name:"Parkside Residences",
+    site:"Sta. Maria Village, San Mateo, Rizal",
+    units:[
+      {id:1, label:"Blk 2 Lot 5 (Corner)", phase:2, block:5, lot:5, area:350, class:"Corner", price_per_sqm:3000},
+      {id:2, label:"Blk 2 Lot 8 (Inner)", phase:2, block:5, lot:8, area:290, class:"Inner", price_per_sqm:2900}
+    ]
+  },
+  {
+    id:2, name:"Faith and Love Farm Estates",
+    site:"Madilay-Dilay, Tanay, Rizal",
+    units:[
+      {id:1, label:"Blk 3 Lot 9B (Inner)", phase:1, block:3, lot:"9B", area:500, class:"Inner", price_per_sqm:2500},
+      {id:2, label:"Blk 3 Lot 10A (Prime)", phase:1, block:3, lot:"10A", area:400, class:"Prime", price_per_sqm:3100}
+    ]
+  },
+  {
+    id:3, name:"Greenfield Heights",
+    site:"Sta. Rosa, Laguna",
+    units:[
+      {id:1, label:"Blk 1 Lot 2 (Prime)", phase:1, block:1, lot:2, area:250, class:"Prime", price_per_sqm:3200},
+      {id:2, label:"Blk 1 Lot 5 (Corner)", phase:1, block:1, lot:5, area:210, class:"Corner", price_per_sqm:3000}
+    ]
+  }
+];
+function peso(val) { return "₱" + (val || 0).toLocaleString(); }
+function fmt(val) { return val||""; }
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function asWords(str) { return str ? str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()) : ''; }
-const unitsJS = <?php echo json_encode($units); ?>;
-const contactsJS = <?php echo json_encode($contacts); ?>;
-const projectsJS = <?php echo json_encode($projects); ?>;
+function asWords(str) { return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()); }
 
+// UI INIT
 $(function(){
-  $("#saleForm").on("change input", "select, input", recalc);
-  $("#customer").on("change", function(){ $("#newCustomerArea").toggleClass("d-none", $(this).val() !== "new"); recalc(); });
+  function refreshCustomerDropdown() {
+    let opts = contacts.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    opts += `<option value="new">+ Create new customer</option>`;
+    $("#customer").html('<option value="" disabled selected>Select customer</option>'+opts);
+  }
+  refreshCustomerDropdown();
+  $("#customer").on("change", function(){
+    $("#newCustomerArea").toggleClass("d-none", $(this).val()!=="new");
+  });
+  $("#addCustomerBtn").on("click", function(){
+    const name = $("#newCustomerName").val().trim();
+    const email = $("#newCustomerEmail").val().trim();
+    const phone = $("#newCustomerPhone").val().trim();
+    if(!name) return alert("Enter customer name.");
+    contacts.push({id: contacts.length+1, name, email, phone});
+    refreshCustomerDropdown();
+    $("#customer").val(contacts.length); // select new
+    $("#newCustomerArea").addClass("d-none");
+    $("#newCustomerName, #newCustomerEmail, #newCustomerPhone").val("");
+    recalc();
+  });
+
+  // --- Projects
+  let projOpts = projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  $("#project").html('<option value="" disabled selected>Select project</option>'+projOpts);
+
+  function refreshUnitDropdown() {
+    let pid = +$("#project").val();
+    if(!pid) { $("#unit").html('<option value="">Select unit</option>'); return; }
+    const p = projects.find(x=>x.id===pid);
+    let uopts = p.units.map(u=>`<option value="${u.id}">${u.label}</option>`).join('');
+    $("#unit").html('<option value="" disabled selected>Select unit</option>'+uopts);
+  }
+  $("#project").on("change", function(){ refreshUnitDropdown(); recalc(); });
+  $("#unit").on("change", recalc);
+
+  $("#customer, #reservationDate, #terms, #reservationAmount, input[name='miscOption']").on("change input", recalc);
+
   $("input[name='miscOption']").on("change", function(){
     let miscOpt = $("input[name='miscOption']:checked").val();
-    let text = miscOpt === "upfront" ? "Miscellaneous fee must be paid in full in advance."
-             : miscOpt === "monthly" ? "Miscellaneous fee will be distributed equally across the amortization period."
-             : "Miscellaneous fee will be paid in full after all monthly amortizations are completed.";
-    $("#miscExplanation").text(text); recalc();
+    let text = miscOpt==="upfront" ? "Miscellaneous fee must be paid in full in advance." :
+               miscOpt==="monthly" ? "Miscellaneous fee will be distributed equally across the amortization period." :
+               "Miscellaneous fee will be paid in full after all monthly amortizations are completed.";
+    $("#miscExplanation").text(text);
+    recalc();
   });
+
   $("#reservationDate").val(todayStr());
+  $("#terms, #reservationAmount").on("input", recalc);
+
+  refreshUnitDropdown();
+  recalc();
+
+  // Confirm Sale logic
+  $("#actionButtons").on("click", "#confirmSaleBtn", function(){
+    $(this).hide();
+    $("#actionButtons").append(`
+      <button class="btn btn-outline-danger me-2" id="cancelSaleBtn"><i class="ri-close-line"></i> Cancel</button>
+      <button class="btn btn-outline-secondary" id="resetDraftBtn"><i class="ri-arrow-go-back-line"></i> Reset to Draft</button>
+    `);
+    $("#saleForm input, #saleForm select").prop("disabled", true);
+  });
+  // Cancel Sale
+  $("#actionButtons").on("click", "#cancelSaleBtn", function(){
+    $("#saleForm input, #saleForm select").prop("disabled", false);
+    $("#actionButtons").html(`
+      <button class="btn btn-success" id="confirmSaleBtn"><i class="ri-checkbox-circle-line"></i> Confirm Sale</button>
+    `);
+  });
+  // Reset to Draft
+  $("#actionButtons").on("click", "#resetDraftBtn", function(){
+    $("#saleForm")[0].reset();
+    $("#saleForm input, #saleForm select").prop("disabled", false);
+    $("#actionButtons").html(`
+      <button class="btn btn-success" id="confirmSaleBtn"><i class="ri-checkbox-circle-line"></i> Confirm Sale</button>
+    `);
+    recalc();
+  });
+
+  // Print & Send
   $("#printContract").on("click", function(){
     let content = $("#contractPreview").html();
     let w = window.open();
     w.document.write('<html><head><title>Contract Preview</title>');
     w.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">');
     w.document.write('</head><body style="background:#fff;font-family:Segoe UI,sans-serif;">');
-    w.document.write(content); w.document.write('</body></html>');
+    w.document.write(content);
+    w.document.write('</body></html>');
     w.document.close();
     setTimeout(()=>w.print(), 400);
   });
   $("#sendContract").on("click", function(){
     alert("Pretend to send contract via email...");
   });
-
-  // Handle Confirm Sale
-  $("#confirmSaleBtn").on("click", function(e){
-    e.preventDefault();
-    if (confirm("Are you sure you want to record this sale? This cannot be undone.")) {
-      $("#phpRealSubmit").click();
-      $(this).prop("disabled", true);
-    }
-  });
-  recalc();
 });
 
-function recalc() {
-  let customerId = $("#customer").val();
-  let unitId = $("#unit").val();
-  let reservationDate = $("#reservationDate").val() || todayStr();
-  let terms = +($("#terms").val()) || 12;
-  let reservationFee = +($("#reservationAmount").val()) || 0;
-  let miscOption = $("input[name='miscOption']:checked").val();
+// DYNAMIC CALCULATOR
+function recalc(){
+  const customerId = +$("#customer").val();
+  const customer = contacts.find(c=>c.id===customerId) || {};
+  const projId = +$("#project").val();
+  const proj = projects.find(p=>p.id===projId) || {};
+  const unitId = +$("#unit").val();
+  const unit = proj.units ? proj.units.find(u=>u.id===unitId) : null;
+  const reservationDate = $("#reservationDate").val()||todayStr();
+  const terms = +$("#terms").val()||12;
+  const reservationFee = +$("#reservationAmount").val()||0;
+  const miscOption = $("input[name='miscOption']:checked").val();
 
-  let customer = contactsJS.find(c => c.id == customerId) || {};
-  let unit = unitsJS.find(u => u.id == unitId) || {};
-
-  let lotArea = parseFloat(unit.lot_area) || 0;
-  let ppsqm = parseFloat(unit.price_per_sqm) || 0;
-  let phase = fmt(unit.phase);
-  let block = fmt(unit.block);
-  let lot = fmt(unit.lot);
-  let lotClass = fmt(unit.lot_class);
-  let contractPrice = lotArea * ppsqm;
+  let lotArea = unit ? unit.area : "";
+  let ppsqm = unit ? unit.price_per_sqm : "";
+  let phase = unit ? unit.phase : "";
+  let block = unit ? unit.block : "";
+  let lot = unit ? unit.lot : "";
+  let lotClass = unit ? unit.class : "";
+  let contractPrice = unit ? unit.area * unit.price_per_sqm : 0;
   let miscFee = Math.round(contractPrice * 0.07);
   let totalPayable = contractPrice + miscFee;
   let netSelling = contractPrice;
   let balancePayable = totalPayable - reservationFee;
 
   let monthlyAmort, miscUpfront=0, miscMonthly=0, miscEnd=0;
-  if (miscOption === "upfront") {
+  if (miscOption==="upfront") {
     miscUpfront = miscFee;
     monthlyAmort = Math.round((contractPrice - reservationFee) / terms);
     miscMonthly = 0; miscEnd = 0;
-  } else if (miscOption === "monthly") {
+  } else if (miscOption==="monthly") {
     miscUpfront = 0;
     miscMonthly = Math.round(miscFee / terms);
     monthlyAmort = Math.round((contractPrice - reservationFee) / terms) + miscMonthly;
@@ -338,21 +304,21 @@ function recalc() {
   }
 
   let amortRows = '';
-  for(let i=1; i<=terms; i++) {
-    let date = new Date(reservationDate);
-    date.setMonth(date.getMonth() + i);
+  for(let i=1;i<=terms;i++) {
+    let date = new Date($("#reservationDate").val()||todayStr());
+    date.setMonth(date.getMonth()+i);
     let due = date.toISOString().slice(0,10);
-    amortRows += `<tr>
+    let row = `<tr>
       <td>${i}</td>
       <td>${due}</td>
       <td>${peso(monthlyAmort)}</td>
       <td>${miscMonthly ? peso(miscMonthly) : '-'}</td>
-      <td>${peso(monthlyAmort + (miscMonthly||0))}</td>
+      <td>${peso(monthlyAmort+(miscMonthly||0))}</td>
     </tr>`;
+    amortRows += row;
   }
-
-  $("#summary-lot-area").text(lotArea || "");
-  $("#summary-ppsqm").text(ppsqm ? peso(ppsqm) : "");
+  $("#summary-lot-area").text(lotArea);
+  $("#summary-ppsqm").text(peso(ppsqm));
   $("#summary-pblc").text([phase,block,lot,lotClass].filter(x=>x).join(", "));
   $("#summary-contract").text(peso(contractPrice));
   $("#summary-misc").text(peso(miscFee));
@@ -363,19 +329,19 @@ function recalc() {
   $("#summary-net").text(peso(netSelling));
   $("#summary-balance").text(peso(balancePayable));
 
-  // Contract preview section
-  let preview = `
+  // --- Contract Preview with Sections ---
+  let contract = `
   <div class="mb-3 card p-3">
     <h5 class="text-primary mb-2">Client Information</h5>
-    <div><b>Name:</b> ${fmt(customer.first_name)} ${fmt(customer.last_name)}</div>
+    <div><b>Name:</b> ${fmt(customer.name)}</div>
     <div><b>Email:</b> ${fmt(customer.email)}</div>
-    <div><b>Contact:</b> ${fmt(customer.phone_number)}</div>
+    <div><b>Contact:</b> ${fmt(customer.phone)}</div>
     <div><b>Date of Reservation:</b> ${reservationDate}</div>
   </div>
   <div class="mb-3 card p-3">
     <h5 class="text-primary mb-2">Property Details</h5>
-    <div><b>Project Title:</b> ${fmt(unit.project_title)}</div>
-    <div><b>Project Site:</b> ${fmt(unit.project_site)}</div>
+    <div><b>Project Title:</b> ${fmt(proj.name)}</div>
+    <div><b>Project Site:</b> ${fmt(proj.site)}</div>
     <div><b>Lot Area:</b> ${lotArea} sqm</div>
     <div><b>Price per sqm:</b> ${peso(ppsqm)}</div>
     <div><b>Phase, Block, Lot, Class:</b> ${[phase,block,lot,lotClass].filter(x=>x).join(", ")}</div>
@@ -417,9 +383,21 @@ function recalc() {
         <li>Client authorizes Faith and Love Realty and Development Co. to process personal data and perform necessary verification, in accordance with the Data Privacy Act of 2012 (RA 10173).</li>
       </ul>
     </div>
+    <hr>
+    <div class="row mb-2 mt-2">
+      <div class="col-4">
+        <strong>Prepared by:</strong><br><br>__________________________
+      </div>
+      <div class="col-4">
+        <strong>Approved by:</strong><br><br>__________________________
+      </div>
+      <div class="col-4">
+        <strong>Received by:</strong><br><br>__________________________
+      </div>
+    </div>
+    <div class="text-muted small">Faith and Love Realty and Development Co. &copy; 2024. All Rights Reserved.</div>
+  </div>
   `;
-  $("#contractPreview").html(preview);
+  $("#contractPreview").html(contract);
 }
 </script>
-</body>
-</html>
