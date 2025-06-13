@@ -7,7 +7,7 @@
         <div class="card-body">
           <div class="row row-cols-2 g-3">
             <div class="col">
-              <a href="products.php" class="text-decoration-none">
+              <a href="estate-units.php" class="text-decoration-none">
                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                   <div class="mb-2 display-6 text-primary"><i class="ri-building-2-line"></i></div>
                   <div class="fw-semibold small">All Units</div>

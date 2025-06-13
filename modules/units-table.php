@@ -1,6 +1,9 @@
 <?php
 // modules/units-table.php
 
+// turn on strict mysqli error reporting
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 // only start session if not already
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -43,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'create') {
         if ($unit_status !== '' && $project_title !== '') {
-            $stmt = mysqli_prepare($link, "
+            $sql = "
                 INSERT INTO units
                   (unit_status, project_title, project_site, phase, block, lot, lot_class,
                    lot_area, price_per_sqm, date_of_reservation, total_contract_price,
@@ -51,9 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                    total_amount_payable, monthly_amortization, amortization_start_date,
                    payment_terms, client_name, balance_payable, view_360_link)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
+            ";
+            $stmt = mysqli_prepare($link, $sql);
+            if ($stmt === false) {
+                die('Prepare failed: ' . mysqli_error($link));
+            }
             mysqli_stmt_bind_param($stmt,
-                'sssssssddsdddddddsisdsi',
+                'sssssssddsdddddddsisds',
                 $unit_status,
                 $project_title,
                 $project_site,
@@ -77,9 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $balance_payable,
                 $view_360_link
             );
-            $flash = mysqli_stmt_execute($stmt)
-                   ? 'Unit added successfully.'
-                   : 'Error adding unit: ' . mysqli_error($link);
+            if (mysqli_stmt_execute($stmt)) {
+                $flash = 'Unit added successfully.';
+            } else {
+                $flash = 'Error adding unit: ' . mysqli_error($link);
+            }
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'Status and Project Title are required.';
@@ -88,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'update') {
         $id = intval($_POST['id'] ?? 0);
         if ($id && $unit_status !== '' && $project_title !== '') {
-            $stmt = mysqli_prepare($link, "
+            $sql = "
                 UPDATE units SET
                   unit_status             = ?,
                   project_title           = ?,
@@ -111,10 +120,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   payment_terms           = ?,
                   client_name             = ?,
                   balance_payable         = ?,
-                  view_360_link           = ?,
-                  updated_at              = NOW()
+                  view_360_link           = ?
                 WHERE id = ?
-            ");
+            ";
+            $stmt = mysqli_prepare($link, $sql);
+            if ($stmt === false) {
+                die('Prepare failed: ' . mysqli_error($link));
+            }
             mysqli_stmt_bind_param($stmt,
                 'sssssssddsdddddddsisdsi',
                 $unit_status,
@@ -141,9 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $view_360_link,
                 $id
             );
-            $flash = mysqli_stmt_execute($stmt)
-                   ? 'Unit updated successfully.'
-                   : 'Error updating unit: ' . mysqli_error($link);
+            if (mysqli_stmt_execute($stmt)) {
+                $flash = 'Unit updated successfully.';
+            } else {
+                $flash = 'Error updating unit: ' . mysqli_error($link);
+            }
             mysqli_stmt_close($stmt);
         } else {
             $flash = 'ID, Status and Project Title are required.';
@@ -290,7 +304,7 @@ mysqli_free_result($res);
         <td>
         <a href="unit-profile.php?id=<?= $u['id'] ?>">
           <?= htmlspecialchars($u['project_title']) ?>
-    </a>
+        </a>
         </td>
         <td><?= htmlspecialchars($u['project_site']) ?></td>
         <td><?= htmlspecialchars($u['unit_status']) ?></td>
