@@ -19,3 +19,8 @@
 /* When sidebar is collapsed, swap visibility */
 .leftside-menu.collapsed .logo-lg { display: none !important; }
 .leftside-menu.collapsed .logo-sm { display: inline-block !important; }
+
+
+.leftside-menu.collapsed .logo {
+  display: none !important;
+}
