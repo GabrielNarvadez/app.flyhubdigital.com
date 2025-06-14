@@ -21,7 +21,25 @@ if (isset($_SESSION['user_id'])) {
     }
     $stmt->close();
 }
+
+// Build the avatar image or icon
+$user_avatar_img = '';
+if (!empty($user_avatar) && $user_avatar !== 'avatar-default.jpg') {
+    // Use uploaded avatar image
+    $user_avatar_img = '<img src="assets/images/users/' . htmlspecialchars($user_avatar) . '" alt="user-image" width="32" class="rounded-circle">';
+} else {
+    // Use SVG icon as default
+    $user_avatar_img = '
+    <span class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#adb5bd" class="bi bi-person" viewBox="0 0 16 16">
+            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
+            <path fill-rule="evenodd" d="M14 14s-1-1.5-6-1.5S2 14 2 14v1h12v-1zm-1.5-.5c.276 0 .5.224.5.5v.5H3v-.5c0-.276.224-.5.5-.5 1.306 0 2.417.835 2.83 2h2.34c.413-1.165 1.524-2 2.83-2z"/>
+        </svg>
+    </span>
+    ';
+}
 ?>
+
 
 
 
@@ -64,12 +82,12 @@ if (isset($_SESSION['user_id'])) {
 
             <!-- App Search -->
             <div class="app-search dropdown d-none d-lg-block">
-                <form>
+                <!-- <form>
                     <div class="input-group">
                         <input type="search" class="form-control dropdown-toggle" placeholder="Search..." id="top-search">
                         <span class="ri-search-line search-icon"></span>
                     </div>
-                </form>
+                </form> -->
 
                 <div class="dropdown-menu dropdown-menu-animated dropdown-lg" id="search-dropdown">
                     <div class="dropdown-header noti-title">
@@ -141,7 +159,7 @@ if (isset($_SESSION['user_id'])) {
             <li class="dropdown">
                 <a class="nav-link dropdown-toggle arrow-none nav-user px-2" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                     <span class="account-user-avatar">
-                        <img src="assets/images/users/<?= htmlspecialchars($user_avatar) ?>" alt="user-image" width="32" class="rounded-circle">
+                        <?= $user_avatar_img ?>
                     </span>
                     <span class="d-lg-flex flex-column gap-1 d-none">
                         <h5 class="my-0"><?= htmlspecialchars($user_name) ?></h5>
