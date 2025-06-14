@@ -2,7 +2,7 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Blank | Flyhub Business Apps</title>
+    <title>Booking | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
 
     <?php include 'layouts/head-css.php'; ?>

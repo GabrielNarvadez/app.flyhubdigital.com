@@ -1,89 +1,4 @@
-<?php
-// --- DB CONNECTION ---
-$host = 'localhost';
-$db   = 'apps-flyhub'; // example: 'crm_db'
-$user = 'root';
-$pass = '';
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-} catch (PDOException $e) {
-    die("Database Connection Failed: " . $e->getMessage());
-}
 
-// --- FETCH CONTACTS ---
-try {
-    $contacts = $pdo->query("SELECT id, first_name, last_name, email, phone_number FROM contacts ORDER BY first_name, last_name")->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    $contacts = [];
-    echo "<div class='alert alert-danger'>Could not load customers: " . htmlspecialchars($e->getMessage()) . "</div>";
-}
-
-// --- FETCH UNITS (all columns) ---
-$units = $pdo->query("
-    SELECT
-        id, unit_status, project_title, project_site,
-        phase, block, lot, lot_class, lot_area, price_per_sqm, view_360_link
-    FROM units
-    WHERE unit_status = 'Available'
-    ORDER BY project_title, block, lot
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// --- FETCH PROJECT TITLES ---
-$projects = $pdo->query("
-    SELECT DISTINCT project_title
-    FROM units
-    WHERE project_title IS NOT NULL AND project_title <> ''
-    ORDER BY project_title
-")->fetchAll(PDO::FETCH_ASSOC);
-
-// --- HANDLE FORM SUBMISSION ---
-$success = $error = "";
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
-    $customer_id        = $_POST['customer_id'] ?? null;
-    $project_title      = $_POST['project_title'] ?? '';
-    $unit_id            = $_POST['unit_id'] ?? null;
-    $reservation_date   = $_POST['reservationDate'] ?? null;
-    $reservation_amount = $_POST['reservationAmount'] ?? 0;
-    $payment_terms      = $_POST['terms'] ?? 12;
-    $misc_option        = $_POST['miscOption'] ?? 'upfront';
-
-    if ($customer_id && $project_title && $unit_id) {
-        // Save sale
-        $stmt = $pdo->prepare("INSERT INTO sales 
-            (customer_id, project_title, unit_id, reservation_date, reservation_amount, payment_terms, misc_option)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $customer_id,
-            $project_title,
-            $unit_id,
-            $reservation_date,
-            $reservation_amount,
-            $payment_terms,
-            $misc_option
-        ]);
-        // Update unit status to Sold
-        $pdo->prepare("UPDATE units SET unit_status = 'Sold' WHERE id = ?")->execute([$unit_id]);
-        $success = "Sale recorded successfully! Unit status set to Sold.";
-        // Optionally, reload page so unit is not shown anymore
-        echo "<script>setTimeout(()=>location.reload(),1200);</script>";
-    } else {
-        $error = "Missing required information. Please fill in all fields.";
-    }
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>New Real Estate Sale</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-</head>
-<body>
 <div class="container-fluid py-4">
   <?php if (!empty($success)): ?>
     <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
@@ -106,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
             <!-- Customer -->
             <div class="mb-3">
               <label for="customer" class="form-label fw-semibold">Customer Name</label>
-              <select class="form-select" id="customer" name="customer_id" required>
+              <select class="form-select" id="customer" name="contact_id" required>
                 <option value="" disabled selected>Select customer</option>
                 <?php foreach ($contacts as $c): ?>
                   <option value="<?= htmlspecialchars($c['id']) ?>"
@@ -145,17 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
                     <option 
                       value="<?= htmlspecialchars($u['id']) ?>"
                       data-project="<?= htmlspecialchars($u['project_title']) ?>"
-                      data-site="<?= htmlspecialchars($u['project_site']) ?>"
-                      data-block="<?= htmlspecialchars($u['block']) ?>"
-                      data-lot="<?= htmlspecialchars($u['lot']) ?>"
-                      data-phase="<?= htmlspecialchars($u['phase']) ?>"
+                      data-site="<?= htmlspecialchars($u['site']) ?>"
+                      data-block="<?= htmlspecialchars($u['block_no']) ?>"
+                      data-lot="<?= htmlspecialchars($u['lot_no']) ?>"
+                      data-phase="<?= htmlspecialchars($u['phase_no']) ?>"
                       data-class="<?= htmlspecialchars($u['lot_class']) ?>"
                       data-area="<?= htmlspecialchars($u['lot_area']) ?>"
                       data-ppsqm="<?= htmlspecialchars($u['price_per_sqm']) ?>"
                     >
-                      Blk <?= htmlspecialchars($u['block']) ?> Lot <?= htmlspecialchars($u['lot']) ?>
+                      Blk <?= htmlspecialchars($u['block_no']) ?> Lot <?= htmlspecialchars($u['lot_no']) ?>
                     </option>
                   <?php endforeach; ?>
+                </select>
+
                 </select>
               </div>
             </div>
@@ -227,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_sale'])) {
         </div>
         <div class="card-footer bg-white border-0">
           <button class="btn btn-success w-100" id="confirmSaleBtn">
-            <i class="ri-checkbox-circle-line"></i> Confirm Sale
+            <i class="ri-checkbox-circle-line"></i> Reserve Unit
           </button>
         </div>
       </div>
@@ -421,5 +338,3 @@ function recalc() {
   $("#contractPreview").html(preview);
 }
 </script>
-</body>
-</html>

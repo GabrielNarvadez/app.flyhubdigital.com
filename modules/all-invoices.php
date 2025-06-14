@@ -50,11 +50,35 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         $tax = $inv['tax_total'];
         $grand = $inv['total'];
         ?>
+        
         <div class="d-flex flex-wrap gap-2 mb-3">
-            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="ri-printer-line"></i> Print</button>
-            <button class="btn btn-outline-primary btn-sm" onclick="alert('Pretend sending email to <?=esc($inv['email'])?>')"><i class="ri-mail-line"></i> Email</button>
-            <a class="btn btn-outline-info btn-sm" id="btn-generate-soa" target="_blank" href="soa-manager.php?customer=<?=urlencode(trim($inv['first_name'].' '.$inv['last_name']))?>"><i class="ri-list-unordered"></i> Generate SOA</a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="ri-printer-line"></i> Print
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="alert('Pretend sending email to <?=esc($inv['email'])?>')">
+                <i class="ri-mail-line"></i> Email
+            </button>
+            <a class="btn btn-outline-info btn-sm" id="btn-generate-soa" target="_blank" href="soa-manager.php?customer=<?=urlencode(trim($inv['first_name'].' '.$inv['last_name']))?>">
+                <i class="ri-list-unordered"></i> Generate SOA
+            </a>
+            <button class="btn btn-outline-success btn-sm" onclick="confirmPayment()">
+                <i class="ri-cash-line"></i> Pay
+            </button>
+            <a class="btn btn-outline-warning btn-sm" href="invoice-edit.php?id=<?=intval($inv['id'])?>">
+                <i class="ri-refresh-line"></i> Reset to draft
+            </a>
         </div>
+
+        <script>
+        function confirmPayment() {
+            if (confirm('Confirm payment for this invoice?')) {
+                alert('Payment confirmed! (Replace with actual payment logic)');
+                // Here, you would trigger payment logic via AJAX or redirect
+            }
+        }
+        </script>
+
+
         <div class="clearfix mb-2">
             <div class="float-start"><img src="/assets/images/logo-dark.png" alt="logo" height="28"></div>
             <div class="float-end"><h3 class="m-0">Invoice</h3></div>

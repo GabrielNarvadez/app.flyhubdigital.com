@@ -1,391 +1,271 @@
-<div class="row g-4">
-    <!-- LEFT: SOA Table and Filters -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm mb-0">
-            <div class="card-body">
-                <h4 class="mb-3"><i class="ri-file-list-2-line align-middle"></i> My Statements of Account</h4>
-                <!-- Filters -->
-                <div class="row mb-3 g-2">
-                    <div class="col">
-                        <label class="form-label mb-1">From</label>
-                        <select id="soa-from" class="form-select"></select>
-                    </div>
-                    <div class="col">
-                        <label class="form-label mb-1">To</label>
-                        <select id="soa-to" class="form-select"></select>
-                    </div>
+<?php
+require_once __DIR__ . '/../layouts/config.php';
+
+// --- Fetch customers for dropdown ---
+$customers = [];
+$cust_sql = "SELECT DISTINCT c.id, CONCAT(c.first_name, ' ', c.last_name) AS customer_name
+             FROM contacts c
+             JOIN soas s ON s.contact_id = c.id
+             ORDER BY customer_name";
+$cust_res = mysqli_query($link, $cust_sql);
+while ($row = mysqli_fetch_assoc($cust_res)) {
+    $customers[] = $row;
+}
+
+// --- Handle filters ---
+$where = [];
+$params = [];
+$types = '';
+
+if (!empty($_GET['customer_id'])) {
+    $where[] = "s.contact_id = ?";
+    $params[] = (int)$_GET['customer_id'];
+    $types .= 'i';
+}
+
+// DATE RANGE DROPDOWN LOGIC
+if (!empty($_GET['date_range'])) {
+    $range = $_GET['date_range'];
+    $today = date('Y-m-d');
+    if ($range === 'today') {
+        $where[] = "s.issue_date = ?";
+        $params[] = $today;
+        $types .= 's';
+    } elseif ($range === 'week') {
+        $monday = date('Y-m-d', strtotime('monday this week'));
+        $sunday = date('Y-m-d', strtotime('sunday this week'));
+        $where[] = "s.issue_date BETWEEN ? AND ?";
+        $params[] = $monday;
+        $params[] = $sunday;
+        $types .= 'ss';
+    } elseif ($range === 'quarter') {
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $quarter = floor(($currentMonth - 1) / 3) + 1;
+        $startMonth = ($quarter - 1) * 3 + 1;
+        $endMonth = $startMonth + 2;
+        $startDate = date('Y-m-d', strtotime("$currentYear-$startMonth-01"));
+        $endDate = date('Y-m-t', strtotime("$currentYear-$endMonth-01"));
+        $where[] = "s.issue_date BETWEEN ? AND ?";
+        $params[] = $startDate;
+        $params[] = $endDate;
+        $types .= 'ss';
+    } elseif ($range === 'year') {
+        $startDate = date('Y-01-01');
+        $endDate = date('Y-12-31');
+        $where[] = "s.issue_date BETWEEN ? AND ?";
+        $params[] = $startDate;
+        $params[] = $endDate;
+        $types .= 'ss';
+    }
+}
+
+$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+// *** REMOVED permanent_address and provincial_address from the select below ***
+$sql = "SELECT 
+            s.id,
+            s.soa_number, 
+            s.soa_name,
+            s.issue_date,
+            s.months,
+            s.contract_price,
+            s.monthly_amort,
+            s.misc_fee,
+            s.reservation,
+            s.total_payable,
+            s.balance,
+            s.total_paid,
+            c.first_name,
+            c.last_name,
+            c.email,
+            c.phone_number,
+            p.project_title,
+            p.project_site,
+            p.phase,
+            p.block,
+            p.lot,
+            p.lot_area,
+            p.lot_class,
+            p.price_per_sqm
+        FROM soas s
+        LEFT JOIN contacts c ON s.contact_id = c.id
+        LEFT JOIN projects p ON s.project_id = p.id
+        $where_sql
+        ORDER BY s.id DESC";
+
+// For procedural + prepared statements:
+$stmt = mysqli_prepare($link, $sql);
+if ($params) {
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// For JS preview
+$soa_list = [];
+if ($result && mysqli_num_rows($result) > 0) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $soa_list[] = $row;
+    }
+}
+?>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<div class="my-4">
+    <div class="row">
+        <!-- Left: Filter + Table -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">All Statements of Accounts</h5>
+                    <form method="get" id="filter-form">
+                        <table class="table table-bordered table-hover align-middle" id="soa-table">
+                            <thead>
+                                <!-- Filter Row -->
+                                <tr>
+                                    <th></th>
+                                    <th>
+                                        <select class="form-select form-select-sm" name="customer_id" onchange="document.getElementById('filter-form').submit();">
+                                            <option value="">All</option>
+                                            <?php foreach ($customers as $c): ?>
+                                                <option value="<?= $c['id'] ?>" <?= (isset($_GET['customer_id']) && $_GET['customer_id'] == $c['id']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($c['customer_name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </th>
+                                    <th>
+                                        <select class="form-select form-select-sm" name="date_range" onchange="document.getElementById('filter-form').submit();">
+                                            <option value="">All Dates</option>
+                                            <option value="today" <?= (isset($_GET['date_range']) && $_GET['date_range'] == 'today') ? 'selected' : '' ?>>Today</option>
+                                            <option value="week" <?= (isset($_GET['date_range']) && $_GET['date_range'] == 'week') ? 'selected' : '' ?>>This Week</option>
+                                            <option value="quarter" <?= (isset($_GET['date_range']) && $_GET['date_range'] == 'quarter') ? 'selected' : '' ?>>This Quarter</option>
+                                            <option value="year" <?= (isset($_GET['date_range']) && $_GET['date_range'] == 'year') ? 'selected' : '' ?>>This Year</option>
+                                        </select>
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th>SOA Number</th>
+                                    <th>Customer Name</th>
+                                    <th>Issue Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($soa_list as $row): ?>
+                                <tr>
+                                    <td>
+                                        <a href="#" class="soa-link text-primary fw-semibold"
+                                            <?php foreach ($row as $k=>$v): ?>
+                                                data-<?= $k ?>="<?= htmlspecialchars($v) ?>"
+                                            <?php endforeach; ?>
+                                        >
+                                            <?= htmlspecialchars($row['soa_number']) ?>
+                                        </a>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['issue_date']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (count($soa_list) == 0): ?>
+                                <tr><td colspan="3" class="text-center">No records found.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </form>
                 </div>
-                <!-- SOA Table -->
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle" id="soa-table">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>SOA #</th>
-                                <th>SOA Name</th>
-                                <th>Issue Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="soa-tbody"></tbody>
-                    </table>
-                </div>
-                <div id="no-soa-results" class="text-center text-muted py-4 d-none">No SOA records found.</div>
             </div>
         </div>
-    </div>
-    <!-- RIGHT: SOA Preview -->
-    <div class="col-lg-6">
-        <div class="invoice-preview card mb-0">
-            <div class="card-body" id="soa-preview">
-                <div class="text-center text-muted py-5" id="preview-placeholder">
-                    <i class="ri-file-list-2-line" style="font-size: 2.5rem;"></i>
-                    <div class="mt-3">Select an SOA to preview</div>
+
+        <!-- Right: Preview -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm" id="soa-preview">
+                <div class="card-body">
+                    <div class="d-flex justify-content-end gap-2 mb-2">
+                        <button class="btn btn-outline-secondary btn-sm" id="btn-soa-print" style="display:none;"><i class="ri-printer-line"></i> Print to PDF</button>
+                        <button class="btn btn-primary btn-sm" id="btn-soa-send-email" style="display:none;"><i class="ri-mail-send-line"></i> Send Email</button>
+                    </div>
+                    <h5 class="card-title">SOA Preview</h5>
+                    <div id="preview-details" class="text-secondary">
+                        <em>Select an SOA to preview details.</em>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- DEMO CSS/JS CDN (Bootstrap/RemixIcon/jQuery) -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<style>
-@media print {
-    body * { visibility: hidden !important; }
-    #printable-soa { visibility: visible !important; position: absolute !important; left: 0; top: 0; width: 100% !important; background: #fff !important;}
-    .noprint { display: none !important; }
-}
-.soa-info-section { margin-bottom: 1.3rem; }
-.soa-info-section h6 { font-size: 1rem; color: #4c4c4c; margin-bottom: .6rem; font-weight: bold;}
-.soa-info-table th, .soa-info-table td { padding: .4em .7em; vertical-align: top; }
-.soa-info-table { font-size: 15px; }
-</style>
 <script>
-// -------- DEMO DATA --------
-const loggedInClient = {
-    id: 1,
-    name: "Ana Del Rosario",
-    client: {
-        first_name: "Ana", last_name: "Del Rosario",
-        contact: "639171234567",
-        email: "ana.rosario@email.com",
-        perm_address: "Blk 2 Lot 5, Sta. Maria Village, San Mateo, Rizal",
-        prov_address: "Barangay Malaya, Pililla, Rizal",
-    }
-};
-// 6 Sample SOAs for demo
-const soaFullData = [
-{
-    soa_number: "SOA-2024-1001",
-    customer_id: 1,
-    soa_name: "January 2024 SOA",
-    issue_date: "2024-01-31",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1106500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱22,000.00",
-    balance: "₱1,106,500.00"
-},
-{
-    soa_number: "SOA-2024-1002",
-    customer_id: 1,
-    soa_name: "February 2024 SOA",
-    issue_date: "2024-02-29",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1088500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-02-29", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱44,000.00",
-    balance: "₱1,088,500.00"
-},
-{
-    soa_number: "SOA-2024-1003",
-    customer_id: 1,
-    soa_name: "March 2024 SOA",
-    issue_date: "2024-03-31",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1066500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-02-29", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-03-31", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱66,000.00",
-    balance: "₱1,066,500.00"
-},
-{
-    soa_number: "SOA-2024-1004",
-    customer_id: 1,
-    soa_name: "April 2024 SOA",
-    issue_date: "2024-04-30",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1044500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-02-29", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-03-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-04-30", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱88,000.00",
-    balance: "₱1,044,500.00"
-},
-{
-    soa_number: "SOA-2024-1005",
-    customer_id: 1,
-    soa_name: "May 2024 SOA",
-    issue_date: "2024-05-31",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1022500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-02-29", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-03-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-04-30", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-05-31", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱110,000.00",
-    balance: "₱1,022,500.00"
-},
-{
-    soa_number: "SOA-2024-1006",
-    customer_id: 1,
-    soa_name: "June 2024 SOA",
-    issue_date: "2024-06-30",
-    project: {
-        project_title: "Parkside Residences",
-        project_site: "Sta. Maria Village, San Mateo, Rizal",
-        phase: "2", block: "5", lot: "8",
-        lot_area: "350", lot_class: "Corner",
-        price_per_sqm: "3,000"
-    },
-    terms: {
-        months: 48, contract_price: 1050000, monthly_amort: 22000, misc_fee: 73500,
-        reservation: 20000, total_payable: 1128500, balance: 1000500
-    },
-    payment_history: [
-        { due: "2024-01-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-02-29", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-03-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-04-30", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-05-31", paid: "₱22,000.00", status: "Paid" },
-        { due: "2024-06-30", paid: "₱22,000.00", status: "Paid" }
-    ],
-    total_paid: "₱132,000.00",
-    balance: "₱1,000,500.00"
+function currency(n) {
+    if (n === undefined || n === null || n === '') return '';
+    n = parseFloat(n);
+    return isNaN(n) ? '' : '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2});
 }
-];
 
-// ----------- FUNCTIONS -----------
-function toProperCase(str) {
-    return str.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase());
-}
-function getUniqueDates() {
-    let dates = soaFullData.map(s => s.issue_date);
-    dates = [...new Set(dates)].sort();
-    return dates;
-}
-function filterSoa(fromDate, toDate) {
-    let records = soaFullData.slice();
-    if (fromDate) records = records.filter(s => s.issue_date >= fromDate);
-    if (toDate) records = records.filter(s => s.issue_date <= toDate);
-    return records;
-}
-function renderSoaTable(soaList) {
-    if (!soaList.length) {
-        $('#soa-tbody').html('');
-        $('#no-soa-results').removeClass('d-none');
-        return;
-    }
-    $('#no-soa-results').addClass('d-none');
-    let html = '';
-    soaList.forEach(soa => {
-        html += `
-            <tr data-soa="${soa.soa_number}">
-                <td><a href="#" class="fw-bold text-primary soa-preview-link">${soa.soa_number}</a></td>
-                <td>${soa.soa_name}</td>
-                <td>${soa.issue_date}</td>
-            </tr>
-        `;
-    });
-    $('#soa-tbody').html(html);
-}
-function renderSoaPreview(soa) {
-    if (!soa) {
-        $('#soa-preview').html(`
-            <div class="text-center text-muted py-5" id="preview-placeholder">
-                <i class="ri-file-list-2-line" style="font-size: 2.5rem;"></i>
-                <div class="mt-3">Select an SOA to preview</div>
-            </div>
-        `);
-        return;
-    }
-    // --- Section 1: Customer Details ---
-    let detailsCustomer = `
-    <div class="soa-info-section">
+// On preview: show buttons
+$(document).on('click', '.soa-link', function(e) {
+    e.preventDefault();
+    const d = $(this).data();
+
+    // Show buttons
+    $('#btn-soa-print, #btn-soa-send-email').show();
+
+    $('#preview-details').html(`
+    <div class="clearfix mb-2">
+        <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="28"></div>
+        <div class="float-end"><h3 class="m-0">Statement of Account</h3></div>
+    </div>
+
+    <!-- Customer Details -->
+    <div class="mb-3 soa-info-section">
         <h6>Customer Details</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr>
-                <th width="38%">Name:</th>
-                <td>${toProperCase(loggedInClient.client.first_name)} ${toProperCase(loggedInClient.client.last_name)}</td>
-            </tr>
-            <tr>
-                <th>Contact Number:</th>
-                <td>${loggedInClient.client.contact}</td>
-            </tr>
-            <tr>
-                <th>Email:</th>
-                <td>${loggedInClient.client.email}</td>
-            </tr>
-            <tr>
-                <th>Permanent Address:</th>
-                <td>${loggedInClient.client.perm_address}</td>
-            </tr>
-            <tr>
-                <th>Provincial Address:</th>
-                <td>${loggedInClient.client.prov_address}</td>
-            </tr>
+            <tr><th width="38%">Name:</th><td>${d.first_name ?? ''} ${d.last_name ?? ''}</td></tr>
+            <tr><th>Contact Number:</th><td>${d.phone_number ?? ''}</td></tr>
+            <tr><th>Email:</th><td>${d.email ?? ''}</td></tr>
             </tbody>
         </table>
-    </div>`;
-    // --- Section 2: Property Details ---
-    let detailsProperty = `
-    <div class="soa-info-section">
+    </div>
+
+    <!-- Property Details -->
+    <div class="mb-3 soa-info-section">
         <h6>Property Details</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr>
-                <th>Project:</th>
-                <td>${soa.project.project_title}</td>
-            </tr>
-            <tr>
-                <th>Site/Location:</th>
-                <td>${soa.project.project_site}</td>
-            </tr>
-            <tr>
-                <th>Block / Lot / Phase:</th>
-                <td>Block ${soa.project.block}, Lot ${soa.project.lot}, Phase ${soa.project.phase}</td>
-            </tr>
-            <tr>
-                <th>Area (sqm):</th>
-                <td>${soa.project.lot_area} sqm (${soa.project.lot_class})</td>
-            </tr>
-            <tr>
-                <th>Price per sqm:</th>
-                <td>₱${parseFloat(soa.project.price_per_sqm).toLocaleString()}</td>
-            </tr>
+            <tr><th>Project:</th><td>${d.project_title ?? ''}</td></tr>
+            <tr><th>Site/Location:</th><td>${d.project_site ?? ''}</td></tr>
+            <tr><th>Block / Lot / Phase:</th><td>Block ${d.block ?? ''}, Lot ${d.lot ?? ''}, Phase ${d.phase ?? ''}</td></tr>
+            <tr><th>Area (sqm):</th><td>${d.lot_area ?? ''} sqm ${d.lot_class ? '('+d.lot_class+')' : ''}</td></tr>
+            <tr><th>Price per sqm:</th><td>${currency(d.price_per_sqm)}</td></tr>
             </tbody>
         </table>
-    </div>`;
-    // --- Section 3: SOA Details / Account Summary ---
-    let detailsSOA = `
-    <div class="soa-info-section">
+    </div>
+
+    <!-- SOA / Account Summary -->
+    <div class="mb-3 soa-info-section">
         <h6>SOA / Account Summary</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr>
-                <th>SOA #:</th>
-                <td>${soa.soa_number}</td>
-            </tr>
-            <tr>
-                <th>SOA Name:</th>
-                <td>${soa.soa_name}</td>
-            </tr>
-            <tr>
-                <th>Issue Date:</th>
-                <td>${soa.issue_date}</td>
-            </tr>
-            <tr>
-                <th>Payment Terms:</th>
-                <td>${soa.terms.months} months</td>
-            </tr>
-            <tr>
-                <th>Total Contract Price:</th>
-                <td>₱${soa.terms.contract_price.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <th>Monthly Amortization:</th>
-                <td>₱${soa.terms.monthly_amort.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <th>Reservation Fee:</th>
-                <td>₱${soa.terms.reservation.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <th>Miscellaneous Fee:</th>
-                <td>₱${soa.terms.misc_fee.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <th>Total Amount Payable:</th>
-                <td>₱${soa.terms.total_payable.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <th>Balance Payable:</th>
-                <td>₱${soa.terms.balance.toLocaleString()}</td>
-            </tr>
+            <tr><th>SOA #:</th><td>${d.soa_number ?? ''}</td></tr>
+            <tr><th>SOA Name:</th><td>${d.soa_name ?? ''}</td></tr>
+            <tr><th>Issue Date:</th><td>${d.issue_date ?? ''}</td></tr>
+            <tr><th>Payment Terms:</th><td>${d.months ?? ''} months</td></tr>
+            <tr><th>Total Contract Price:</th><td>${currency(d.contract_price)}</td></tr>
+            <tr><th>Monthly Amortization:</th><td>${currency(d.monthly_amort)}</td></tr>
+            <tr><th>Reservation Fee:</th><td>${currency(d.reservation)}</td></tr>
+            <tr><th>Miscellaneous Fee:</th><td>${currency(d.misc_fee)}</td></tr>
+            <tr><th>Total Amount Payable:</th><td>${currency(d.total_payable)}</td></tr>
+            <tr><th>Balance Payable:</th><td>${currency(d.balance)}</td></tr>
             </tbody>
         </table>
-    </div>`;
-    // --- Section 4: Payment History ---
-    let paymentRows = soa.payment_history.map((p, i) => `
-        <tr>
-            <td>${i+1}</td>
-            <td>${p.due}</td>
-            <td>${p.paid}</td>
-            <td>${p.status == "Paid" ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'}</td>
-        </tr>
-    `).join('');
-    let detailsPayments = `
-    <div class="soa-info-section">
+    </div>
+
+    <!-- Payment History -->
+    <div class="mb-3 soa-info-section">
         <h6>Payment History</h6>
         <table class="table table-sm table-centered table-bordered mb-0">
             <thead class="border-top border-bottom bg-light-subtle border-light">
@@ -396,23 +276,30 @@ function renderSoaPreview(soa) {
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>${paymentRows}</tbody>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>${d.issue_date ?? ''}</td>
+                    <td>${currency(d.total_paid)}</td>
+                    <td><span class="text-success">${parseFloat(d.total_paid || 0) > 0 ? "Paid" : "Pending"}</span></td>
+                </tr>
+            </tbody>
             <tfoot>
                 <tr>
                     <th colspan="2" class="text-end">Total Paid:</th>
-                    <th>${soa.total_paid}</th>
+                    <th>${currency(d.total_paid)}</th>
                     <th></th>
                 </tr>
                 <tr>
                     <th colspan="2" class="text-end">Balance:</th>
-                    <th>${soa.balance}</th>
+                    <th>${currency(d.balance)}</th>
                     <th></th>
                 </tr>
             </tfoot>
         </table>
-    </div>`;
-    // --- Section 5: Legal Note & Portal ---
-    let portalNote = `
+    </div>
+
+    <!-- Notes -->
     <div class="soa-info-section mb-2">
         <h6>Notes</h6>
         <div class="alert alert-info mt-1 mb-2 p-2" style="font-size:14px">
@@ -429,81 +316,23 @@ function renderSoaPreview(soa) {
             <div class="col-4"><strong>Approved by:</strong><br><br>__________________________</div>
             <div class="col-4"><strong>Received by:</strong><br><br>__________________________</div>
         </div>
-    </div>`;
-    // --- Print block for print/pdf ---
-    let printable = `
-    <div id="printable-soa" style="display:none">
-        <div class="clearfix mb-2">
-            <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="28"></div>
-            <div class="float-end"><h3 class="m-0">Statement of Account</h3></div>
-        </div>
-        <div class="mb-3">${detailsCustomer}</div>
-        <div class="mb-3">${detailsProperty}</div>
-        <div class="mb-3">${detailsSOA}</div>
-        <div class="mb-3">${detailsPayments}</div>
-        ${portalNote}
-    </div>`;
-    // --- Actual preview ---
-    $('#soa-preview').html(`
-        <div class="noprint d-flex flex-wrap gap-2 mb-3">
-            <button class="btn btn-outline-secondary btn-sm" id="btn-soa-print"><i class="ri-printer-line"></i> Print to PDF</button>
-        </div>
-        <div class="clearfix mb-2">
-            <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="28"></div>
-            <div class="float-end"><h3 class="m-0">Statement of Account</h3></div>
-        </div>
-        <div class="mb-3">${detailsCustomer}</div>
-        <div class="mb-3">${detailsProperty}</div>
-        <div class="mb-3">${detailsSOA}</div>
-        <div class="mb-3">${detailsPayments}</div>
-        ${portalNote}
-        ${printable}
+    </div>
     `);
-}
-// ----------- MAIN LOGIC -----------
-$(function(){
-    // Populate date filter options
-    let dates = getUniqueDates();
-    let dateOpts = '<option value="">All</option>' + dates.map(d => `<option value="${d}">${d}</option>`).join('');
-    $('#soa-from, #soa-to').html(dateOpts).prop('disabled', false);
-    let selectedSoa = null;
+});
 
-    function refreshTable() {
-        let from = $('#soa-from').val();
-        let to = $('#soa-to').val();
-        let list = filterSoa(from, to);
-        renderSoaTable(list);
-        renderSoaPreview(null);
-        $('#soa-tbody tr').removeClass('table-active');
-    }
-    $('#soa-from, #soa-to').on('change', refreshTable);
+// Print to PDF (prints the preview area only)
+$(document).on('click', '#btn-soa-print', function() {
+    // Print only the preview section
+    var printContents = document.getElementById('soa-preview').innerHTML;
+    var originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload();
+});
 
-    $('#soa-tbody').on('click', '.soa-preview-link', function(e){
-        e.preventDefault();
-        let soaNum = $(this).closest('tr').data('soa');
-        selectedSoa = soaFullData.find(s => s.soa_number === soaNum);
-        renderSoaPreview(selectedSoa);
-        $('#soa-tbody tr').removeClass('table-active');
-        $(this).closest('tr').addClass('table-active');
-    });
-    $('#soa-preview').on('click', '#btn-soa-print', function(){
-        if (!selectedSoa) return;
-        renderSoaPreview(selectedSoa); // Ensure print block is up to date
-        let printable = document.getElementById('printable-soa').cloneNode(true);
-        printable.style.display = "block";
-        let win = window.open('', '', 'height=900,width=1100');
-        win.document.write('<html><head><title>Print SOA</title>');
-        win.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">');
-        win.document.write('<link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">');
-        win.document.write('<style>@media print{.noprint{display:none !important;}}</style>');
-        win.document.write('</head><body style="background:#fff;">');
-        win.document.write(printable.outerHTML);
-        win.document.write('</body></html>');
-        win.document.close();
-        setTimeout(function(){ win.print(); win.close(); }, 500);
-    });
-    // Initial render
-    renderSoaTable(soaFullData);
-    renderSoaPreview(null);
+// Send Email button placeholder (add your AJAX/email code as needed)
+$(document).on('click', '#btn-soa-send-email', function() {
+    alert('Send Email function will be implemented here.');
 });
 </script>

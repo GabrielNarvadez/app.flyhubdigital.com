@@ -1,323 +1,131 @@
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<?php
+require_once __DIR__ . '/../layouts/config.php';
 
-<div class="container-fluid my-4">
-  <div class="row">
-    <!-- Filters Sidebar (Left) -->
-    <div class="col-lg-2 mb-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-light fw-semibold">Filters</div>
-        <div class="card-body">
-          <form id="filterForm">
-            <div class="mb-3">
-              <label class="form-label">Project Name</label>
-              <select class="form-select" name="project" id="filterProject">
-                <option value="">All</option>
-                <option value="Sunrise Estates">Sunrise Estates</option>
-                <option value="Green Meadows">Green Meadows</option>
-                <option value="Maple Residences">Maple Residences</option>
-                <option value="Palm Gardens">Palm Gardens</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Lot Size (sqm)</label>
-              <input type="number" class="form-control mb-1" placeholder="Min" name="minSize" id="filterMinSize">
-              <input type="number" class="form-control" placeholder="Max" name="maxSize" id="filterMaxSize">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Price (₱)</label>
-              <input type="range" class="form-range" min="500000" max="6000000" step="50000" id="filterPrice" value="6000000">
-              <div class="d-flex justify-content-between small">
-                <span>₱500K</span>
-                <span id="filterPriceValue" class="fw-bold">₱6,000,000</span>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Type of Lot</label>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="type" value="Inner" id="typeInner">
-                <label class="form-check-label" for="typeInner">Inner</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="type" value="Corner" id="typeCorner">
-                <label class="form-check-label" for="typeCorner">Corner</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="type" value="Premium" id="typePremium">
-                <label class="form-check-label" for="typePremium">Premium</label>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Status</label>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="status" value="Available" id="statusAvailable">
-                <label class="form-check-label" for="statusAvailable">Available</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="status" value="Reserved" id="statusReserved">
-                <label class="form-check-label" for="statusReserved">Reserved</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="status" value="Sold" id="statusSold">
-                <label class="form-check-label" for="statusSold">Sold</label>
-              </div>
-            </div>
-            <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">Apply Filters</button>
-          </form>
-        </div>
-      </div>
+// Start session if not active (usually in session.php)
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+// Success & error messages from session (e.g. after adding a unit)
+$success_msg = '';
+if (!empty($_SESSION['success_message'])) {
+    $success_msg = $_SESSION['success_message'];
+    unset($_SESSION['success_message']);
+}
+$error_msg = '';
+if (!empty($_SESSION['error_message'])) {
+    $error_msg = $_SESSION['error_message'];
+    unset($_SESSION['error_message']);
+}
+
+// Fetch units (non-archived)
+$sql = "SELECT * FROM projects WHERE archived = 0 ORDER BY created_at DESC";
+$result = mysqli_query($link, $sql);
+
+// Fetch projects for Add Unit dropdown
+$projects_for_dropdown = [];
+$proj_res = mysqli_query($link, "SELECT DISTINCT id, project_title, project_site FROM projects WHERE archived = 0 ORDER BY project_title");
+while ($pr = mysqli_fetch_assoc($proj_res)) {
+    $projects_for_dropdown[] = $pr;
+}
+
+if (!$result) {
+    echo '<div class="alert alert-danger">Error fetching units: ' . htmlspecialchars(mysqli_error($link)) . '</div>';
+    return;
+}
+?>
+
+<!-- Display success or error messages -->
+<?php if ($success_msg): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($success_msg) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+<?php endif; ?>
 
-    <!-- Main Product Grid (Right) -->
-    <div class="col-lg-10">
-      <div id="productGrid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-3">
-
-        <!-- Product Card Examples (data attributes used for filtering and details) -->
-
-        <!-- Example 1 -->
-        <div class="col product-card"
-          data-project="Sunrise Estates"
-          data-size="200"
-          data-price="2500000"
-          data-type="Corner"
-          data-status="Available"
-          data-title="Sunrise Estates - Lot 1"
-          data-description="Spacious corner lot perfect for a large home or garden."
-          data-img="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Sunrise Estates - Lot 1</div>
-              <div class="mb-1 text-secondary small">Corner &bull; 200 sqm</div>
-              <div class="mb-1 fw-bold">₱2,500,000</div>
-              <span class="badge bg-success">Available</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example 2 -->
-        <div class="col product-card"
-          data-project="Sunrise Estates"
-          data-size="180"
-          data-price="2000000"
-          data-type="Inner"
-          data-status="Reserved"
-          data-title="Sunrise Estates - Lot 2"
-          data-description="Cozy inner lot, ideal for starter homes. Near main entrance."
-          data-img="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Sunrise Estates - Lot 2</div>
-              <div class="mb-1 text-secondary small">Inner &bull; 180 sqm</div>
-              <div class="mb-1 fw-bold">₱2,000,000</div>
-              <span class="badge bg-warning text-dark">Reserved</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example 3 -->
-        <div class="col product-card"
-          data-project="Green Meadows"
-          data-size="250"
-          data-price="3300000"
-          data-type="Premium"
-          data-status="Sold"
-          data-title="Green Meadows - Premium Lot"
-          data-description="A premium lot with lush surroundings and best community amenities."
-          data-img="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Green Meadows - Premium Lot</div>
-              <div class="mb-1 text-secondary small">Premium &bull; 250 sqm</div>
-              <div class="mb-1 fw-bold">₱3,300,000</div>
-              <span class="badge bg-secondary">Sold</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example 4 -->
-        <div class="col product-card"
-          data-project="Maple Residences"
-          data-size="300"
-          data-price="4100000"
-          data-type="Premium"
-          data-status="Available"
-          data-title="Maple Residences - Lot 5"
-          data-description="Large premium lot, best for upscale custom houses."
-          data-img="https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Maple Residences - Lot 5</div>
-              <div class="mb-1 text-secondary small">Premium &bull; 300 sqm</div>
-              <div class="mb-1 fw-bold">₱4,100,000</div>
-              <span class="badge bg-success">Available</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example 5 -->
-        <div class="col product-card"
-          data-project="Palm Gardens"
-          data-size="220"
-          data-price="3200000"
-          data-type="Corner"
-          data-status="Reserved"
-          data-title="Palm Gardens - Lot 8"
-          data-description="Corner lot near the clubhouse and pool. Great for families."
-          data-img="https://images.unsplash.com/photo-1472224371017-08207f84aaae?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1472224371017-08207f84aaae?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Palm Gardens - Lot 8</div>
-              <div class="mb-1 text-secondary small">Corner &bull; 220 sqm</div>
-              <div class="mb-1 fw-bold">₱3,200,000</div>
-              <span class="badge bg-warning text-dark">Reserved</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Example 6 -->
-        <div class="col product-card"
-          data-project="Palm Gardens"
-          data-size="150"
-          data-price="1200000"
-          data-type="Inner"
-          data-status="Available"
-          data-title="Palm Gardens - Lot 10"
-          data-description="Affordable inner lot, perfect for compact house design."
-          data-img="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80"
-        >
-          <div class="card h-100 shadow-sm">
-            <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80"
-                 class="card-img-top" style="object-fit:cover;height:130px;">
-            <div class="card-body p-2">
-              <div class="fw-bold small">Palm Gardens - Lot 10</div>
-              <div class="mb-1 text-secondary small">Inner &bull; 150 sqm</div>
-              <div class="mb-1 fw-bold">₱1,200,000</div>
-              <span class="badge bg-success">Available</span>
-            </div>
-            <div class="card-footer bg-light py-2">
-              <button class="btn btn-outline-primary btn-sm w-100" onclick="showDetails(this)">View Details</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- You can copy and adapt these blocks for more sample lots. -->
-      </div>
+<?php if ($error_msg): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($error_msg) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  </div>
+<?php endif; ?>
+
+<!-- Units Grid -->
+<div class="row g-4">
+    <?php if (mysqli_num_rows($result) > 0): ?>
+        <?php $i = 0; while ($row = mysqli_fetch_assoc($result)): $i++;
+            $total_price = $row['lot_area'] * $row['price_per_sqm'];
+            $unitStatus = "Available"; // Adjust as needed if you have a status field
+        ?>
+        <div class="col-md-2">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0"><?= htmlspecialchars($row['project_title']) ?></h5>
+                        <span class="badge bg-success"><?= $unitStatus ?></span>
+                    </div>
+
+                    <p class="card-text mb-1"><strong>Site:</strong> <?= htmlspecialchars($row['project_site']) ?></p>
+                    <p class="card-text mb-1"><strong>Phase:</strong> <?= htmlspecialchars($row['phase']) ?></p>
+
+                    <p class="card-text mb-1"><strong>Class:</strong> <?= htmlspecialchars($row['lot_class']) ?></p>
+              
+                    <div class="row mb-1">
+                      <div class="col">
+                        <p class="card-text mb-0"><strong>Block:</strong> <?= htmlspecialchars($row['block']) ?></p>
+                      </div>
+                      <div class="col">
+                        <p class="card-text mb-0"><strong>Lot:</strong> <?= htmlspecialchars($row['lot']) ?></p>
+                      </div>
+                    </div>
+
+                    <p class="card-text mb-1"><strong>Lot Area:</strong> <?= htmlspecialchars($row['lot_area']) ?> sqm</p>
+                    <p class="card-text mb-1"><strong>Price per sqm:</strong> ₱<?= number_format($row['price_per_sqm'], 2) ?></p>
+                    <p class="card-text text-primary mb-3"><strong>Total Price:</strong> ₱<?= number_format($total_price, 2) ?></p>
+                    
+                    <button type="button" class="btn btn-primary mt-auto" data-bs-toggle="offcanvas" data-bs-target="#unitDetails<?= $i ?>" aria-controls="unitDetails<?= $i ?>">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offcanvas Modal for Unit Details -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="unitDetails<?= $i ?>" aria-labelledby="unitDetailsLabel<?= $i ?>">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="unitDetailsLabel<?= $i ?>">Unit Details</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Project Title</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['project_title']) ?></dd>
+                    <dt class="col-sm-4">Site</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['project_site']) ?></dd>
+                    <dt class="col-sm-4">Phase</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['phase']) ?></dd>
+                    <dt class="col-sm-4">Block</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['block']) ?></dd>
+                    <dt class="col-sm-4">Lot</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['lot']) ?></dd>
+                    <dt class="col-sm-4">Class</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['lot_class']) ?></dd>
+                    <dt class="col-sm-4">Lot Area</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['lot_area']) ?> sqm</dd>
+                    <dt class="col-sm-4">Price per sqm</dt>
+                    <dd class="col-sm-8">₱<?= number_format($row['price_per_sqm'], 2) ?></dd>
+                    <dt class="col-sm-4">Total Price</dt>
+                    <dd class="col-sm-8">₱<?= number_format($total_price, 2) ?></dd>
+                    <dt class="col-sm-4">Created At</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($row['created_at']) ?></dd>
+                </dl>
+            </div>
+        </div>
+
+        <?php endwhile; ?>
+    <?php else: ?>
+        <div class="col-12">
+            <div class="alert alert-info text-center">No units found.</div>
+        </div>
+    <?php endif; ?>
 </div>
-
-<!-- Offcanvas Side Modal for Property Details -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="propertyDetailsOffcanvas" aria-labelledby="propertyDetailsLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="propertyDetailsLabel">Property Details</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <img id="detailsImg" src="" alt="" class="w-100 rounded mb-3" style="max-height:180px;object-fit:cover;">
-    <h5 id="detailsTitle"></h5>
-    <div id="detailsDesc" class="mb-3"></div>
-    <ul class="list-group list-group-flush mb-2">
-      <li class="list-group-item"><b>Project:</b> <span id="detailsProject"></span></li>
-      <li class="list-group-item"><b>Lot Size:</b> <span id="detailsSize"></span> sqm</li>
-      <li class="list-group-item"><b>Type:</b> <span id="detailsType"></span></li>
-      <li class="list-group-item"><b>Status:</b> <span id="detailsStatus"></span></li>
-      <li class="list-group-item"><b>Price:</b> <span id="detailsPrice"></span></li>
-    </ul>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-const priceSlider = document.getElementById('filterPrice');
-const priceValue = document.getElementById('filterPriceValue');
-if (priceSlider) {
-  priceSlider.addEventListener('input', function() {
-    priceValue.textContent = '₱' + Number(priceSlider.value).toLocaleString();
-  });
-}
-
-// Filtering Function
-function applyFilters() {
-  const project = document.getElementById('filterProject').value;
-  const minSize = parseInt(document.getElementById('filterMinSize').value) || 0;
-  const maxSize = parseInt(document.getElementById('filterMaxSize').value) || 10000;
-  const maxPrice = parseInt(document.getElementById('filterPrice').value) || 6000000;
-
-  // Collect checked types
-  let types = [];
-  ['typeInner', 'typeCorner', 'typePremium'].forEach(id => {
-    if(document.getElementById(id).checked) types.push(document.getElementById(id).nextElementSibling.textContent);
-  });
-  // Collect checked status
-  let statuses = [];
-  ['statusAvailable', 'statusReserved', 'statusSold'].forEach(id => {
-    if(document.getElementById(id).checked) statuses.push(document.getElementById(id).nextElementSibling.textContent);
-  });
-
-  document.querySelectorAll('.product-card').forEach(card => {
-    const cardProject = card.getAttribute('data-project');
-    const cardSize = parseInt(card.getAttribute('data-size'));
-    const cardPrice = parseInt(card.getAttribute('data-price'));
-    const cardType = card.getAttribute('data-type');
-    const cardStatus = card.getAttribute('data-status');
-
-    let show = true;
-    if (project && cardProject !== project) show = false;
-    if (cardSize < minSize || cardSize > maxSize) show = false;
-    if (cardPrice > maxPrice) show = false;
-    if (types.length && !types.includes(cardType)) show = false;
-    if (statuses.length && !statuses.includes(cardStatus)) show = false;
-
-    card.style.display = show ? '' : 'none';
-  });
-}
-
-// Side Modal Show Details
-function showDetails(btn) {
-  const card = btn.closest('.product-card');
-  document.getElementById('detailsImg').src = card.getAttribute('data-img');
-  document.getElementById('detailsTitle').textContent = card.getAttribute('data-title');
-  document.getElementById('detailsDesc').textContent = card.getAttribute('data-description');
-  document.getElementById('detailsProject').textContent = card.getAttribute('data-project');
-  document.getElementById('detailsSize').textContent = card.getAttribute('data-size');
-  document.getElementById('detailsType').textContent = card.getAttribute('data-type');
-  document.getElementById('detailsStatus').textContent = card.getAttribute('data-status');
-  document.getElementById('detailsPrice').textContent = '₱' + Number(card.getAttribute('data-price')).toLocaleString();
-
-  const offcanvas = new bootstrap.Offcanvas(document.getElementById('propertyDetailsOffcanvas'));
-  offcanvas.show();
-}
-
-// Apply filters on load and on each change
-document.getElementById('filterForm').addEventListener('change', applyFilters);
-applyFilters();
-</script>

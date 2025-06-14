@@ -1,564 +1,364 @@
-<?php
-// modules/units-table.php
 
-// turn on strict mysqli error reporting
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-// only start session if not already
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+<form method="post" id="projects-form">
 
-// load your DB config (must define $link = mysqli_connect(...))
-require_once __DIR__ . '/../layouts/config.php';
-
-// initialize flash
-if (empty($_SESSION['flash'])) {
-    $_SESSION['flash'] = '';
-}
-
-// handle Create / Update / Delete
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action                  = $_POST['action']                         ?? '';
-    $unit_status             = mysqli_real_escape_string($link, trim($_POST['unit_status']             ?? ''));
-    $project_title           = mysqli_real_escape_string($link, trim($_POST['project_title']           ?? ''));
-    $project_site            = mysqli_real_escape_string($link, trim($_POST['project_site']            ?? ''));
-    $phase                   = mysqli_real_escape_string($link, trim($_POST['phase']                   ?? ''));
-    $block                   = mysqli_real_escape_string($link, trim($_POST['block']                   ?? ''));
-    $lot                     = mysqli_real_escape_string($link, trim($_POST['lot']                     ?? ''));
-    $lot_class               = mysqli_real_escape_string($link, trim($_POST['lot_class']               ?? ''));
-    $lot_area                = floatval($_POST['lot_area']                ?? 0);
-    $price_per_sqm           = floatval($_POST['price_per_sqm']           ?? 0);
-    $date_of_reservation     = $_POST['date_of_reservation']             ?? null;
-    $total_contract_price    = floatval($_POST['total_contract_price']    ?? 0);
-    $additional_misc_fee     = floatval($_POST['additional_misc_fee']     ?? 0);
-    $reservation_fee         = floatval($_POST['reservation_fee']         ?? 0);
-    $interest                = floatval($_POST['interest']                ?? 0);
-    $net_selling_price       = floatval($_POST['net_selling_price']       ?? 0);
-    $total_amount_payable    = floatval($_POST['total_amount_payable']    ?? 0);
-    $monthly_amortization    = floatval($_POST['monthly_amortization']    ?? 0);
-    $amortization_start_date = $_POST['amortization_start_date']        ?? null;
-    $payment_terms           = intval($_POST['payment_terms']            ?? 0);
-    $client_name             = mysqli_real_escape_string($link, trim($_POST['client_name']             ?? ''));
-    $balance_payable         = floatval($_POST['balance_payable']         ?? 0);
-    $view_360_link           = mysqli_real_escape_string($link, trim($_POST['view_360_link']           ?? ''));
-    $flash                   = '';
-
-    if ($action === 'create') {
-        if ($unit_status !== '' && $project_title !== '') {
-            $sql = "
-                INSERT INTO units
-                  (unit_status, project_title, project_site, phase, block, lot, lot_class,
-                   lot_area, price_per_sqm, date_of_reservation, total_contract_price,
-                   additional_misc_fee, reservation_fee, interest, net_selling_price,
-                   total_amount_payable, monthly_amortization, amortization_start_date,
-                   payment_terms, client_name, balance_payable, view_360_link)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ";
-            $stmt = mysqli_prepare($link, $sql);
-            if ($stmt === false) {
-                die('Prepare failed: ' . mysqli_error($link));
-            }
-            mysqli_stmt_bind_param($stmt,
-                'sssssssddsdddddddsisds',
-                $unit_status,
-                $project_title,
-                $project_site,
-                $phase,
-                $block,
-                $lot,
-                $lot_class,
-                $lot_area,
-                $price_per_sqm,
-                $date_of_reservation,
-                $total_contract_price,
-                $additional_misc_fee,
-                $reservation_fee,
-                $interest,
-                $net_selling_price,
-                $total_amount_payable,
-                $monthly_amortization,
-                $amortization_start_date,
-                $payment_terms,
-                $client_name,
-                $balance_payable,
-                $view_360_link
-            );
-            if (mysqli_stmt_execute($stmt)) {
-                $flash = 'Unit added successfully.';
-            } else {
-                $flash = 'Error adding unit: ' . mysqli_error($link);
-            }
-            mysqli_stmt_close($stmt);
-        } else {
-            $flash = 'Status and Project Title are required.';
-        }
-
-    } elseif ($action === 'update') {
-        $id = intval($_POST['id'] ?? 0);
-        if ($id && $unit_status !== '' && $project_title !== '') {
-            $sql = "
-                UPDATE units SET
-                  unit_status             = ?,
-                  project_title           = ?,
-                  project_site            = ?,
-                  phase                   = ?,
-                  block                   = ?,
-                  lot                     = ?,
-                  lot_class               = ?,
-                  lot_area                = ?,
-                  price_per_sqm           = ?,
-                  date_of_reservation     = ?,
-                  total_contract_price    = ?,
-                  additional_misc_fee     = ?,
-                  reservation_fee         = ?,
-                  interest                = ?,
-                  net_selling_price       = ?,
-                  total_amount_payable    = ?,
-                  monthly_amortization    = ?,
-                  amortization_start_date = ?,
-                  payment_terms           = ?,
-                  client_name             = ?,
-                  balance_payable         = ?,
-                  view_360_link           = ?
-                WHERE id = ?
-            ";
-            $stmt = mysqli_prepare($link, $sql);
-            if ($stmt === false) {
-                die('Prepare failed: ' . mysqli_error($link));
-            }
-            mysqli_stmt_bind_param($stmt,
-                'sssssssddsdddddddsisdsi',
-                $unit_status,
-                $project_title,
-                $project_site,
-                $phase,
-                $block,
-                $lot,
-                $lot_class,
-                $lot_area,
-                $price_per_sqm,
-                $date_of_reservation,
-                $total_contract_price,
-                $additional_misc_fee,
-                $reservation_fee,
-                $interest,
-                $net_selling_price,
-                $total_amount_payable,
-                $monthly_amortization,
-                $amortization_start_date,
-                $payment_terms,
-                $client_name,
-                $balance_payable,
-                $view_360_link,
-                $id
-            );
-            if (mysqli_stmt_execute($stmt)) {
-                $flash = 'Unit updated successfully.';
-            } else {
-                $flash = 'Error updating unit: ' . mysqli_error($link);
-            }
-            mysqli_stmt_close($stmt);
-        } else {
-            $flash = 'ID, Status and Project Title are required.';
-        }
-
-    } elseif ($action === 'delete' && !empty($_POST['ids'])) {
-        $ids = array_map('intval', explode(',', $_POST['ids']));
-        $in  = implode(',', $ids);
-        if (mysqli_query($link, "DELETE FROM units WHERE id IN ($in)")) {
-            $flash = 'Selected unit(s) deleted.';
-        } else {
-            $flash = 'Error deleting units: ' . mysqli_error($link);
-        }
-    }
-
-    $_SESSION['flash'] = $flash;
-    echo "<script>window.location.replace('".htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES)."');</script>";
-    exit;
-}
-
-// fetch units for display
-$units = [];
-$sql   = "
-    SELECT
-      id, unit_status, project_title, project_site, phase, block, lot, lot_class,
-      lot_area, price_per_sqm, date_of_reservation, total_contract_price,
-      additional_misc_fee, reservation_fee, interest, net_selling_price,
-      total_amount_payable, monthly_amortization, amortization_start_date,
-      payment_terms, client_name, balance_payable, view_360_link
-    FROM units
-    ORDER BY project_title
-";
-$res = mysqli_query($link, $sql);
-if (!$res) {
-    die("Fetch failed: " . mysqli_error($link));
-}
-while ($row = mysqli_fetch_assoc($res)) {
-    $units[] = $row;
-}
-mysqli_free_result($res);
-?>
-<!-- Page Title & Flash -->
-<div class="row">
-  <div class="col-12">
-    <div class="page-title-box">
-      <div class="page-title-right">
-        <ol class="breadcrumb m-0">
-          <li class="breadcrumb-item"><a href="index.php">Flyhub Digital</a></li>
-          <li class="breadcrumb-item active">Units</li>
-        </ol>
-      </div>
-      <h4 class="page-title">Units Management</h4>
+    <!-- Bulk Panel -->
+    <div id="bulk-panel" class="d-flex align-items-center bg-light border rounded px-3 py-2 mb-3" style="display:none;">
+        <small id="selected-count" class="me-3">0 selected</small>
+        <a href="#" id="select-all-link" class="me-3">Select all <span id="total-count"><?= mysqli_num_rows($result) ?></span></a>
+        <button type="button" id="bulk-archive" class="btn btn-link p-0 me-3" style="text-decoration:none;color:#ffc107;">Archive</button>
     </div>
-  </div>
-</div>
 
-<?php if ($_SESSION['flash']): ?>
-  <div class="alert alert-info"><?= $_SESSION['flash'] ?></div>
-  <?php $_SESSION['flash'] = '' ?>
-<?php endif; ?>
-
-<div class="row">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-body">
-
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h4 class="header-title mb-0">Units List</h4>
-          <button id="btn-add" class="btn btn-success">+ Add Unit</button>
+    <!-- Filters + Action Buttons -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+        <div class="row g-2 align-items-end" style="flex-grow:1; min-width:350px;">
+            <div class="col-md-4">
+                <label class="form-label">Project</label>
+                <select class="form-select" id="filter-project">
+                    <option value="">All Projects</option>
+                    <?php foreach ($project_titles as $title): ?>
+                        <option value="<?= htmlspecialchars($title) ?>"><?= htmlspecialchars($title) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="filter-status">
+                    <option value="">All Statuses</option>
+                    <option value="Available">Available</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Reserved">Reserved</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Class</label>
+                <select class="form-select" id="filter-class">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
         </div>
 
-        <!-- Bulk panel -->
-        <div id="bulk-panel"
-             class="d-flex align-items-center bg-light border rounded px-3 py-2 mb-3"
-             style="display: none;">
-          <small id="selected-count" class="me-3">0 selected</small>
-          <a href="#" id="select-all-link" class="me-3">
-            Select all <span id="total-count"><?= count($units) ?></span>
-          </a>
-          <a href="#" id="bulk-edit" class="me-3">Edit</a>
-          <a href="#" id="bulk-delete" class="me-3 text-danger">Delete</a>
+        <div class="btn-group" style="margin-top: 30px;">
+            <button type="button" id="print-pdf-btn" class="btn btn-outline-primary">Print</button>
+            <button type="button" id="export-csv-btn" class="btn btn-outline-secondary">Export</button>
+            <button type="button" class="btn btn-success" data-bs-toggle="offcanvas" data-bs-target="#addUnitCanvas" aria-controls="addUnitCanvas">Add Unit</button>
         </div>
+    </div>
 
-        <!-- Bulk-delete form -->
-        <form id="bulk-form"
-              method="POST"
-              action="<?= htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES) ?>"
-              style="display: none;">
-          <input type="hidden" name="action" value="delete">
-          <input type="hidden" name="ids" id="bulk-ids">
+    <!-- Units Table -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0" id="projects-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:36px;"><input type="checkbox" id="master-checkbox" /></th>
+                            <th>Unit</th>
+                            <th>Class</th>
+                            <th>Lot Area (sqm)</th>
+                            <th>Price/sqm</th>
+                            <th>Total Price</th>
+                            <th>Status</th>
+                            <th>Site</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (mysqli_num_rows($result) > 0): ?>
+                            <?php $i = 0; while ($row = mysqli_fetch_assoc($result)): $i++;
+                                $total_price = $row['lot_area'] * $row['price_per_sqm'];
+                                $unitStatus = "Available"; // Adjust accordingly if real status field
+                            ?>
+                                <tr data-project="<?= htmlspecialchars($row['project_title']) ?>"
+                                    data-status="<?= $unitStatus ?>"
+                                    data-class="<?= htmlspecialchars($row['lot_class']) ?>">
+                                    <td><input type="checkbox" class="row-checkbox" name="selected[]" value="<?= $row['id'] ?>"></td>
+                                    <td>
+                                        <a href="#"
+                                           class="text-decoration-underline fw-semibold"
+                                           data-bs-toggle="offcanvas"
+                                           data-bs-target="#unitDetails<?= $i ?>"
+                                           aria-controls="unitDetails<?= $i ?>">
+                                            <?= htmlspecialchars($row['project_title'] . ' - Block ' . $row['block'] . ', Lot ' . $row['lot']) ?>
+                                        </a>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['lot_class']) ?></td>
+                                    <td><?= htmlspecialchars($row['lot_area']) ?></td>
+                                    <td>₱<?= number_format($row['price_per_sqm'], 2) ?></td>
+                                    <td>₱<?= number_format($total_price, 2) ?></td>
+                                    <td><span class="badge bg-success"><?= $unitStatus ?></span></td>
+                                    <td><?= htmlspecialchars($row['project_site']) ?></td>
+                                </tr>
+
+                                <!-- Offcanvas Modal for Details -->
+                                <div class="offcanvas offcanvas-end" tabindex="-1" id="unitDetails<?= $i ?>" aria-labelledby="unitDetailsLabel<?= $i ?>">
+                                    <div class="offcanvas-header">
+                                        <h5 class="offcanvas-title" id="unitDetailsLabel<?= $i ?>">Unit Details</h5>
+                                        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                                    </div>
+                                    <div class="offcanvas-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">Project Title</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['project_title']) ?></dd>
+                                            <dt class="col-sm-4">Site</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['project_site']) ?></dd>
+                                            <dt class="col-sm-4">Phase</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['phase']) ?></dd>
+                                            <dt class="col-sm-4">Block</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['block']) ?></dd>
+                                            <dt class="col-sm-4">Lot</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot']) ?></dd>
+                                            <dt class="col-sm-4">Class</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot_class']) ?></dd>
+                                            <dt class="col-sm-4">Lot Area</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot_area']) ?> sqm</dd>
+                                            <dt class="col-sm-4">Price per sqm</dt>
+                                            <dd class="col-sm-8">₱<?= number_format($row['price_per_sqm'], 2) ?></dd>
+                                            <dt class="col-sm-4">Total Price</dt>
+                                            <dd class="col-sm-8">₱<?= number_format($total_price, 2) ?></dd>
+                                            <dt class="col-sm-4">Created At</dt>
+                                            <dd class="col-sm-8"><?= htmlspecialchars($row['created_at']) ?></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="8" class="text-center text-muted">No projects found.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Add Unit Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="addUnitCanvas" aria-labelledby="addUnitCanvasLabel">
+    <div class="offcanvas-header">
+        <h4 class="offcanvas-title" id="addUnitCanvasLabel">Add New Unit</h4>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="add-unit-form" method="post">
+            <input type="hidden" name="add_unit" value="1" />
+            <div class="mb-3">
+                <label for="project_id" class="form-label">Project</label>
+                <select id="project_id" name="project_id" class="form-select" required>
+                    <option value="">Select Project</option>
+                    <?php foreach ($projects_for_dropdown as $proj): ?>
+                        <option value="<?= $proj['id'] ?>" data-site="<?= htmlspecialchars($proj['project_site']) ?>"><?= htmlspecialchars($proj['project_title']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="site" class="form-label">Site</label>
+                <input type="text" id="site" name="site" class="form-control" readonly>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="phase" class="form-label">Phase</label>
+                    <input type="text" id="phase" name="phase" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="lot_class" class="form-label">Class</label>
+                    <select id="lot_class" name="lot_class" class="form-select" required>
+                        <option value="">Select Class</option>
+                        <option value="Economy">Economy</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Premium">Premium</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="block" class="form-label">Block</label>
+                    <input type="text" id="block" name="block" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="lot" class="form-label">Lot</label>
+                    <input type="text" id="lot" name="lot" class="form-control" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="lot_area" class="form-label">Lot Area (sqm)</label>
+                    <input type="number" step="0.01" min="0" id="lot_area" name="lot_area" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="price_per_sqm" class="form-label">Price per sqm (₱)</label>
+                    <input type="number" step="0.01" min="0" id="price_per_sqm" name="price_per_sqm" class="form-control" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="total_price" class="form-label">Total Price (₱)</label>
+                <input type="text" id="total_price" name="total_price" class="form-control" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Unit</button>
         </form>
-
-        <!-- DataTable -->
-        <table id="units-table" class="table table-striped dt-responsive nowrap w-100">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="select-all"></th>
-
-              <th>Project Title</th>
-              <th>Project Site</th>
-              <th>Status</th>
-              <th>Phase</th>
-              <th>Block</th>
-              <th>Lot</th>
-              <th>Lot Class</th>
-              <th>Area (sqm)</th>
-              <th>Price/sqm</th>
-              <th>Reserved On</th>
-              <th>Contract Price</th>
-              <th>Misc Fee</th>
-              <th>Reservation Fee</th>
-            </tr>
-          </thead>
-          <tbody>
-    <?php foreach ($units as $u): ?>
-      <tr
-        data-id="<?= $u['id'] ?>"
-        data-unit_status="<?= htmlspecialchars($u['unit_status'], ENT_QUOTES) ?>"
-        data-project_title="<?= htmlspecialchars($u['project_title'], ENT_QUOTES) ?>"
-        data-project_site="<?= htmlspecialchars($u['project_site'], ENT_QUOTES) ?>"
-        data-phase="<?= htmlspecialchars($u['phase'], ENT_QUOTES) ?>"
-        data-block="<?= htmlspecialchars($u['block'], ENT_QUOTES) ?>"
-        data-lot="<?= htmlspecialchars($u['lot'], ENT_QUOTES) ?>"
-        data-lot_class="<?= htmlspecialchars($u['lot_class'], ENT_QUOTES) ?>"
-        data-lot_area="<?= $u['lot_area'] ?>"
-        data-price_per_sqm="<?= $u['price_per_sqm'] ?>"
-        data-date_of_reservation="<?= $u['date_of_reservation'] ?>"
-        data-total_contract_price="<?= $u['total_contract_price'] ?>"
-        data-additional_misc_fee="<?= $u['additional_misc_fee'] ?>"
-        data-reservation_fee="<?= $u['reservation_fee'] ?>"
-        data-interest="<?= $u['interest'] ?>"
-        data-net_selling_price="<?= $u['net_selling_price'] ?>"
-        data-total_amount_payable="<?= $u['total_amount_payable'] ?>"
-        data-monthly_amortization="<?= $u['monthly_amortization'] ?>"
-        data-amortization_start_date="<?= $u['amortization_start_date'] ?>"
-        data-payment_terms="<?= $u['payment_terms'] ?>"
-        data-client_name="<?= htmlspecialchars($u['client_name'], ENT_QUOTES) ?>"
-        data-balance_payable="<?= $u['balance_payable'] ?>"
-        data-view_360_link="<?= htmlspecialchars($u['view_360_link'], ENT_QUOTES) ?>"
-      >
-        <td><input type="checkbox" class="row-checkbox"></td>
-
-        <td>
-        <a href="unit-profile.php?id=<?= $u['id'] ?>">
-          <?= htmlspecialchars($u['project_title']) ?>
-        </a>
-        </td>
-        <td><?= htmlspecialchars($u['project_site']) ?></td>
-        <td><?= htmlspecialchars($u['unit_status']) ?></td>
-        <td><?= htmlspecialchars($u['phase']) ?></td>
-        <td><?= htmlspecialchars($u['block']) ?></td>
-        <td><?= htmlspecialchars($u['lot']) ?></td>
-        <td><?= htmlspecialchars($u['lot_class']) ?></td>
-        <td><?= number_format($u['lot_area'], 2) ?></td>
-        <td><?= number_format($u['price_per_sqm'], 2) ?></td>
-        <td><?= $u['date_of_reservation'] ?></td>
-        <td><?= number_format($u['total_contract_price'], 2) ?></td>
-        <td><?= number_format($u['additional_misc_fee'], 2) ?></td>
-        <td><?= number_format($u['reservation_fee'], 2) ?></td>
-      </tr>
-    <?php endforeach; ?>
-          </tbody>
-        </table>
-
-      </div>
     </div>
-  </div>
 </div>
 
-<!-- Offcanvas form for Add / Edit -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="unitCanvas">
-  <div class="offcanvas-header">
-    <h5 id="canvas-title">Add Unit</h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
-  </div>
-  <div class="offcanvas-body">
-    <form id="unit-form"
-          method="POST"
-          action="<?= htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES) ?>">
-      <input type="hidden" name="action" id="form-action" value="create">
-      <input type="hidden" name="id"     id="form-id">
-
-      <div class="mb-3">
-        <label for="form-unit_status" class="form-label">Status *</label>
-        <select class="form-control" id="form-unit_status" name="unit_status" required>
-          <option value="">Select…</option>
-          <option>Available</option>
-          <option>Sold</option>
-          <option>Reserved</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label for="form-project_title" class="form-label">Project Title *</label>
-        <input type="text" class="form-control" id="form-project_title" name="project_title" required>
-      </div>
-      <div class="mb-3">
-        <label for="form-project_site" class="form-label">Project Site</label>
-        <input type="text" class="form-control" id="form-project_site" name="project_site">
-      </div>
-      <div class="mb-3">
-        <label for="form-phase" class="form-label">Phase</label>
-        <input type="text" class="form-control" id="form-phase" name="phase">
-      </div>
-      <div class="mb-3">
-        <label for="form-block" class="form-label">Block</label>
-        <input type="text" class="form-control" id="form-block" name="block">
-      </div>
-      <div class="mb-3">
-        <label for="form-lot" class="form-label">Lot</label>
-        <input type="text" class="form-control" id="form-lot" name="lot">
-      </div>
-      <div class="mb-3">
-        <label for="form-lot_class" class="form-label">Lot Class</label>
-        <input type="text" class="form-control" id="form-lot_class" name="lot_class">
-      </div>
-      <div class="mb-3">
-        <label for="form-lot_area" class="form-label">Lot Area (sqm)</label>
-        <input type="number" step="0.01" class="form-control" id="form-lot_area" name="lot_area" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-price_per_sqm" class="form-label">Price per sqm</label>
-        <input type="number" step="0.01" class="form-control" id="form-price_per_sqm" name="price_per_sqm" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-date_of_reservation" class="form-label">Date of Reservation</label>
-        <input type="date" class="form-control" id="form-date_of_reservation" name="date_of_reservation">
-      </div>
-      <div class="mb-3">
-        <label for="form-total_contract_price" class="form-label">Total Contract Price</label>
-        <input type="number" step="0.01" class="form-control" id="form-total_contract_price" name="total_contract_price" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-additional_misc_fee" class="form-label">Additional Misc Fee</label>
-        <input type="number" step="0.01" class="form-control" id="form-additional_misc_fee" name="additional_misc_fee" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-reservation_fee" class="form-label">Reservation Fee</label>
-        <input type="number" step="0.01" class="form-control" id="form-reservation_fee" name="reservation_fee" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-interest" class="form-label">Interest</label>
-        <input type="number" step="0.01" class="form-control" id="form-interest" name="interest" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-net_selling_price" class="form-label">Net Selling Price</label>
-        <input type="number" step="0.01" class="form-control" id="form-net_selling_price" name="net_selling_price" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-total_amount_payable" class="form-label">Total Amount Payable</label>
-        <input type="number" step="0.01" class="form-control" id="form-total_amount_payable" name="total_amount_payable" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-monthly_amortization" class="form-label">Monthly Amortization</label>
-        <input type="number" step="0.01" class="form-control" id="form-monthly_amortization" name="monthly_amortization" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-amortization_start_date" class="form-label">Amortization Start Date</label>
-        <input type="date" class="form-control" id="form-amortization_start_date" name="amortization_start_date">
-      </div>
-      <div class="mb-3">
-        <label for="form-payment_terms" class="form-label">Payment Terms (months)</label>
-        <input type="number" class="form-control" id="form-payment_terms" name="payment_terms" value="0">
-      </div>
-      <div class="mb-3">
-        <label for="form-client_name" class="form-label">Client Name</label>
-        <input type="text" class="form-control" id="form-client_name" name="client_name">
-      </div>
-      <div class="mb-3">
-        <label for="form-balance_payable" class="form-label">Balance Payable</label>
-        <input type="number" step="0.01" class="form-control" id="form-balance_payable" name="balance_payable" value="0.00">
-      </div>
-      <div class="mb-3">
-        <label for="form-view_360_link" class="form-label">360° View Link</label>
-        <input type="url" class="form-control" id="form-view_360_link" name="view_360_link">
-      </div>
-
-      <button type="submit" class="btn btn-primary" id="canvas-submit">Save</button>
-    </form>
-  </div>
+<!-- Archive Disclaimer Modal -->
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="archiveModalLabel">Archive Project(s)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Projects cannot be deleted if they have related Statement of Account (SOA) records.</strong></p>
+                <p>Instead, selected projects will be archived and hidden from this table. You can view them in the Archived Projects page.</p>
+                <p>Are you sure you want to archive the selected project(s)?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirm-archive" class="btn btn-warning">Archive</button>
+            </div>
+        </div>
+    </div>
 </div>
-
-<!-- CSS / JS includes -->
-<link rel="stylesheet" href="assets/vendor/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
-<script src="assets/vendor/jquery/jquery.min.js"></script>
-<script src="assets/vendor/datatables.net/js/jquery.dataTables.min.js"></script>
-<script src="assets/vendor/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
-<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const bulkPanel         = document.getElementById('bulk-panel');
-  const selectedCount     = document.getElementById('selected-count');
-  const selectAllLink     = document.getElementById('select-all-link');
-  const bulkForm          = document.getElementById('bulk-form');
-  const bulkIds           = document.getElementById('bulk-ids');
-  const selectAllCheckbox = document.getElementById('select-all');
-  const table             = $('#units-table').DataTable({
-    responsive: true,
-    order: [[2, 'asc']]
-  });
+    const table = document.getElementById('projects-table');
+    const bulkPanel = document.getElementById('bulk-panel');
+    const selectedCount = document.getElementById('selected-count');
+    const selectAllLink = document.getElementById('select-all-link');
+    const masterCheckbox = document.getElementById('master-checkbox');
+    const archiveBtn = document.getElementById('bulk-archive');
+    const form = document.getElementById('projects-form');
 
-  function getSelectedIds() {
-    return Array.from(document.querySelectorAll('.row-checkbox:checked'))
-      .map(cb => cb.closest('tr').dataset.id);
-  }
-
-  function updateBulkPanel() {
-    const ids = getSelectedIds();
-    if (ids.length) {
-      bulkPanel.style.display   = 'flex';
-      selectedCount.textContent = `${ids.length} selected`;
-      bulkIds.value             = ids.join(',');
-    } else {
-      bulkPanel.style.display   = 'none';
-      selectedCount.textContent = '0 selected';
+    function updatePanel() {
+        const visibleRows = table.querySelectorAll('tbody tr:not([style*="display: none"])');
+        const checkedBoxes = Array.from(visibleRows)
+            .map(row => row.querySelector('.row-checkbox'))
+            .filter(cb => cb && cb.checked);
+        bulkPanel.style.display = checkedBoxes.length > 0 ? 'flex' : 'none';
+        selectedCount.textContent = `${checkedBoxes.length} selected`;
     }
-  }
 
-  $('#units-table tbody').on('change', '.row-checkbox', updateBulkPanel);
-  table.on('draw', () => {
-    selectAllCheckbox.checked = false;
-    updateBulkPanel();
-  });
-
-  selectAllCheckbox.addEventListener('change', () => {
-    document.querySelectorAll('.row-checkbox')
-      .forEach(cb => cb.checked = selectAllCheckbox.checked);
-    updateBulkPanel();
-  });
-
-  selectAllLink.addEventListener('click', e => {
-    e.preventDefault();
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = true);
-    selectAllCheckbox.checked = true;
-    updateBulkPanel();
-  });
-
-  document.getElementById('bulk-delete').addEventListener('click', function(e) {
-    e.preventDefault();
-    const ids = getSelectedIds();
-    if (!ids.length) return alert('No units selected.');
-    if (confirm('Delete selected unit(s)?')) {
-      bulkIds.value = ids.join(',');
-      bulkForm.submit();
-    }
-  });
-
-  document.getElementById('bulk-edit').addEventListener('click', function(e) {
-    e.preventDefault();
-    const ids = getSelectedIds();
-    if (ids.length !== 1) return alert('Please select exactly one unit to edit.');
-    const tr = document.querySelector(`tr[data-id="${ids[0]}"]`);
-    const offcanvas = new bootstrap.Offcanvas(document.getElementById('unitCanvas'));
-
-    document.getElementById('canvas-title').textContent = 'Edit Unit';
-    document.getElementById('form-action').value      = 'update';
-    document.getElementById('form-id').value          = tr.dataset.id;
-
-    const fields = [
-      'unit_status','project_title','project_site','phase','block','lot','lot_class',
-      'lot_area','price_per_sqm','date_of_reservation','total_contract_price',
-      'additional_misc_fee','reservation_fee','interest','net_selling_price',
-      'total_amount_payable','monthly_amortization','amortization_start_date',
-      'payment_terms','client_name','balance_payable','view_360_link'
-    ];
-    fields.forEach(field => {
-      document.getElementById('form-' + field).value = tr.dataset[field] || '';
+    // Row checkboxes
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', () => {
+            updatePanel();
+            const visibleBoxes = Array.from(table.querySelectorAll('tbody tr:not([style*="display: none"]) .row-checkbox'));
+            const checkedBoxes = visibleBoxes.filter(box => box.checked);
+            masterCheckbox.checked = visibleBoxes.length > 0 && visibleBoxes.length === checkedBoxes.length;
+        });
     });
 
-    document.getElementById('canvas-submit').textContent = 'Update';
-    offcanvas.show();
-  });
-
-  document.getElementById('btn-add').addEventListener('click', function() {
-    const offcanvas = new bootstrap.Offcanvas(document.getElementById('unitCanvas'));
-    document.getElementById('canvas-title').textContent = 'Add Unit';
-    document.getElementById('form-action').value      = 'create';
-    document.getElementById('form-id').value          = '';
-
-    const fields = [
-      'unit_status','project_title','project_site','phase','block','lot','lot_class',
-      'lot_area','price_per_sqm','date_of_reservation','total_contract_price',
-      'additional_misc_fee','reservation_fee','interest','net_selling_price',
-      'total_amount_payable','monthly_amortization','amortization_start_date',
-      'payment_terms','client_name','balance_payable','view_360_link'
-    ];
-    fields.forEach(field => {
-      const el = document.getElementById('form-' + field);
-      if (!el) return;
-      if (['lot_area','price_per_sqm','total_contract_price','additional_misc_fee','reservation_fee','interest','net_selling_price','total_amount_payable','monthly_amortization','balance_payable'].includes(field)) {
-        el.value = '0.00';
-      } else if (field === 'payment_terms') {
-        el.value = '0';
-      } else {
-        el.value = '';
-      }
+    // Master checkbox
+    masterCheckbox.addEventListener('change', () => {
+        const visibleBoxes = table.querySelectorAll('tbody tr:not([style*="display: none"]) .row-checkbox');
+        visibleBoxes.forEach(cb => cb.checked = masterCheckbox.checked);
+        updatePanel();
     });
 
-    document.getElementById('canvas-submit').textContent = 'Add';
-    offcanvas.show();
-  });
+    // Select all link
+    selectAllLink.addEventListener('click', e => {
+        e.preventDefault();
+        const visibleBoxes = table.querySelectorAll('tbody tr:not([style*="display: none"]) .row-checkbox');
+        visibleBoxes.forEach(cb => cb.checked = true);
+        masterCheckbox.checked = true;
+        updatePanel();
+    });
+
+    // Bulk archive button
+    archiveBtn.addEventListener('click', e => {
+        e.preventDefault();
+        const visibleBoxes = table.querySelectorAll('tbody tr:not([style*="display: none"]) .row-checkbox');
+        const checked = Array.from(visibleBoxes).filter(cb => cb.checked);
+        if (checked.length === 0) return;
+        const archiveModal = new bootstrap.Modal(document.getElementById('archiveModal'));
+        archiveModal.show();
+    });
+
+    // Confirm archive button in modal
+    document.getElementById('confirm-archive').addEventListener('click', () => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'bulk_archive';
+        hiddenInput.value = '1';
+        form.appendChild(hiddenInput);
+        form.submit();
+    });
+
+    // FILTER LOGIC
+    function normalize(str) {
+        return (str || '').toLowerCase().replace(/\s+/g, '').trim();
+    }
+
+    function applyTableFilters() {
+        const proj = normalize(document.getElementById('filter-project').value);
+        const stat = normalize(document.getElementById('filter-status').value);
+        const lotClass = normalize(document.getElementById('filter-class').value);
+
+        document.querySelectorAll("#projects-table tbody tr").forEach(tr => {
+            let matches = true;
+            if (proj && normalize(tr.getAttribute('data-project')) !== proj) matches = false;
+            if (stat && normalize(tr.getAttribute('data-status')) !== stat) matches = false;
+            if (lotClass && normalize(tr.getAttribute('data-class')) !== lotClass) matches = false;
+            tr.style.display = matches ? "" : "none";
+        });
+        updatePanel();
+    }
+
+    document.getElementById('filter-project').addEventListener('change', applyTableFilters);
+    document.getElementById('filter-status').addEventListener('change', applyTableFilters);
+    document.getElementById('filter-class').addEventListener('change', applyTableFilters);
+
+    // Add Unit form logic
+    const projectSelect = document.getElementById('project_id');
+    const siteInput = document.getElementById('site');
+    const lotAreaInput = document.getElementById('lot_area');
+    const pricePerSqmInput = document.getElementById('price_per_sqm');
+    const totalPriceInput = document.getElementById('total_price');
+
+    projectSelect.addEventListener('change', () => {
+        const selectedOption = projectSelect.selectedOptions[0];
+        siteInput.value = selectedOption ? selectedOption.dataset.site : '';
+    });
+
+    function calculateTotalPrice() {
+        const area = parseFloat(lotAreaInput.value) || 0;
+        const price = parseFloat(pricePerSqmInput.value) || 0;
+        totalPriceInput.value = area && price ? '₱' + (area * price).toFixed(2) : '';
+    }
+    lotAreaInput.addEventListener('input', calculateTotalPrice);
+    pricePerSqmInput.addEventListener('input', calculateTotalPrice);
+
+    // Print to PDF button
+    document.getElementById('print-pdf-btn').addEventListener('click', () => {
+        window.print();
+    });
+
+    // Export CSV button
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+        const rows = Array.from(table.querySelectorAll('tbody tr:not([style*="display: none"])'));
+        if (!rows.length) return alert('No visible rows to export.');
+
+        let csv = '"Unit","Class","Lot Area (sqm)","Price/sqm","Total Price","Status","Site"\n';
+        rows.forEach(tr => {
+            const cols = tr.querySelectorAll('td');
+            const rowData = [
+                cols[1].innerText.trim(),
+                cols[2].innerText.trim(),
+                cols[3].innerText.trim(),
+                cols[4].innerText.trim(),
+                cols[5].innerText.trim(),
+                cols[6].innerText.trim(),
+                cols[7].innerText.trim(),
+            ];
+            csv += '"' + rowData.join('","') + '"\n';
+        });
+
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'units_export.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
 });
 </script>

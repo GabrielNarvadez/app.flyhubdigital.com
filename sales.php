@@ -10,6 +10,7 @@
 
 <body>
     <!-- Begin page -->
+
     <div class="wrapper">
 
         <?php include 'layouts/menu.php'; ?>

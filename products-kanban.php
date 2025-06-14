@@ -24,10 +24,25 @@
                 <!-- Start Content-->
                 <div class="container-fluid">
 
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="page-title-box">
-                                <h4 class="page-title">Units</h4>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="page-title-box">
+                                            <div class="page-title-left" style="margin-top: 30px;">
+                                                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                                    <h3 class="mb-0">Units</h3>
+                                                    <div class="d-flex gap-2">
+                                                        <a href="estate-units.php" class="btn btn-outline-primary">
+                                                            <i class="ri-list-unordered"></i>
+                                                        </a>
+                                                        <a href="products-kanban.php" class="btn btn-outline-primary active">
+                                                            <i class="ri-grid-fill"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <?php include 'modules/products-kanban.php'; ?>
 

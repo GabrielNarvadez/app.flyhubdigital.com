@@ -93,7 +93,7 @@
       </a>
     </li>
     <li class="side-nav-item">
-      <a href="apps-real-estate-management.php" class="side-nav-link">
+      <a href="apps-real-estate.php" class="side-nav-link">
         <i class="ri-building-line"></i>
         <span> Real Estate </span>
       </a>

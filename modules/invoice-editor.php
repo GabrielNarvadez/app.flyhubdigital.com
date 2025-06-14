@@ -391,10 +391,10 @@ function renderLineItemsTable() {
                    value="${item.unit_price}" ${isConfirmed?'readonly':''}>
           </td>
           <td class="text-end align-middle">₱${amt.toFixed(2)}</td>
-          <td>
+          <td class="text-center">
             ${isConfirmed ? '' : `
-              <button type="button" class="btn btn-link text-danger btn-sm p-0 remove-item" data-idx="${i}">
-                <i class="ri-close-line"></i>
+              <button type="button" class="btn btn-link text-danger btn-sm p-0 remove-item" data-idx="${i}" style="text-decoration: none;">
+                <i class="ri-delete-bin-line"></i>
               </button>
             `}
           </td>
@@ -481,7 +481,7 @@ function renderPreview() {
     <div class="row mt-3">
       <div class="col-12">
         <div class="float-end small">
-          <p><b>Sub-total:</b> <span class="float-end">₱${parseFloat(sub).toFixed(2)}</span></p>
+          <p><b>Sub-total :</b> <span class="float-end">₱${parseFloat(sub).toFixed(2)}</span></p>
           <p><b>Discount:</b> <span class="float-end">₱${parseFloat(dis).toFixed(2)}</span></p>
           <p><b>Tax:</b> <span class="float-end">₱${parseFloat(tax).toFixed(2)}</span></p>
           <h5 class="mt-2">₱${parseFloat(tot).toFixed(2)}</h5>
