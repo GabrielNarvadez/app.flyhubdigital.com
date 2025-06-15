@@ -4,7 +4,7 @@
 <?php
 require_once __DIR__ . '/layouts/config.php';
 
-// Helper function for dynamic binding (for delete)
+// Helper function for dynamic binding (for delete))
 function refValues($arr) {
     $refs = [];
     foreach ($arr as $key => $value) {
