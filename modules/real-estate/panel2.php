@@ -10,30 +10,34 @@ if (!$link) {
 // Date Range filter
 $filter_range = $_GET['range'] ?? '';
 $where = [];
-$params = [];
-$types = '';
 $status_filter = $_GET['status'] ?? '';
+// Define allowed statuses for safe filtering
+$allowed_statuses = ['draft', 'sent', 'paid', 'void', 'canceled'];
 
 if ($filter_range) {
-    if ($filter_range == 'today') {
+    if ($filter_range === 'today') {
         $where[] = "DATE(i.issue_date) = CURDATE()";
-    } elseif ($filter_range == 'week') {
+    } elseif ($filter_range === 'week') {
         $where[] = "YEARWEEK(i.issue_date, 1) = YEARWEEK(CURDATE(), 1)";
-    } elseif ($filter_range == 'month') {
+    } elseif ($filter_range === 'month') {
         $where[] = "YEAR(i.issue_date) = YEAR(CURDATE()) AND MONTH(i.issue_date) = MONTH(CURDATE())";
-    } elseif ($filter_range == 'year') {
+    } elseif ($filter_range === 'year') {
         $where[] = "YEAR(i.issue_date) = YEAR(CURDATE())";
     }
 }
-if ($status_filter !== '' && $status_filter !== 'all') {
-    $where[] = "i.status = '" . mysqli_real_escape_string($link, $status_filter) . "'";
+
+// Apply status filter only if valid and not 'all'
+if ($status_filter !== '' && $status_filter !== 'all' && in_array($status_filter, $allowed_statuses)) {
+    // Safe escape since it comes from a whitelist
+    $where[] = "i.status = '" . $status_filter . "'";
 }
+
 $whereSQL = $where ? "WHERE " . implode(' AND ', $where) : "";
 
 // --- Query with filters ---
 $sql = "SELECT 
             i.invoice_number,
-            CONCAT(c.first_name, ' ', c.last_name) AS client_name,
+            CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) AS client_name,
             i.total,
             i.status,
             i.issue_date
@@ -57,6 +61,15 @@ $statuses = [
     'paid' => 'Paid',
     'void' => 'Void',
     'canceled' => 'Canceled'
+];
+
+// Map status to Bootstrap badge classes
+$statusBadgeClass = [
+    'paid' => 'success',
+    'sent' => 'primary',
+    'draft' => 'secondary',
+    'canceled' => 'danger',
+    'void' => 'warning'
 ];
 ?>
 
@@ -87,7 +100,7 @@ $statuses = [
                     <div class="col-auto">
                         <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                             <?php foreach ($statuses as $key => $label): ?>
-                                <option value="<?= $key ?>" <?= ($status_filter === $key) ? 'selected' : '' ?>><?= $label ?></option>
+                                <option value="<?= htmlspecialchars($key) ?>" <?= ($status_filter === $key) ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -114,18 +127,17 @@ $statuses = [
                 <tbody>
                 <?php if (mysqli_num_rows($result) > 0): ?>
                     <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                        <?php 
+                            $status = strtolower($row['status']);
+                            $badgeClass = $statusBadgeClass[$status] ?? 'secondary';
+                        ?>
                         <tr>
                             <td><?= htmlspecialchars($row['invoice_number']) ?></td>
-                            <td><?= htmlspecialchars($row['client_name'] ?: '—') ?></td>
+                            <td><?= htmlspecialchars(trim($row['client_name']) ?: '—') ?></td>
                             <td><strong><?= number_format($row['total'], 2) ?></strong></td>
                             <td>
-                                <span class="badge bg-<?= 
-                                    $row['status'] == 'paid' ? 'success' : 
-                                    ($row['status'] == 'sent' ? 'primary' : 
-                                    ($row['status'] == 'draft' ? 'secondary' : 
-                                    ($row['status'] == 'canceled' ? 'danger' : 'warning')) )
-                                ?>">
-                                    <?= htmlspecialchars(ucfirst($row['status'])) ?>
+                                <span class="badge bg-<?= $badgeClass ?>">
+                                    <?= htmlspecialchars(ucfirst($status)) ?>
                                 </span>
                             </td>
                             <td><?= htmlspecialchars($row['issue_date']) ?></td>
@@ -142,11 +154,9 @@ $statuses = [
     </div>
 </div>
 
-<!-- Print & Export Scripts -->
 <script>
 function printTable() {
     var printContents = document.getElementById('invoice-table').outerHTML;
-    var originalContents = document.body.innerHTML;
     var win = window.open('', '', 'height=700,width=900');
     win.document.write('<html><head><title>Print Invoices</title>');
     win.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">');
@@ -169,7 +179,6 @@ function exportTableToCSV(filename) {
             row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
         csv.push(row.join(","));
     }
-    // Download CSV
     var csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
     var downloadLink = document.createElement("a");
     downloadLink.download = filename;

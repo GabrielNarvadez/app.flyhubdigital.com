@@ -18,7 +18,7 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
 ?>
 
 <div class="row mb-4 g-3">
-    <div class="col-md-6">
+    <div class="col-12">  <!-- full width column -->
         <div class="card text-success border-success border shadow h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -31,7 +31,7 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-12">  <!-- full width column -->
         <div class="card text-primary border-primary border shadow h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
