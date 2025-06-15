@@ -5,11 +5,11 @@ function esc($str) { return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8'); }
 
 // ---- AJAX HANDLER for Invoice Preview ----
 if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
-    // =========== INVOICE PREVIEW AJAX ============
+    // =========== INVOICE PREVIEW AJAX ============ 
     if (isset($_GET['id'])) {
         $inv_id = intval($_GET['id']);
-        // Fetch invoice header and contact info
-        $stmt = $link->prepare("SELECT i.*, c.first_name, c.last_name, c.email, c.phone_number, c.address 
+        // Fix: No address in contacts table
+        $stmt = $link->prepare("SELECT i.*, c.first_name, c.last_name, c.email, c.phone_number, c.company_name 
             FROM invoices i LEFT JOIN contacts c ON i.contact_id = c.id WHERE i.id=?");
         $stmt->bind_param("i", $inv_id);
         $stmt->execute();
@@ -78,7 +78,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
         </script>
 
-
         <div class="clearfix mb-2">
             <div class="float-start"><img src="/assets/images/logo-dark.png" alt="logo" height="28"></div>
             <div class="float-end"><h3 class="m-0">Invoice</h3></div>
@@ -98,7 +97,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 <h6 class="fw-bold">Billing Address</h6>
                 <address class="mb-0">
                     <?=esc(trim($inv['first_name'].' '.$inv['last_name']))?><br>
-                    <?=esc($inv['address'])?><br>
+                    <?php if (!empty($inv['company_name'])): ?>
+                        <?=esc($inv['company_name'])?><br>
+                    <?php endif; ?>
                     <abbr title="Phone">P:</abbr> <?=esc($inv['phone_number'])?>
                 </address>
             </div>
@@ -151,7 +152,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     }
 
     // =========== INVOICE TABLE AJAX (live filter/search) ============
-    // (Triggered if ?ajax=1&table=1)
     if (isset($_GET['table']) && $_GET['table']=='1') {
         // For security, re-validate all params below:
         $search = trim($_GET['search'] ?? '');

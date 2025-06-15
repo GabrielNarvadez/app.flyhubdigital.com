@@ -18,11 +18,17 @@ if (!empty($_SESSION['error_message'])) {
     unset($_SESSION['error_message']);
 }
 
-// Fetch units (non-archived)
-$sql = "SELECT * FROM projects WHERE archived = 0 ORDER BY created_at DESC";
+// Fetch units (not archived) - JOIN to projects for title/site (if you want to display from projects)
+$sql = "SELECT 
+    u.*, 
+    p.project_title, 
+    p.project_site 
+FROM units u
+LEFT JOIN projects p ON u.project_id = p.id
+ORDER BY u.created_at DESC";
 $result = mysqli_query($link, $sql);
 
-// Fetch projects for Add Unit dropdown
+// Fetch projects for Add Unit dropdown (optional, if you use this later)
 $projects_for_dropdown = [];
 $proj_res = mysqli_query($link, "SELECT DISTINCT id, project_title, project_site FROM projects WHERE archived = 0 ORDER BY project_title");
 while ($pr = mysqli_fetch_assoc($proj_res)) {
@@ -54,35 +60,32 @@ if (!$result) {
 <div class="row g-4">
     <?php if (mysqli_num_rows($result) > 0): ?>
         <?php $i = 0; while ($row = mysqli_fetch_assoc($result)): $i++;
-            $total_price = $row['lot_area'] * $row['price_per_sqm'];
-            $unitStatus = "Available"; // Adjust as needed if you have a status field
+            $lot_area = isset($row['lot_area']) && $row['lot_area'] !== null ? $row['lot_area'] : 0;
+            $ppsqm = isset($row['price_per_sqm']) && $row['price_per_sqm'] !== null ? $row['price_per_sqm'] : 0;
+            $total_price = $lot_area * $ppsqm;
+            $unitStatus = isset($row['status']) ? $row['status'] : "Available";
         ?>
         <div class="col-md-2">
             <div class="card h-100 shadow-sm">
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <h5 class="card-title mb-0"><?= htmlspecialchars($row['project_title']) ?></h5>
-                        <span class="badge bg-success"><?= $unitStatus ?></span>
+                        <span class="badge bg-success"><?= htmlspecialchars($unitStatus) ?></span>
                     </div>
-
                     <p class="card-text mb-1"><strong>Site:</strong> <?= htmlspecialchars($row['project_site']) ?></p>
                     <p class="card-text mb-1"><strong>Phase:</strong> <?= htmlspecialchars($row['phase']) ?></p>
-
                     <p class="card-text mb-1"><strong>Class:</strong> <?= htmlspecialchars($row['lot_class']) ?></p>
-              
                     <div class="row mb-1">
-                      <div class="col">
-                        <p class="card-text mb-0"><strong>Block:</strong> <?= htmlspecialchars($row['block']) ?></p>
-                      </div>
-                      <div class="col">
-                        <p class="card-text mb-0"><strong>Lot:</strong> <?= htmlspecialchars($row['lot']) ?></p>
-                      </div>
+                        <div class="col">
+                            <p class="card-text mb-0"><strong>Block:</strong> <?= htmlspecialchars($row['block']) ?></p>
+                        </div>
+                        <div class="col">
+                            <p class="card-text mb-0"><strong>Lot:</strong> <?= htmlspecialchars($row['lot']) ?></p>
+                        </div>
                     </div>
-
-                    <p class="card-text mb-1"><strong>Lot Area:</strong> <?= htmlspecialchars($row['lot_area']) ?> sqm</p>
-                    <p class="card-text mb-1"><strong>Price per sqm:</strong> ₱<?= number_format($row['price_per_sqm'], 2) ?></p>
+                    <p class="card-text mb-1"><strong>Lot Area:</strong> <?= htmlspecialchars($lot_area) ?> sqm</p>
+                    <p class="card-text mb-1"><strong>Price per sqm:</strong> ₱<?= number_format($ppsqm, 2) ?></p>
                     <p class="card-text text-primary mb-3"><strong>Total Price:</strong> ₱<?= number_format($total_price, 2) ?></p>
-                    
                     <button type="button" class="btn btn-primary mt-auto" data-bs-toggle="offcanvas" data-bs-target="#unitDetails<?= $i ?>" aria-controls="unitDetails<?= $i ?>">
                         View Details
                     </button>
@@ -111,9 +114,9 @@ if (!$result) {
                     <dt class="col-sm-4">Class</dt>
                     <dd class="col-sm-8"><?= htmlspecialchars($row['lot_class']) ?></dd>
                     <dt class="col-sm-4">Lot Area</dt>
-                    <dd class="col-sm-8"><?= htmlspecialchars($row['lot_area']) ?> sqm</dd>
+                    <dd class="col-sm-8"><?= htmlspecialchars($lot_area) ?> sqm</dd>
                     <dt class="col-sm-4">Price per sqm</dt>
-                    <dd class="col-sm-8">₱<?= number_format($row['price_per_sqm'], 2) ?></dd>
+                    <dd class="col-sm-8">₱<?= number_format($ppsqm, 2) ?></dd>
                     <dt class="col-sm-4">Total Price</dt>
                     <dd class="col-sm-8">₱<?= number_format($total_price, 2) ?></dd>
                     <dt class="col-sm-4">Created At</dt>
@@ -121,7 +124,6 @@ if (!$result) {
                 </dl>
             </div>
         </div>
-
         <?php endwhile; ?>
     <?php else: ?>
         <div class="col-12">
