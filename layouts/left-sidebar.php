@@ -1,20 +1,39 @@
+<?php
+require_once __DIR__ . '/../layouts/config.php';
+
+// Use session, login context, or default for demo
+// Example: $tenant_id = $_SESSION['tenant_id'] ?? 1;
+$tenant_id = 1; // Set your actual logic here
+
+$logo_url = '/assets/images/flyhub-white-logo.png'; // Default logo
+$sql = "SELECT logo_url FROM tenants WHERE id = ?";
+$stmt = $link->prepare($sql);
+$stmt->bind_param("i", $tenant_id);
+$stmt->execute();
+$stmt->bind_result($db_logo_url);
+if ($stmt->fetch() && $db_logo_url) {
+    $logo_url = $db_logo_url;
+}
+$stmt->close();
+?>
+
 <div class="leftside-menu" id="leftside-menu">
-  <!-- LOGO: wrap both logos in a single container for easy toggle -->
+  <!-- LOGO: dynamic loading -->
   <div id="sidebarLogoContainer" style="height:60px;">
     <a href="index.php" class="logo logo-light">
       <span class="logo-lg">
-        <img src="assets/images/flyhub-white-logo.png" alt="logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;"/>
       </span>
       <span class="logo-sm">
-        <img src="assets/images/flyhub-white-logo.png" alt="small logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;"/>
       </span>
     </a>
     <a href="index.php" class="logo logo-dark">
       <span class="logo-lg">
-        <img src="assets/images/flyhub-white-logo.png" alt="dark logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="dark logo" style="height: 42px;"/>
       </span>
       <span class="logo-sm">
-        <img src="assets/images/flyhub-white-logo.png" alt="small logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;"/>
       </span>
     </a>
   </div>

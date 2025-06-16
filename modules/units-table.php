@@ -1,5 +1,3 @@
-
-
 <form method="post" id="projects-form">
 
     <!-- Bulk Panel -->
@@ -63,67 +61,78 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (mysqli_num_rows($result) > 0): ?>
-                            <?php $i = 0; while ($row = mysqli_fetch_assoc($result)): $i++;
-                                $total_price = $row['lot_area'] * $row['price_per_sqm'];
-                                $unitStatus = "Available"; // Adjust accordingly if real status field
-                            ?>
-                                <tr data-project="<?= htmlspecialchars($row['project_title']) ?>"
-                                    data-status="<?= $unitStatus ?>"
-                                    data-class="<?= htmlspecialchars($row['lot_class']) ?>">
-                                    <td><input type="checkbox" class="row-checkbox" name="selected[]" value="<?= $row['id'] ?>"></td>
-                                    <td>
-                                        <a href="#"
-                                           class="text-decoration-underline fw-semibold"
-                                           data-bs-toggle="offcanvas"
-                                           data-bs-target="#unitDetails<?= $i ?>"
-                                           aria-controls="unitDetails<?= $i ?>">
-                                            <?= htmlspecialchars($row['project_title'] . ' - Block ' . $row['block'] . ', Lot ' . $row['lot']) ?>
-                                        </a>
-                                    </td>
-                                    <td><?= htmlspecialchars($row['lot_class']) ?></td>
-                                    <td><?= htmlspecialchars($row['lot_area']) ?></td>
-                                    <td>₱<?= number_format($row['price_per_sqm'], 2) ?></td>
-                                    <td>₱<?= number_format($total_price, 2) ?></td>
-                                    <td><span class="badge bg-success"><?= $unitStatus ?></span></td>
-                                    <td><?= htmlspecialchars($row['project_site']) ?></td>
-                                </tr>
+<?php if (mysqli_num_rows($result) > 0): ?>
+    <?php $i = 0; while ($row = mysqli_fetch_assoc($result)): $i++;
+        // Use null coalescing to avoid warnings
+        $project_title = $row['project_title'] ?? '';
+        $block = $row['block'] ?? '';
+        $lot = $row['lot'] ?? '';
+        $lot_class = $row['lot_class'] ?? '';
+        $lot_area = $row['lot_area'] ?? 0;
+        $price_per_sqm = $row['price_per_sqm'] ?? 0;
+        $project_site = $row['project_site'] ?? '';
+        $phase = $row['phase'] ?? '';
+        $created_at = $row['created_at'] ?? '';
+        $unitStatus = "Available"; // Replace with $row['status'] ?? 'Available' if you have a status column
+        $total_price = $lot_area * $price_per_sqm;
+        $id = $row['id'] ?? '';
+    ?>
+        <tr data-project="<?= htmlspecialchars($project_title) ?>"
+            data-status="<?= htmlspecialchars($unitStatus) ?>"
+            data-class="<?= htmlspecialchars($lot_class) ?>">
+            <td><input type="checkbox" class="row-checkbox" name="selected[]" value="<?= htmlspecialchars($id) ?>"></td>
+            <td>
+                <a href="#"
+                   class="text-decoration-underline fw-semibold"
+                   data-bs-toggle="offcanvas"
+                   data-bs-target="#unitDetails<?= $i ?>"
+                   aria-controls="unitDetails<?= $i ?>">
+                    <?= htmlspecialchars($project_title . ' - Block ' . $block . ', Lot ' . $lot) ?>
+                </a>
+            </td>
+            <td><?= htmlspecialchars($lot_class) ?></td>
+            <td><?= htmlspecialchars($lot_area) ?></td>
+            <td>₱<?= number_format((float)$price_per_sqm, 2) ?></td>
+            <td>₱<?= number_format((float)$total_price, 2) ?></td>
+            <td><span class="badge bg-success"><?= htmlspecialchars($unitStatus) ?></span></td>
+            <td><?= htmlspecialchars($project_site) ?></td>
+        </tr>
 
-                                <!-- Offcanvas Modal for Details -->
-                                <div class="offcanvas offcanvas-end" tabindex="-1" id="unitDetails<?= $i ?>" aria-labelledby="unitDetailsLabel<?= $i ?>">
-                                    <div class="offcanvas-header">
-                                        <h5 class="offcanvas-title" id="unitDetailsLabel<?= $i ?>">Unit Details</h5>
-                                        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                                    </div>
-                                    <div class="offcanvas-body">
-                                        <dl class="row">
-                                            <dt class="col-sm-4">Project Title</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['project_title']) ?></dd>
-                                            <dt class="col-sm-4">Site</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['project_site']) ?></dd>
-                                            <dt class="col-sm-4">Phase</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['phase']) ?></dd>
-                                            <dt class="col-sm-4">Block</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['block']) ?></dd>
-                                            <dt class="col-sm-4">Lot</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot']) ?></dd>
-                                            <dt class="col-sm-4">Class</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot_class']) ?></dd>
-                                            <dt class="col-sm-4">Lot Area</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['lot_area']) ?> sqm</dd>
-                                            <dt class="col-sm-4">Price per sqm</dt>
-                                            <dd class="col-sm-8">₱<?= number_format($row['price_per_sqm'], 2) ?></dd>
-                                            <dt class="col-sm-4">Total Price</dt>
-                                            <dd class="col-sm-8">₱<?= number_format($total_price, 2) ?></dd>
-                                            <dt class="col-sm-4">Created At</dt>
-                                            <dd class="col-sm-8"><?= htmlspecialchars($row['created_at']) ?></dd>
-                                        </dl>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr><td colspan="8" class="text-center text-muted">No projects found.</td></tr>
-                        <?php endif; ?>
+        <!-- Offcanvas Modal for Details -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="unitDetails<?= $i ?>" aria-labelledby="unitDetailsLabel<?= $i ?>">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="unitDetailsLabel<?= $i ?>">Unit Details</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Project Title</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($project_title) ?></dd>
+                    <dt class="col-sm-4">Site</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($project_site) ?></dd>
+                    <dt class="col-sm-4">Phase</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($phase) ?></dd>
+                    <dt class="col-sm-4">Block</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($block) ?></dd>
+                    <dt class="col-sm-4">Lot</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($lot) ?></dd>
+                    <dt class="col-sm-4">Class</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($lot_class) ?></dd>
+                    <dt class="col-sm-4">Lot Area</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($lot_area) ?> sqm</dd>
+                    <dt class="col-sm-4">Price per sqm</dt>
+                    <dd class="col-sm-8">₱<?= number_format((float)$price_per_sqm, 2) ?></dd>
+                    <dt class="col-sm-4">Total Price</dt>
+                    <dd class="col-sm-8">₱<?= number_format((float)$total_price, 2) ?></dd>
+                    <dt class="col-sm-4">Created At</dt>
+                    <dd class="col-sm-8"><?= htmlspecialchars($created_at) ?></dd>
+                </dl>
+            </div>
+        </div>
+    <?php endwhile; ?>
+<?php else: ?>
+    <tr><td colspan="8" class="text-center text-muted">No projects found.</td></tr>
+<?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -145,7 +154,7 @@
                 <select id="project_id" name="project_id" class="form-select" required>
                     <option value="">Select Project</option>
                     <?php foreach ($projects_for_dropdown as $proj): ?>
-                        <option value="<?= $proj['id'] ?>" data-site="<?= htmlspecialchars($proj['project_site']) ?>"><?= htmlspecialchars($proj['project_title']) ?></option>
+                        <option value="<?= $proj['id'] ?>" data-site="<?= htmlspecialchars($proj['project_site'] ?? '') ?>"><?= htmlspecialchars($proj['project_title'] ?? '') ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

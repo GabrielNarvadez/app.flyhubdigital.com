@@ -62,7 +62,6 @@ if (!empty($_GET['date_range'])) {
 
 $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// *** REMOVED permanent_address and provincial_address from the select below ***
 $sql = "SELECT 
             s.id,
             s.soa_number, 
@@ -72,8 +71,10 @@ $sql = "SELECT
             s.contract_price,
             s.monthly_amort,
             s.misc_fee,
+            s.misc_fee_option,
             s.reservation,
             s.total_payable,
+            s.net_selling_price,
             s.balance,
             s.total_paid,
             c.first_name,
@@ -82,19 +83,20 @@ $sql = "SELECT
             c.phone_number,
             p.project_title,
             p.project_site,
-            p.phase,
-            p.block,
-            p.lot,
-            p.lot_area,
-            p.lot_class,
-            p.price_per_sqm
+            u.phase,
+            u.block,
+            u.lot,
+            u.lot_area,
+            u.lot_class,
+            u.price_per_sqm
         FROM soas s
         LEFT JOIN contacts c ON s.contact_id = c.id
-        LEFT JOIN projects p ON s.project_id = p.id
+        LEFT JOIN units u ON s.unit_id = u.id
+        LEFT JOIN projects p ON u.project_id = p.id
         $where_sql
         ORDER BY s.id DESC";
 
-// For procedural + prepared statements:
+// Prepare statement for procedural mysqli
 $stmt = mysqli_prepare($link, $sql);
 if ($params) {
     mysqli_stmt_bind_param($stmt, $types, ...$params);
@@ -102,7 +104,6 @@ if ($params) {
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-// For JS preview
 $soa_list = [];
 if ($result && mysqli_num_rows($result) > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
@@ -224,9 +225,9 @@ $(document).on('click', '.soa-link', function(e) {
         <h6>Customer Details</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr><th width="38%">Name:</th><td>${d.first_name ?? ''} ${d.last_name ?? ''}</td></tr>
-            <tr><th>Contact Number:</th><td>${d.phone_number ?? ''}</td></tr>
-            <tr><th>Email:</th><td>${d.email ?? ''}</td></tr>
+            <tr><th width="38%">Name:</th><td>${d.first_name || ''} ${d.last_name || ''}</td></tr>
+            <tr><th>Contact Number:</th><td>${d.phone_number || ''}</td></tr>
+            <tr><th>Email:</th><td>${d.email || ''}</td></tr>
             </tbody>
         </table>
     </div>
@@ -236,10 +237,10 @@ $(document).on('click', '.soa-link', function(e) {
         <h6>Property Details</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr><th>Project:</th><td>${d.project_title ?? ''}</td></tr>
-            <tr><th>Site/Location:</th><td>${d.project_site ?? ''}</td></tr>
-            <tr><th>Block / Lot / Phase:</th><td>Block ${d.block ?? ''}, Lot ${d.lot ?? ''}, Phase ${d.phase ?? ''}</td></tr>
-            <tr><th>Area (sqm):</th><td>${d.lot_area ?? ''} sqm ${d.lot_class ? '('+d.lot_class+')' : ''}</td></tr>
+            <tr><th>Project:</th><td>${d.project_title || ''}</td></tr>
+            <tr><th>Site/Location:</th><td>${d.project_site || ''}</td></tr>
+            <tr><th>Block / Lot / Phase:</th><td>Block ${d.block || ''}, Lot ${d.lot || ''}, Phase ${d.phase || ''}</td></tr>
+            <tr><th>Area (sqm):</th><td>${d.lot_area || ''} sqm ${d.lot_class ? '('+d.lot_class+')' : ''}</td></tr>
             <tr><th>Price per sqm:</th><td>${currency(d.price_per_sqm)}</td></tr>
             </tbody>
         </table>
@@ -250,15 +251,17 @@ $(document).on('click', '.soa-link', function(e) {
         <h6>SOA / Account Summary</h6>
         <table class="table soa-info-table table-borderless w-100 mb-0">
             <tbody>
-            <tr><th>SOA #:</th><td>${d.soa_number ?? ''}</td></tr>
-            <tr><th>SOA Name:</th><td>${d.soa_name ?? ''}</td></tr>
-            <tr><th>Issue Date:</th><td>${d.issue_date ?? ''}</td></tr>
-            <tr><th>Payment Terms:</th><td>${d.months ?? ''} months</td></tr>
+            <tr><th>SOA #:</th><td>${d.soa_number || ''}</td></tr>
+            <tr><th>SOA Name:</th><td>${d.soa_name || ''}</td></tr>
+            <tr><th>Issue Date:</th><td>${d.issue_date || ''}</td></tr>
+            <tr><th>Payment Terms:</th><td>${d.months || ''} months</td></tr>
             <tr><th>Total Contract Price:</th><td>${currency(d.contract_price)}</td></tr>
             <tr><th>Monthly Amortization:</th><td>${currency(d.monthly_amort)}</td></tr>
             <tr><th>Reservation Fee:</th><td>${currency(d.reservation)}</td></tr>
             <tr><th>Miscellaneous Fee:</th><td>${currency(d.misc_fee)}</td></tr>
+            <tr><th>Misc Fee Option:</th><td>${d.misc_fee_option || ''}</td></tr>
             <tr><th>Total Amount Payable:</th><td>${currency(d.total_payable)}</td></tr>
+            <tr><th>Net Selling Price:</th><td>${currency(d.net_selling_price)}</td></tr>
             <tr><th>Balance Payable:</th><td>${currency(d.balance)}</td></tr>
             </tbody>
         </table>
@@ -279,7 +282,7 @@ $(document).on('click', '.soa-link', function(e) {
             <tbody>
                 <tr>
                     <td>1</td>
-                    <td>${d.issue_date ?? ''}</td>
+                    <td>${d.issue_date || ''}</td>
                     <td>${currency(d.total_paid)}</td>
                     <td><span class="text-success">${parseFloat(d.total_paid || 0) > 0 ? "Paid" : "Pending"}</span></td>
                 </tr>
@@ -322,7 +325,6 @@ $(document).on('click', '.soa-link', function(e) {
 
 // Print to PDF (prints the preview area only)
 $(document).on('click', '#btn-soa-print', function() {
-    // Print only the preview section
     var printContents = document.getElementById('soa-preview').innerHTML;
     var originalContents = document.body.innerHTML;
     document.body.innerHTML = printContents;
@@ -331,7 +333,7 @@ $(document).on('click', '#btn-soa-print', function() {
     window.location.reload();
 });
 
-// Send Email button placeholder (add your AJAX/email code as needed)
+// Send Email button placeholder
 $(document).on('click', '#btn-soa-send-email', function() {
     alert('Send Email function will be implemented here.');
 });
