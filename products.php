@@ -1,12 +1,17 @@
 <?php
 require_once __DIR__ . '/layouts/config.php';
 
+// Auto-generate a SKU with optional prefix, e.g. PROD-20240810-4D6A
+function generateSKU($prefix = 'PROD') {
+    return $prefix . '-' . date('Ymd') . '-' . strtoupper(substr(uniqid('', true), -4));
+}
+
 // --- Handle Add Product ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $name = mysqli_real_escape_string($link, $_POST['name'] ?? '');
     $price = floatval($_POST['price'] ?? 0);
     $category_id = intval($_POST['category_id'] ?? 0);
-    $sku = mysqli_real_escape_string($link, $_POST['sku'] ?? '');
+    $sku = trim(mysqli_real_escape_string($link, $_POST['sku'] ?? ''));
     $description = mysqli_real_escape_string($link, $_POST['description'] ?? '');
     $status = mysqli_real_escape_string($link, $_POST['status'] ?? 'active');
     $stock = intval($_POST['stock'] ?? 0);
@@ -21,6 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $size = mysqli_real_escape_string($link, $_POST['size'] ?? '');
     $availability = mysqli_real_escape_string($link, $_POST['availability'] ?? '');
     $image = mysqli_real_escape_string($link, $_POST['image'] ?? '');
+
+    // --- SKU auto-generation logic ---
+    if ($sku === '') {
+        // Ensure no duplicate SKU!
+        do {
+            $sku = generateSKU();
+            $q = $link->prepare("SELECT COUNT(*) FROM products WHERE sku=?");
+            $q->bind_param('s', $sku);
+            $q->execute();
+            $q->bind_result($count);
+            $q->fetch();
+            $q->close();
+        } while ($count > 0);
+    }
 
     $insert_sql = "INSERT INTO products 
         (name, price, category_id, sku, description, status, stock, photo_url, lot_area, price_per_sqm, lot_class, color, color_code, material, hardware, size, availability, image)
@@ -211,7 +230,7 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
 }
 
 .custom-selected-actions {
-    display: flex !important;
+    display: none;
     align-items: center;
     gap: 0.85em;
     margin-left: 0.5em;
@@ -255,6 +274,25 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
     margin-top: 15px !important;;
 }
 
+.table-responsive {
+    padding-left: 23px;
+    padding-right: 23px;
+    padding-top: 20px;
+}
+
+.dropdown-menu {
+    min-width: 180px;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 24px rgba(18, 38, 63, 0.11);
+}
+.dropdown-item i {
+    font-size: 1.15em;
+    vertical-align: middle;
+}
+.dropdown-item {
+    padding: 0.7em 1.2em;
+}
+
 </style>
 
 </head>
@@ -270,18 +308,37 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                         <div class="page-title-box">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <h3 class="mb-0">Products</h3>
-                                <div class="d-flex gap-2">
-                                    <!-- Import, Export, Add -->
-                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#importProductsModal" title="Import">
-                                        <i class="ri-upload-2-line"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#exportProductsModal" title="Export">
-                                        <i class="ri-download-2-line"></i>
-                                    </button>
-                                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="ri-add-circle-line"></i> Add Product
-                                    </button>
-                                </div>
+
+                                    <div class="d-flex gap-2">
+                                        <!-- Actions Dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="actionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ri-settings-3-line"></i> Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown">                                                
+                                                <li>
+                                                    <a class="dropdown-item" href="products-grid.php">
+                                                        <i class="ri-grid-fill me-2"></i>Grid View
+                                                    </a>
+                                                </li>
+                                                <li>                                    
+                                                    <a class="dropdown-item" href="#" id="importAction">
+                                                        <i class="ri-upload-2-line me-2"></i>Import Products
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" id="exportAction">
+                                                        <i class="ri-download-2-line me-2"></i>Export to CSV
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- Add Product button remains -->
+                                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                            <i class="ri-add-circle-line"></i> Add Product
+                                        </button>
+                                    </div>
+
                             </div>
                         </div>
                     </div>
@@ -328,7 +385,9 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                                     <tr>
                                         <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
                                         <th>Product Name</th>
+                                        <th>SKU</th>
                                         <th>Price</th>
+                                        <th>Stocks</th>
                                         <th>Category</th>
                                         <th>Last Updated</th>
                                     </tr>
@@ -336,23 +395,26 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                                     <tbody>
                                     <?php if (!empty($products)): ?>
                                         <?php foreach ($products as $row): ?>
-                                            <tr>
-                                                <td>
-                                                    <input type="checkbox" class="row-checkbox" name="selected[]" value="<?= (int)$row['id'] ?>">
-                                                </td>
-                                                <td>
-                                                    <a href="#" class="product-link" data-id="<?= (int)$row['id'] ?>">
-                                                        <?= htmlspecialchars($row['name'] ?? '') ?>
-                                                    </a>
-                                                </td>
-                                                <td>₱<?= number_format($row['price'], 2) ?></td>
-                                                <td><?= htmlspecialchars($row['category_name'] ?? '-') ?></td>
-                                                <td><?= htmlspecialchars(date('Y-m-d H:i', strtotime($row['updated_at'] ?? ''))) ?></td>
-                                            </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="row-checkbox" name="selected[]" value="<?= (int)$row['id'] ?>">
+                                            </td>
+                                            <td>
+                                                <a href="#" class="product-link" data-id="<?= (int)$row['id'] ?>">
+                                                    <?= htmlspecialchars($row['name'] ?? '') ?>
+                                                </a>
+                                            </td>
+                                            <td><?= htmlspecialchars($row['sku'] ?? '-') ?></td>
+                                            <td>₱<?= number_format($row['price'], 2) ?></td>
+                                            <td><?= (int)$row['stock'] ?></td>
+                                            <td><?= htmlspecialchars($row['category_name'] ?? '-') ?></td>
+                                            <td><?= htmlspecialchars(date('Y-m-d H:i', strtotime($row['updated_at'] ?? ''))) ?></td>
+                                        </tr>
                                         <?php endforeach; ?>
+
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="5" class="text-center">No products found.</td>
+                                            <td colspan="6" class="text-center">No products found.</td>
                                         </tr>
                                     <?php endif; ?>
                                     </tbody>
@@ -390,7 +452,7 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Category</label>
-                    <select name="category_id" class="form-select" required>
+                    <select name="category_id" class="form-select">
                         <option value="">Select category</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= (int)$cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
@@ -445,7 +507,7 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
             </div>
             <div class="mb-2">
                 <label class="form-label">Category</label>
-                <select name="category_id" id="editCategoryId" class="form-select" required>
+                <select name="category_id" id="editCategoryId" class="form-select">
                     <option value="">Select category</option>
                     <?php foreach ($categories as $cat): ?>
                         <option value="<?= (int)$cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
@@ -794,8 +856,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Provide products data to JS (for CSV export)
     window.exportProductsData = <?php echo json_encode($products, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
-});
-</script>
-<script src="assets/js/app.min.js"></script>
+        });
+        </script>
+        <script src="assets/js/app.min.js"></script>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Open Import Modal
+            document.getElementById('importAction').addEventListener('click', function(e) {
+                e.preventDefault();
+                var importModal = new bootstrap.Modal(document.getElementById('importProductsModal'));
+                importModal.show();
+            });
+            // Open Export Modal
+            document.getElementById('exportAction').addEventListener('click', function(e) {
+                e.preventDefault();
+                var exportModal = new bootstrap.Modal(document.getElementById('exportProductsModal'));
+                exportModal.show();
+            });
+        });
+        </script>
+
 </body>
 </html>
