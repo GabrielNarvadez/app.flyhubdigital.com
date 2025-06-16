@@ -42,11 +42,11 @@ if (isset($_GET['export_csv'])) {
     $res = mysqli_query($link, "SELECT * FROM contacts");
     while ($row = mysqli_fetch_assoc($res)) {
         fputcsv($out, [
-            $row['first_name'] . ' ' . $row['last_name'],
-            $row['email'],
-            $row['phone_number'],
-            $row['company_name'],
-            $row['created_at']
+            ($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''),
+            $row['email'] ?? '',
+            $row['phone_number'] ?? '',
+            $row['company_name'] ?? '',
+            $row['created_at'] ?? ''
         ]);
     }
     fclose($out);
@@ -101,7 +101,7 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
     <h3 class="fw-bold mb-0">Contacts</h3>
     <div class="d-flex gap-2">
       <form method="get" class="d-flex">
-        <input type="text" class="form-control form-control-sm me-1" name="filter" value="<?= htmlspecialchars($filter) ?>" placeholder="Search...">
+        <input type="text" class="form-control form-control-sm me-1" name="filter" value="<?= htmlspecialchars($filter ?? '') ?>" placeholder="Search...">
         <button class="btn btn-outline-secondary btn-sm">Search</button>
       </form>
       <form method="get" class="d-inline">
@@ -116,7 +116,7 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
     </div>
   </div>
   <?php if ($msg): ?>
-    <div class="alert alert-info"><?= $msg ?></div>
+    <div class="alert alert-info"><?= htmlspecialchars($msg ?? '') ?></div>
   <?php endif; ?>
 
   <!-- ADD/EDIT FORM -->
@@ -124,7 +124,7 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
     <div class="card-body p-4">
       <form method="post">
         <input type="hidden" name="save_contact" value="1">
-        <input type="hidden" name="contact_id" value="<?= $edit['id'] ?? '' ?>">
+        <input type="hidden" name="contact_id" value="<?= htmlspecialchars($edit['id'] ?? '') ?>">
         <div class="row g-2 align-items-end">
           <div class="col-md-3">
             <label class="form-label">First Name</label>
@@ -151,7 +151,7 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
             <select name="company_id" class="form-select">
               <option value="">--</option>
               <?php foreach ($company_opt as $cid => $cname): ?>
-                <option value="<?= $cid ?>" <?= (isset($edit['company_id']) && $edit['company_id']==$cid) ? 'selected' : '' ?>><?= htmlspecialchars($cname) ?></option>
+                <option value="<?= htmlspecialchars($cid) ?>" <?= (isset($edit['company_id']) && $edit['company_id']==$cid) ? 'selected' : '' ?>><?= htmlspecialchars($cname ?? '') ?></option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -186,23 +186,21 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
             while ($row = mysqli_fetch_assoc($res)): ?>
             <tr>
               <td>
-                <!-- Update this line -->
-                <a href="single-contact.php?id=<?= $row['id'] ?>" class="fw-semibold text-decoration-underline">
-                  <?= htmlspecialchars($row['first_name'].' '.$row['last_name']) ?>
+                <a href="single-contact.php?id=<?= htmlspecialchars($row['id'] ?? '') ?>" class="fw-semibold text-decoration-underline">
+                  <?= htmlspecialchars(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')) ?>
                 </a>
               </td>
               <td>
-                <!-- Update this line -->
-                <a href="single-contact.php?id=<?= $row['id'] ?>" class="text-decoration-underline">
-                  <?= htmlspecialchars($row['email']) ?>
+                <a href="single-contact.php?id=<?= htmlspecialchars($row['id'] ?? '') ?>" class="text-decoration-underline">
+                  <?= htmlspecialchars($row['email'] ?? '') ?>
                 </a>
               </td>
-              <td><?= htmlspecialchars($row['phone_number']) ?></td>
-              <td><?= htmlspecialchars($row['company_name']) ?></td>
-              <td><?= htmlspecialchars(date('Y-m-d', strtotime($row['created_at']))) ?></td>
+              <td><?= htmlspecialchars($row['phone_number'] ?? '') ?></td>
+              <td><?= htmlspecialchars($row['company_name'] ?? '') ?></td>
+              <td><?= htmlspecialchars(isset($row['created_at']) ? date('Y-m-d', strtotime($row['created_at'])) : '') ?></td>
               <td>
-                <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="ri-edit-line"></i></a>
-                <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this contact?');"><i class="ri-delete-bin-2-line"></i></a>
+                <a href="?edit=<?= htmlspecialchars($row['id'] ?? '') ?>" class="btn btn-sm btn-outline-primary"><i class="ri-edit-line"></i></a>
+                <a href="?delete=<?= htmlspecialchars($row['id'] ?? '') ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this contact?');"><i class="ri-delete-bin-2-line"></i></a>
               </td>
             </tr>
           <?php endwhile; else: ?>
@@ -215,6 +213,5 @@ if ($q) while ($r = mysqli_fetch_assoc($q)) $company_opt[$r['id']] = $r['company
     </div>
   </div>
 </div>
-
 
 <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">

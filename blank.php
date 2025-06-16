@@ -29,7 +29,7 @@
                             <div class="page-title-box">
                                 <h4 class="page-title">Blank Page</h4>
                                 
-                                <?php include 'modules/sales-editor-ui.php'; ?>
+                                <?php include 'modules/blank.php'; ?>
 
                             </div>
                         </div>

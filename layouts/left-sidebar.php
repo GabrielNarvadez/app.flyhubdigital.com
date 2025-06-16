@@ -1,39 +1,43 @@
 <?php
 require_once __DIR__ . '/../layouts/config.php';
 
-// Use session, login context, or default for demo
-// Example: $tenant_id = $_SESSION['tenant_id'] ?? 1;
-$tenant_id = 1; // Set your actual logic here
+// Set your actual logic for $tenant_id (e.g., from session)
+$tenant_id = 1;
 
-$logo_url = '/assets/images/flyhub-white-logo.png'; // Default logo
+// Default to white logo
+$default_white_logo = '/assets/images/flyhub-white-logo.png';
+$logo_url = $default_white_logo;
+
+// Try to fetch custom logo from tenants table
 $sql = "SELECT logo_url FROM tenants WHERE id = ?";
 $stmt = $link->prepare($sql);
 $stmt->bind_param("i", $tenant_id);
 $stmt->execute();
 $stmt->bind_result($db_logo_url);
-if ($stmt->fetch() && $db_logo_url) {
+if ($stmt->fetch() && !empty($db_logo_url)) {
     $logo_url = $db_logo_url;
 }
 $stmt->close();
 ?>
 
 <div class="leftside-menu" id="leftside-menu">
-  <!-- LOGO: dynamic loading -->
+  <!-- LOGO always uses white version -->
   <div id="sidebarLogoContainer" style="height:60px;">
     <a href="index.php" class="logo logo-light">
       <span class="logo-lg">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
       </span>
       <span class="logo-sm">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
       </span>
     </a>
+    <!-- If you use a different logo for dark theme, change src here, otherwise use same -->
     <a href="index.php" class="logo logo-dark">
       <span class="logo-lg">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="dark logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
       </span>
       <span class="logo-sm">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;"/>
+        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
       </span>
     </a>
   </div>

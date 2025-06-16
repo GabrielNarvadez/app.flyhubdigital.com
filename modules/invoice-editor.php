@@ -604,3 +604,6 @@ $(function () {
   });
 });
 </script>
+
+<!-- App js -->
+<script src="assets/js/app.min.js"></script>
