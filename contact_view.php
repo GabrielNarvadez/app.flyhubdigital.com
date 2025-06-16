@@ -172,18 +172,73 @@ $contact_id = $id;
                         <h4 class="page-title"><a href="contacts.php">Back to Contacts</a></h4>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <div class="card h-100">
+
+                        <div class="card h-100" id="profileCard">
                             <div class="card-body">
-                                <h3><?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?></h3>
-                                <p>Email: <?= htmlspecialchars($row['email']) ?></p>
-                                <p>Phone: <?= htmlspecialchars($row['phone_number']) ?></p>
-                                <p>Position: <?= htmlspecialchars($row['position']) ?></p>
-                                <p>City: <?= htmlspecialchars($row['city']) ?></p>
-                                <p>Company: <?= htmlspecialchars($row['company_name']) ?></p>
-                                <p>Type: <?= htmlspecialchars($row['contact_type']) ?></p>
-                                <p>Created At: <?= htmlspecialchars($row['created_at']) ?></p>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div id="profileAvatar" class="rounded-circle bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
+                                         style="width:60px;height:60px;font-size:2rem;user-select:none;cursor:pointer;">
+                                        <?= strtoupper(substr($row['first_name'],0,1).substr($row['last_name'],0,1)) ?>
+                                    </div>
+                                        <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                                    <div class="ms-3 flex-grow-1">
+                                        <span class="fw-bold fs-5" id="profileName"><?= htmlspecialchars($row['first_name'].' '.$row['last_name']) ?></span>
+                                        <button class="btn btn-outline-secondary btn-sm float-end" id="editProfileBtn">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="profileDetailsView">
+                                    <p>Email: <span id="profileEmail"><?= htmlspecialchars($row['email']) ?></span></p>
+                                    <p>Phone: <span id="profilePhone"><?= htmlspecialchars($row['phone_number']) ?></span></p>
+                                    <p>Position: <span id="profilePosition"><?= htmlspecialchars($row['position']) ?></span></p>
+                                    <p>City: <span id="profileCity"><?= htmlspecialchars($row['city']) ?></span></p>
+                                    <p>Company: <span id="profileCompany"><?= htmlspecialchars($row['company_name']) ?></span></p>
+                                    <p>Type: <span id="profileType"><?= htmlspecialchars($row['contact_type']) ?></span></p>
+                                    <p>Created At: <span id="profileCreated"><?= htmlspecialchars($row['created_at']) ?></span></p>
+                                </div>
+                                <form id="profileEditForm" class="d-none">
+                                    <input type="hidden" name="contact_id" value="<?= $contact_id ?>">
+                                    <div class="mb-2">
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($row['first_name']) ?>" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" name="last_name" value="<?= htmlspecialchars($row['last_name']) ?>" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($row['email']) ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Phone Number</label>
+                                        <input type="text" class="form-control" name="phone_number" value="<?= htmlspecialchars($row['phone_number']) ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Position</label>
+                                        <input type="text" class="form-control" name="position" value="<?= htmlspecialchars($row['position']) ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">City</label>
+                                        <input type="text" class="form-control" name="city" value="<?= htmlspecialchars($row['city']) ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Company Name</label>
+                                        <input type="text" class="form-control" name="company_name" value="<?= htmlspecialchars($row['company_name']) ?>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Type</label>
+                                        <input type="text" class="form-control" name="contact_type" value="<?= htmlspecialchars($row['contact_type']) ?>">
+                                    </div>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-light" id="cancelEditBtn">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Activity Timeline (6 columns) -->
@@ -343,7 +398,6 @@ $contact_id = $id;
         <?php include 'layouts/footer.php'; ?>
     </div>
     <?php include 'layouts/right-sidebar.php'; ?>
-    <?php include 'layouts/footer-scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
@@ -615,9 +669,113 @@ $(function() {
         $('#formAssociateCompany')[0].reset();
         $('#formCreateCompany')[0].reset();
     });
+
+
+    // Click on avatar opens file dialog
+    $('#profileAvatar').on('click', function() {
+        $('#profileImageInput').click();
+    });
+
+    // On file select, upload via AJAX
+    $('#profileImageInput').on('change', function(){
+        var formData = new FormData();
+        formData.append('contact_id', <?= $contact_id ?>); // PHP echo for current contact
+        formData.append('profile_image', this.files[0]);
+        $.ajax({
+            url: 'upload-profile.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp) {
+                try {
+                    var data = JSON.parse(resp);
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Upload failed.');
+                    }
+                } catch(e) { alert('Upload error.'); }
+            },
+            error: function() { alert('Failed to upload image.'); }
+        });
+    });
+
+    $(function() {
+        // Show edit form, hide details
+        $('#editProfileBtn').on('click', function() {
+            $('#profileDetailsView').addClass('d-none');
+            $('#editProfileBtn').addClass('d-none');
+            $('#profileEditForm').removeClass('d-none');
+        });
+        // Cancel edit
+        $('#cancelEditBtn').on('click', function() {
+            $('#profileEditForm').addClass('d-none');
+            $('#profileDetailsView').removeClass('d-none');
+            $('#editProfileBtn').removeClass('d-none');
+        });
+
+        // AJAX submit
+        $('#profileEditForm').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: 'update-contact.php', // create this backend script!
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(res) {
+                    if(res.status === 'success') {
+                        // Optionally: fetch new data via AJAX or just update values in place
+                        location.reload();
+                    } else {
+                        alert(res.message || 'Failed to save');
+                    }
+                },
+                error: function() {
+                    alert('Save failed. Try again.');
+                }
+            });
+        });
+    });
+
+
 });
 </script>
 <!-- App js -->
 <script src="assets/js/app.min.js"></script>
+<script>
+$(function() {
+    // Click on avatar opens file dialog
+    $('#profileAvatar').on('click', function() {
+        $('#profileImageInput').click();
+    });
+
+    // On file select, upload via AJAX
+    $('#profileImageInput').on('change', function(){
+        var formData = new FormData();
+        formData.append('contact_id', <?= $contact_id ?>);
+        formData.append('profile_image', this.files[0]);
+        $.ajax({
+            url: 'upload-profile.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp) {
+                try {
+                    var data = JSON.parse(resp);
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Upload failed.');
+                    }
+                } catch(e) { alert('Upload error.'); }
+            },
+            error: function() { alert('Failed to upload image.'); }
+        });
+    });
+});
+</script>
+
 </body>
 </html>
