@@ -135,6 +135,9 @@ function upsertVariant(int $tenantId, array $product, array $variant): void
               photo_url   = VALUES(photo_url),
               updated_at  = NOW()';
     $stmt = $link->prepare($sql);
+    if (!$stmt) {
+        die("SQL error: " . $link->error . "\nQuery: " . $sql);
+    }    
     $stmt->bind_param(
         'issssdisiii',
         $tenantId,

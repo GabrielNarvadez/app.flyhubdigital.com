@@ -1,7 +1,7 @@
 import os
 
 # File types to include
-ALLOWED_EXTENSIONS = {'.php', '.html', '.css'}
+ALLOWED_EXTENSIONS = {'.php', '.html',}
 
 # Folders to exclude
 EXCLUDED_DIRS = {'.git'}
