@@ -129,9 +129,15 @@ $q_companies = mysqli_query($link, "
     WHERE cc.contact_id = $id
     ORDER BY c.company_name
 ");
+
+if (!$q_companies) {
+    die("Query failed: " . mysqli_error($link));
+}
+
 while ($c = mysqli_fetch_assoc($q_companies)) {
     $companies[] = $c;
 }
+
 
 // ===== [END ASSOCIATION] =====
 

@@ -3,16 +3,22 @@ import os
 # File types to include
 ALLOWED_EXTENSIONS = {'.php', '.html', '.css'}
 
+# Folders to exclude
+EXCLUDED_DIRS = {'.git'}
+
 def tree(dir_path='.', prefix=''):
     try:
         entries = sorted(os.listdir(dir_path))
     except (PermissionError, FileNotFoundError):
         return
 
-    # Filter entries to only include directories and allowed files
+    # Filter entries
     visible_entries = [
         e for e in entries
-        if os.path.isdir(os.path.join(dir_path, e)) or os.path.splitext(e)[1] in ALLOWED_EXTENSIONS
+        if (
+            (os.path.isdir(os.path.join(dir_path, e)) and e not in EXCLUDED_DIRS) or
+            (os.path.splitext(e)[1] in ALLOWED_EXTENSIONS)
+        )
     ]
 
     entries_count = len(visible_entries)
