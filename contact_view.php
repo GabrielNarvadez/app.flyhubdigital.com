@@ -1,6 +1,23 @@
 <?php
 require_once __DIR__ . '/layouts/config.php';
 session_start();
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id <= 0) die('Invalid contact ID.');
+$contact_id = $id;
+
+$invoice_rows = [];
+$q_invoices = mysqli_query($link, "SELECT * FROM invoices WHERE contact_id = $contact_id ORDER BY issue_date DESC, id DESC");
+if ($q_invoices) {
+    while ($inv = mysqli_fetch_assoc($q_invoices)) $invoice_rows[] = $inv;
+}
+function invoiceStatusColor($s) {
+    $s = strtolower(trim($s));
+    if ($s == "paid") return "text-success";
+    if ($s == "unpaid") return "text-warning";
+    if ($s == "overdue") return "text-danger";
+    return "text-secondary";
+}
+
 // ========== AJAX HANDLER FOR COMPANY ASSOCIATION ==========
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'associate_company') {
     $contact_id = intval($_POST['contact_id'] ?? 0);
@@ -164,7 +181,34 @@ $contact_id = $id;
         .activity-timeline .activity-card .activity-title { font-weight: 500; color: #212b36; font-size: 1.09rem; }
         .activity-timeline .activity-card .activity-details { font-size: 0.98rem; color: #5d6d7e; margin-top: 6px; margin-bottom: 4px; }
         .activity-timeline .activity-card .activity-time { font-size: 0.95rem; color: #6c757d; margin-top: 0; margin-left: 12px; white-space: nowrap; }
+        .accordion-button {
+            font-weight: bold !important;
+        }
+        .invoice-list-item {
+            border-bottom: 1px solid #f0f1f3;
+            transition: background 0.15s;
+            cursor: pointer;
+            padding: 0.7em 0.5em 0.5em 0.5em;
+        }
+        .invoice-list-item:last-child {
+            border-bottom: none;
+        }
+        .invoice-list-item:hover {
+            background: #f8fafc;
+        }
+        .invoice-details {
+            font-size: 0.93em;
+            color: #7c8fa6;
+        }
+        .list-group, .list-group-flush, .list-group-flush .list-group-item {
+            list-style-type: none !important;
+        }
+        .invoice-list-item {
+            list-style-type: none !important;
+        }
+
     </style>
+
 </head>
 <body>
 <div class="wrapper">
@@ -188,26 +232,26 @@ $contact_id = $id;
                                     </div>
                                         <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
                                     <div class="ms-3 flex-grow-1">
-                                        <span class="fw-bold fs-5" id="profileName"><?= htmlspecialchars($row['first_name'].' '.$row['last_name']) ?></span>
+                                        <span class="fw-bold fs-5" id="profileName"><?= htmlspecialchars(($row['first_name'] ?? '').' '.($row['last_name'] ?? '')) ?></span>
                                         <button class="btn btn-outline-secondary btn-sm float-end" id="editProfileBtn">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
                                     </div>
                                 </div>
                                 <div id="profileDetailsView">
-                                    <p>Email: <span id="profileEmail"><?= htmlspecialchars($row['email']) ?></span></p>
-                                    <p>Phone: <span id="profilePhone"><?= htmlspecialchars($row['phone_number']) ?></span></p>
-                                    <p>Position: <span id="profilePosition"><?= htmlspecialchars($row['position']) ?></span></p>
-                                    <p>City: <span id="profileCity"><?= htmlspecialchars($row['city']) ?></span></p>
-                                    <p>Company: <span id="profileCompany"><?= htmlspecialchars($row['company_name']) ?></span></p>
-                                    <p>Type: <span id="profileType"><?= htmlspecialchars($row['contact_type']) ?></span></p>
-                                    <p>Created At: <span id="profileCreated"><?= htmlspecialchars($row['created_at']) ?></span></p>
+                                    <p>Email: <span id="profileEmail"><?= htmlspecialchars($row['email'] ?? '') ?></span></p>
+                                    <p>Phone: <span id="profilePhone"><?= htmlspecialchars($row['phone_number'] ?? '') ?></span></p>
+                                    <p>Position: <span id="profilePosition"><?= htmlspecialchars($row['position'] ?? '') ?></span></p>
+                                    <p>City: <span id="profileCity"><?= htmlspecialchars($row['city'] ?? '') ?></span></p>
+                                    <p>Company: <span id="profileCompany"><?= htmlspecialchars($row['company_name'] ?? '') ?></span></p>
+                                    <p>Type: <span id="profileType"><?= htmlspecialchars($row['contact_type'] ?? '') ?></span></p>
+                                    <p>Created At: <span id="profileCreated"><?= htmlspecialchars($row['created_at'] ?? '') ?></span></p>
                                 </div>
                                 <form id="profileEditForm" class="d-none">
                                     <input type="hidden" name="contact_id" value="<?= $contact_id ?>">
                                     <div class="mb-2">
                                         <label class="form-label">First Name</label>
-                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($row['first_name']) ?>" required>
+                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($row['first_name'] ?? '') ?>" required>
                                     </div>
                                     <div class="mb-2">
                                         <label class="form-label">Last Name</label>
@@ -279,15 +323,15 @@ $contact_id = $id;
                                                     <?php foreach ($companies as $c): ?>
                                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                                             <span>
-                                                                <strong>Company Name:</strong> <?= htmlspecialchars($c['company_name']) ?><br>
+                                                                <strong>Company Name:</strong> <?= htmlspecialchars($c['company_name'] ?? '') ?><br>
                                                                 <?php if (!empty($c['address'])): ?>
-                                                                    <small>Address: <?= htmlspecialchars($c['address']) ?></small><br>
+                                                                    <small>Address: <?= htmlspecialchars($c['address'] ?? '') ?></small><br>
                                                                 <?php endif; ?>
                                                                 <?php if (!empty($c['email'])): ?>
-                                                                    <small>Email: <?= htmlspecialchars($c['email']) ?></small><br>
+                                                                    <small>Email: <?= htmlspecialchars($c['email'] ?? '') ?></small><br>
                                                                 <?php endif; ?>
                                                                 <?php if (!empty($c['phone_number'])): ?>
-                                                                    <small>Phone: <?= htmlspecialchars($c['phone_number']) ?></small>
+                                                                    <small>Phone: <?= htmlspecialchars($c['phone_number'] ?? '') ?></small>
                                                                 <?php endif; ?>
                                                             </span>
                                                             <!-- Add a remove/disassociate button here if you want -->
@@ -307,24 +351,56 @@ $contact_id = $id;
 
                                     <!-- Invoices -->
                                     <div class="accordion-item mb-2">
+
                                         <h2 class="accordion-header" id="headingInvoices">
-                                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInvoices" aria-expanded="false" aria-controls="collapseInvoices">
-                                                Invoices
-                                            </button>
+                                            <div class="d-flex align-items-center">
+                                                <button class="accordion-button collapsed py-2 flex-grow-1 text-start" type="button"
+                                                    data-bs-toggle="collapse" data-bs-target="#collapseInvoices" aria-expanded="false" aria-controls="collapseInvoices">
+                                                    Invoices
+                                                </button>
+                                            </div>
                                         </h2>
                                         <div id="collapseInvoices" class="accordion-collapse collapse" aria-labelledby="headingInvoices" data-bs-parent="#associationAccordion">
                                             <div class="accordion-body">
                                                 <!-- No Add button for auto-generated -->
-                                                <ul class="list-group list-group-flush">
-                                                    <li class="list-group-item py-1 px-0">
-                                                        <strong>#INV-1001</strong> - ₱10,000 <br>
-                                                        <span class="text-success">Paid</span> | <small>Issued: 2025-06-12</small>
-                                                    </li>
-                                                    <li class="list-group-item py-1 px-0">
-                                                        <strong>#INV-1002</strong> - ₱12,500 <br>
-                                                        <span class="text-warning">Unpaid</span> | <small>Issued: 2025-07-01</small>
-                                                    </li>
-                                                </ul>
+
+                                                    <div class="d-flex justify-content-end mb-2">
+                                                        <a href="app-invoicing.php?contact_id=<?= $contact_id ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            </i> Create Invoice
+                                                        </a>
+                                                    </div>
+
+                                        <?php if (count($invoice_rows) === 0): ?>
+                                            <div class="text-center text-muted py-4 small" style="font-size:1.05rem;letter-spacing:0.01em;">
+                                                No invoice issued yet.
+                                            </div>
+                                        <?php else: ?>
+                                            <ul class="list-group list-group-flush mb-2">
+                                                <?php foreach ($invoice_rows as $inv): ?>
+                                                <li class="invoice-list-item" data-invoice-id="<?= $inv['id'] ?>">
+                                                    <div class="fw-semibold" style="font-size:1.07rem;">
+                                                        #<?= htmlspecialchars($inv['invoice_number']) ?>
+                                                        <span class="ms-1"><?= '₱' . number_format((float)$inv['total'], 2) ?></span>
+                                                    </div>
+                                                    <div class="invoice-details">
+                                                        <span class="<?= invoiceStatusColor($inv['status']) ?> fw-semibold"><?= ucfirst($inv['status']) ?></span>
+                                                        <span class="text-muted ms-2">
+                                                            | Issued: <?= date('M-d-Y', strtotime($inv['issue_date'])) ?>
+                                                        </span>
+                                                    </div>
+                                                </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                        <!-- Optional: View All Invoices link -->
+                                        <div class="mt-1 mb-0 ms-1">
+                                            <a href="invoicing.php?contact_id=<?= $contact_id ?>"
+                                               class="text-decoration-underline small text-primary"
+                                               style="font-size: 0.97rem;">
+                                                <i class="bi bi-box-arrow-up-right"></i> View all invoices
+                                            </a>
+                                        </div>
+
                                             </div>
                                         </div>
                                     </div>
@@ -607,7 +683,7 @@ $contact_id = $id;
                       $all_companies[] = $c;
                   }
                   foreach ($all_companies as $c) {
-                      echo '<option value="'.(int)$c['id'].'">'.htmlspecialchars($c['company_name']).'</option>';
+                      echo '<option value="'.(int)$c['id'].'">'.htmlspecialchars($c['company_name'] ?? '').'</option>';
                   }
                   ?>
                 </select>
@@ -780,7 +856,9 @@ $(function() {
             error: function() { alert('Failed to upload image.'); }
         });
     });
+
 });
+
 </script>
 
 </body>

@@ -1,28 +1,4 @@
-<?php
-// DB connection ($link) must be ready
 
-// Fetch contacts
-$contacts = [];
-$sql = "SELECT id, first_name, last_name, email, phone_number FROM contacts ORDER BY first_name, last_name";
-if ($result = mysqli_query($link, $sql)) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $contacts[] = $row;
-    }
-    mysqli_free_result($result);
-}
-
-// Fetch units
-$units = [];
-$sql = "SELECT id, project_title, project_site, block, lot, phase, lot_class, lot_area, price_per_sqm
-        FROM units
-        ORDER BY project_title, block, lot";
-if ($result = mysqli_query($link, $sql)) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $units[] = $row;
-    }
-    mysqli_free_result($result);
-}
-?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -39,22 +15,30 @@ if ($result = mysqli_query($link, $sql)) {
           <button class="btn btn-success" id="confirmSaleBtn"><i class="ri-checkbox-circle-line"></i> Reserve Unit</button>
         </div>
         <div class="card-body">
+        <div id="contactAlert"></div>
           <form id="saleForm" autocomplete="off">
             <!-- Customer -->
+
             <div class="mb-3">
               <label for="contactSelect" class="form-label">Customer Name</label>
-              <select class="form-select" id="contactSelect" style="width:100%" required>
-                <option value="" disabled selected>Select customer...</option>
-                <?php foreach ($contacts as $c): ?>
-                  <option value="<?= $c['id'] ?>"
-                    data-email="<?= htmlspecialchars($c['email']) ?>"
-                    data-phone="<?= htmlspecialchars($c['phone_number']) ?>"
-                  >
-                    <?= htmlspecialchars($c['first_name'] . ' ' . $c['last_name']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
+              <div class="d-flex" style="gap:8px">
+                <select class="form-select" id="contactSelect" style="width:100%" required>
+                  <option value="" disabled selected>Select customer...</option>
+                  <?php foreach ($contacts as $c): ?>
+                    <option value="<?= $c['id'] ?>"
+                      data-email="<?= htmlspecialchars($c['email']) ?>"
+                      data-phone="<?= htmlspecialchars($c['phone_number']) ?>"
+                    >
+                      <?= htmlspecialchars($c['first_name'] . ' ' . $c['last_name']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn btn-outline-primary" id="newContactBtn" style="white-space:nowrap;">
+                  <i class="ri-user-add-line"></i> Create New Contact 
+                </button>
+              </div>
             </div>
+
             <!-- Project/Unit -->
             <div class="row g-2 mb-3">
               <div class="col">
@@ -158,6 +142,49 @@ if ($result = mysqli_query($link, $sql)) {
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- New Contact Modal -->
+<div class="modal fade" id="newContactModal" tabindex="-1" aria-labelledby="newContactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="newContactForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newContactModalLabel">Create New Contact</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-2">
+          <div class="col">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" name="first_name" required>
+          </div>
+          <div class="col">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" name="last_name" required>
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" name="email">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Phone</label>
+          <input type="text" class="form-control" name="phone">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">City</label>
+          <input type="text" class="form-control" name="city">
+        </div>
+        <div class="alert alert-info small mt-2 mb-0">
+          You can add the rest of the contact info in their profile after creation.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Contact</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -336,4 +363,38 @@ $(function(){
     alert("Pretend to send contract via email...");
   });
 });
+
+// Show the modal when "Create New Contact" button is clicked
+$('#newContactBtn').on('click', function() {
+  $('#newContactModal').modal('show');
+  $('#newContactForm')[0].reset();
+});
+
+// Handle form submission
+$('#newContactForm').on('submit', function(e) {
+  e.preventDefault();
+  var data = $(this).serialize() + '&action=create_contact';
+  $.post('', data, function(res) {
+    try { res = JSON.parse(res); } catch(e) { res = {}; }
+    if (res.success) {
+      // Add new option to select, select it, and trigger change
+      var newOption = new Option(res.name, res.id, true, true);
+      $('#contactSelect').append(newOption).val(res.id).trigger('change');
+      $('#contactSelect').select2('close');
+      // Hide the modal using Bootstrap 5's JS API:
+      var modalEl = document.getElementById('newContactModal');
+      var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modal.hide();
+
+      // Optional: Show success alert (add a <div id="contactAlert"></div> in your HTML above the form)
+      $('#contactAlert').html('<div class="alert alert-success alert-dismissible fade show" role="alert">Contact added successfully!<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+    } else {
+      alert(res.msg || "Could not add contact.");
+    }
+  });
+});
+
 </script>
+
+
+<script> src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
