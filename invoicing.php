@@ -54,6 +54,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         $grand = $inv['total'];
         ?>
 
+
         <div class="d-flex flex-wrap gap-2 mb-3">
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -289,7 +290,6 @@ $status_opts = ['draft','sent','paid','void','canceled'];
     <title>Invoicing | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
     <?php include 'layouts/head-css.php'; ?>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
     <style>
         .form-control:focus, .form-select:focus { box-shadow: 0 0 0 0.15rem #4285f4 !important; }

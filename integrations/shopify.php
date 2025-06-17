@@ -11,7 +11,7 @@ declare(strict_types=1);
  * Images : D:/Projects/app.flyhubdigital.com/assets/img/tenants/{slug}/products/
  */
 
-ini_set('max_execution_time', '300');
+ini_set('max_execution_time', '1000');
 ini_set('memory_limit', '512M');
 
 require_once __DIR__ . '/../layouts/config.php'; // $link (mysqli)

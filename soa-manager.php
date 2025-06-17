@@ -4,8 +4,8 @@
 <head>
     <title>SOA Manager | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
-
     <?php include 'layouts/head-css.php'; ?>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
 </head>
 
 <body>
