@@ -171,7 +171,7 @@ $contact_id = $id;
     <?php include 'layouts/title-meta.php'; ?>
     <?php include 'layouts/head-css.php'; ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         .tab-custom .nav-link { color: #40516a; font-weight: 500; border: none; background: transparent; margin-right: 20px; padding-bottom: 8px; }
         .tab-custom .nav-link.active { color: #32475b; border-bottom: 4px solid #3d5a80; background: transparent; }
@@ -824,7 +824,6 @@ $(function() {
 });
 </script>
 <!-- App js -->
-<script src="assets/js/app.min.js"></script>
 <script>
 $(function() {
     // Click on avatar opens file dialog

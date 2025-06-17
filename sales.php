@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/layouts/config.php';  // Always the first line
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 // --- AJAX: Create New Contact ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_contact') {
