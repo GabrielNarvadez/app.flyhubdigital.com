@@ -10,66 +10,42 @@ if (!isset($link) || !$link) {
     return;
 }
 
-// --- FILTER HANDLING ---
-$filter_range = $_GET['range'] ?? '';
-$where = [];
-$status_filter = $_GET['status'] ?? '';
-$allowed_statuses = ['draft', 'sent', 'paid', 'void', 'canceled'];
-
-if ($filter_range) {
-    if ($filter_range === 'today') {
-        $where[] = "DATE(i.issue_date) = CURDATE()";
-    } elseif ($filter_range === 'week') {
-        $where[] = "YEARWEEK(i.issue_date, 1) = YEARWEEK(CURDATE(), 1)";
-    } elseif ($filter_range === 'month') {
-        $where[] = "YEAR(i.issue_date) = YEAR(CURDATE()) AND MONTH(i.issue_date) = MONTH(CURDATE())";
-    } elseif ($filter_range === 'year') {
-        $where[] = "YEAR(i.issue_date) = YEAR(CURDATE())";
-    }
-}
-
-if ($status_filter !== '' && $status_filter !== 'all' && in_array($status_filter, $allowed_statuses)) {
-    $where[] = "i.status = '" . $status_filter . "'";
-}
-
-$whereSQL = $where ? "WHERE " . implode(' AND ', $where) : "";
-
-// --- QUERY: Invoices ---
-$sql = "SELECT 
-            i.invoice_number,
-            CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) AS client_name,
-            i.total,
-            i.status,
-            i.issue_date
-        FROM invoices i
-        LEFT JOIN contacts c ON i.contact_id = c.id
-        $whereSQL
-        ORDER BY i.created_at DESC";
-
-$result = mysqli_query($link, $sql);
-
-if (!$result) {
-    echo '<div class="alert alert-danger">Failed to fetch invoices: ' . htmlspecialchars(mysqli_error($link)) . '</div>';
-    return;
-}
-
 // --- STATUS ARRAYS ---
 $statuses = [
-    'all' => 'All Status',
-    'draft' => 'Draft',
-    'sent' => 'Sent',
-    'paid' => 'Paid',
-    'void' => 'Void',
-    'canceled' => 'Canceled'
+    'all'      => 'All Status',
+    'active'   => 'Active',
+    'draft'    => 'Draft',
+    'archived' => 'Archived'
 ];
 
-$statusBadgeClass = [
-    'paid' => 'success',
-    'sent' => 'primary',
-    'draft' => 'secondary',
-    'canceled' => 'danger',
-    'void' => 'warning'
-];
+// --- CATEGORY FETCH ---
+$categories = [];
+$res_cat = mysqli_query($link, "SELECT id, name FROM categories ORDER BY name");
+while ($cat = mysqli_fetch_assoc($res_cat)) $categories[$cat['id']] = $cat['name'];
+
+// --- FILTER HANDLING ---
+$category_filter = $_GET['category'] ?? '';
+$status_filter   = $_GET['status'] ?? '';
+
+$where = [];
+if ($category_filter !== '' && $category_filter !== 'all') {
+    $where[] = "p.category_id = '".intval($category_filter)."'";
+}
+if ($status_filter !== '' && $status_filter !== 'all') {
+    $where[] = "p.status = '".mysqli_real_escape_string($link, $status_filter)."'";
+}
+$whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+// --- QUERY: Products ---
+$sql = "SELECT p.id, p.name, p.description, p.price, p.stock, p.product_type, p.status, p.category_id
+        FROM products p
+        $whereSQL
+        ORDER BY p.id DESC";
+$result = mysqli_query($link, $sql);
+if (!$result) {
+    echo '<div class="alert alert-danger">Failed to fetch products: ' . htmlspecialchars(mysqli_error($link)) . '</div>';
+    $result = false;
+}
 
 // --- CARD 1: Units Sold ---
 $units_sql = "SELECT COUNT(*) AS units_sold FROM invoices WHERE status IN ('paid', 'sent')";
@@ -95,6 +71,34 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
     <title>Products Kanban | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
     <?php include 'layouts/head-css.php'; ?>
+
+    <style>
+    /* Reduce vertical space above and below filters */
+    .card-body .row.align-items-center.mb-2 {
+        margin-bottom: 20px !important;
+        margin-top: 0 !important;
+    }
+    .card-body .form-select-sm {
+        padding-top: 3px;
+        padding-bottom: 3px;
+        font-size: 0.96rem;
+    }
+    .card-body label.form-label {
+        font-size: 1rem;
+        margin-right: 8px;
+    }
+    @media (max-width: 991.98px) {
+        .card-body .row.align-items-center.mb-2 {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
+        .card-body .col.d-flex.justify-content-end {
+            justify-content: flex-start !important;
+            margin-top: 10px;
+        }
+    }
+    </style>
+
 </head>
 
 <body>
@@ -116,7 +120,14 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                     <div class="row">
                         <div class="col-12">
                             <div class="page-title-box">
-                                <h4 class="page-title">Blank Page</h4>
+                                <div class="page-title-right"><!-- 
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="app-ecom-manager.php">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Extended UI</a></li>
+                                        <li class="breadcrumb-item active">Scrollbar</li>
+                                    </ol> -->
+                                </div>
+                                <h4 class="page-title">E-Commerce Manager</h4>
                             </div>
                         </div>
                     </div>
@@ -127,8 +138,8 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                             <div class="card shadow-sm mb-4">
                                 <div class="card-header bg-white fw-bold">Apps</div>
                                 <div class="card-body">
-                                    <div class="row g-3">
-                                        <div class="col-12">
+                                    <div class="row row-cols-2 g-3">
+                                        <div class="col">
                                             <a href="http://localhost/app.flyhubdigital.com/invoicing.php" class="text-decoration-none">
                                                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                                                     <div class="mb-2 display-6 text-info"><i class="ri-bill-line"></i></div>
@@ -136,7 +147,7 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                                                 </div>
                                             </a>
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col">
                                             <a href="sales.php" class="text-decoration-none">
                                                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                                                     <div class="mb-2 display-6 text-warning"><i class="ri-cash-line"></i></div>
@@ -144,7 +155,7 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                                                 </div>
                                             </a>
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col">
                                             <a href="products.php" class="text-decoration-none">
                                                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                                                     <div class="mb-2 display-6 text-warning"><i class="ri-database-2-line"></i></div>
@@ -152,7 +163,7 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                                                 </div>
                                             </a>
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col">
                                             <a href="pos.php" class="text-decoration-none">
                                                 <div class="card border-0 text-center p-3 h-100 shadow-sm">
                                                     <div class="mb-2 display-6 text-info"><i class="ri-store-2-line"></i></div>
@@ -168,116 +179,81 @@ $revenue_ytd = ($ytd_invoice ?: 0) + ($ytd_soa ?: 0);
                         <!-- Center: Main Content -->
                         <div class="col-12 col-md-6">                                        
                             <div class="card shadow-sm mb-4 overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&amp;fit=crop&amp;w=800&amp;q=80" class="w-100" alt="Aerial Property View" style="max-height:180px;object-fit:cover;">
+                            <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80" class="w-100" alt="E-commerce Bags" style="max-height:180px;object-fit:cover;">
                                 <div class="card-img-overlay p-3 d-flex flex-column justify-content-end align-items-end">
-                                    <span class="badge bg-primary shadow">Featured Property</span>
                                 </div>
                             </div>
                             <div class="card shadow-sm mb-4">
                                 <div class="card-body">
-                                    <div class="row align-items-end mb-3">
-                                        <div class="col-md-6">
-                                            <form method="get" class="row g-2">
-                                                <div class="col-auto">
-                                                    <label class="form-label mb-0">Filter:</label>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <select name="range" class="form-select form-select-sm" onchange="this.form.submit()">
-                                                        <option value="">All Dates</option>
-                                                        <option value="today" <?= ($filter_range == 'today') ? 'selected' : '' ?>>Today</option>
-                                                        <option value="week" <?= ($filter_range == 'week') ? 'selected' : '' ?>>This Week</option>
-                                                        <option value="month" <?= ($filter_range == 'month') ? 'selected' : '' ?>>This Month</option>
-                                                        <option value="year" <?= ($filter_range == 'year') ? 'selected' : '' ?>>This Year</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                                        <?php foreach ($statuses as $key => $label): ?>
-                                                            <option value="<?= htmlspecialchars($key) ?>" <?= ($status_filter === $key) ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+
+                                        <div class="row align-items-center mb-2 flex-nowrap">
+                                            <div class="col-auto d-flex align-items-center gap-2" style="flex-wrap:nowrap;">
+                                                <label class="form-label mb-0 me-2">Filter:</label>
+                                                <form method="get" class="d-flex align-items-center gap-2" style="margin-bottom:0;">
+                                                    <select name="category" class="form-select form-select-sm" style="width: 145px;" onchange="this.form.submit()">
+                                                        <option value="all">All Categories</option>
+                                                        <?php foreach ($categories as $id => $catname): ?>
+                                                        <option value="<?= htmlspecialchars($id) ?>" <?= ($category_filter == $id) ? 'selected' : '' ?>><?= htmlspecialchars($catname) ?></option>
                                                         <?php endforeach; ?>
                                                     </select>
-                                                </div>
-                                                <input type="hidden" name="page" value="<?= htmlspecialchars($_GET['page'] ?? '') ?>">
-                                            </form>
+                                                    <select name="status" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
+                                                        <option value="all">All Status</option>
+                                                        <option value="active" <?= ($status_filter == 'active') ? 'selected' : '' ?>>Active</option>
+                                                        <option value="draft" <?= ($status_filter == 'draft') ? 'selected' : '' ?>>Draft</option>
+                                                        <option value="archived" <?= ($status_filter == 'archived') ? 'selected' : '' ?>>Archived</option>
+                                                    </select>
+                                                    <input type="hidden" name="page" value="<?= htmlspecialchars($_GET['page'] ?? '') ?>">
+                                                </form>
+                                            </div>
+                                            <div class="col d-flex justify-content-end">
+                                                <a href="products.php" class="btn btn-link fw-semibold px-2" style="white-space:nowrap;">View All Products</a>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6 d-flex justify-content-end gap-2">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="printTable()">Print</button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportTableToCSV('invoices.csv')">Export</button>
-                                        </div>
-                                    </div>
 
-                                    <div class="table-responsive">
-                                        <table id="invoice-table" class="table table-bordered table-hover align-middle mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Invoice #</th>
-                                                    <th>Client Name</th>
-                                                    <th>Amount</th>
-                                                    <th>Status</th>
-                                                    <th>Invoice Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            <?php if (mysqli_num_rows($result) > 0): ?>
-                                                <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                                                    <?php 
-                                                        $status = strtolower($row['status']);
-                                                        $badgeClass = $statusBadgeClass[$status] ?? 'secondary';
-                                                    ?>
+                                        <div class="table-responsive">
+                                            <table id="product-table" class="table table-bordered table-hover align-middle mb-0">
+                                                <thead class="table-light">
                                                     <tr>
-                                                        <td><?= htmlspecialchars($row['invoice_number']) ?></td>
-                                                        <td><?= htmlspecialchars(trim($row['client_name']) ?: '—') ?></td>
-                                                        <td><strong><?= number_format($row['total'], 2) ?></strong></td>
-                                                        <td>
-                                                            <span class="badge bg-<?= $badgeClass ?>">
-                                                                <?= htmlspecialchars(ucfirst($status)) ?>
-                                                            </span>
-                                                        </td>
-                                                        <td><?= htmlspecialchars($row['issue_date']) ?></td>
+                                                        <th>Name</th>
+                                                        <th>Description</th>
+                                                        <th>Type</th>
+                                                        <th>Price</th>
+                                                        <th>Stock</th>
+                                                        <th>Status</th>
                                                     </tr>
-                                                <?php endwhile; ?>
-                                            <?php else: ?>
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted">No invoices found.</td>
-                                                </tr>
-                                            <?php endif; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody>
+                                                <?php if (mysqli_num_rows($result) > 0): ?>
+                                                    <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($row['name']) ?></td>
+                                                            <td><?= htmlspecialchars($row['description']) ?></td>
+                                                            <td><?= htmlspecialchars($row['product_type']) ?></td>
+                                                            <td>₱<?= number_format($row['price'], 2) ?></td>
+                                                            <td><?= htmlspecialchars($row['stock']) ?></td>
+                                                            <td>
+                                                                <span class="badge bg-<?= $row['status'] === 'active' ? 'success' : 'secondary' ?>">
+                                                                    <?= htmlspecialchars(ucfirst($row['status'])) ?>
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endwhile; ?>
+                                                <?php else: ?>
+                                                    <tr>
+                                                        <td colspan="6" class="text-center text-muted">No products found.</td>
+                                                    </tr>
+                                                <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
                                 </div>
                             </div>
                         </div>
 
                         <!-- Right: Metrics -->
                         <div class="col-12 col-md-3">
-                            <div class="row mb-4 g-3">
-                                <div class="col-12">
-                                    <div class="card text-success border-success border shadow h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <div class="display-6 me-3"><i class="ri-home-2-line"></i></div>
-                                                <div>
-                                                    <h6 class="mb-1 fw-bold">Units Sold</h6>
-                                                    <div class="fs-3 fw-semibold"><?= number_format($units_sold) ?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="card text-primary border-primary border shadow h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <div class="display-6 me-3"><i class="ri-currency-line"></i></div>
-                                                <div>
-                                                    <h6 class="mb-1 fw-bold">Revenue (YTD)</h6>
-                                                    <div class="fs-3 fw-semibold">₱<?= number_format($revenue_ytd, 2) ?></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
                     </div><!-- end row g-4 -->
 

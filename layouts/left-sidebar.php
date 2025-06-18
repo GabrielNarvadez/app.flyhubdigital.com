@@ -67,12 +67,71 @@ $stmt->close();
           <span> Contacts </span>
         </a>
       </li>
-      <li class="side-nav-item">
-        <a href="apps-real-estate.php" class="side-nav-link">
-          <i class="ri-building-line"></i>
-          <span> Real Estate </span>
-        </a>
-      </li>
+
+<li class="side-nav-item">
+  <a href="#realEstateMenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="ri-home-8-line"></i>
+    <span> Real Estate </span>
+    <span class="menu-arrow"></span>
+  </a>
+  <ul class="side-nav-second-level collapse" id="realEstateMenu" style="padding-left:32px;">
+    <li>
+      <a href="real-estate-dashboard.php">
+        <i class="ri-dashboard-2-line"></i>
+        <span> Dashboard </span>
+      </a>
+    </li>
+    <li>
+      <a href="property-inventory.php">
+        <i class="ri-building-2-line"></i>
+        <span> Properties </span>
+      </a>
+    </li>
+    <li>
+      <a href="real-estate-crm.php">
+        <i class="ri-contacts-book-line"></i>
+        <span> CRM </span>
+      </a>
+    </li>
+    <li>
+      <a href="sales.php">
+        <i class="ri-bill-line"></i>
+        <span> Sales </span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="ri-folder-line"></i>
+        <span> Documents </span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="ri-bar-chart-2-line"></i>
+        <span> Reports </span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="ri-calendar-2-line"></i>
+        <span> Notifications </span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="ri-shield-user-line"></i>
+        <span> Users </span>
+      </a>
+    </li>
+    <li>
+      <a href="customer-portal.php">
+        <i class="ri-door-open-line"></i>
+        <span> Customer Portal </span>
+      </a>
+    </li>
+  </ul>
+</li>
+
 
       <li class="side-nav-item">
         <a href="#ecomSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">

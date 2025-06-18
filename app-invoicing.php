@@ -1,12 +1,105 @@
 <?php
-// === SERVER-SIDE: Confirm & Pay Logic ===
+// === SERVER-SIDE: Handle AJAX Actions for Invoices ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     require_once __DIR__ . '/layouts/config.php';
     header('Content-Type: application/json');
 
+    // === SAVE AS DRAFT ===
+    if ($_POST['ajax'] == 'draft') {
+        if (empty($_POST['invoice_number'])) {
+            echo json_encode(['success'=>false,'msg'=>'Invoice number is required']);
+            exit;
+        }
+        $company_id      = 1;
+        $currency        = 'PHP';
+        $status          = 'draft';
+        $contact_id      = $_POST['contact_id'] ?? null;
+        $invoice_number  = $_POST['invoice_number'];
+        $issue_date      = $_POST['issue_date'] ?? null;
+        $due_date        = $_POST['due_date'] ?? null;
+        $notes           = $_POST['notes'] ?? '';
+        $subtotal        = $_POST['subtotal'] ?? 0;
+        $discount_total  = $_POST['discount_total'] ?? 0;
+        $tax_total       = $_POST['tax_total'] ?? 0;
+        $total           = $_POST['total'] ?? 0;
+
+        // Insert or update invoice as draft
+        $stmt = $link->prepare("
+            INSERT INTO invoices
+              (company_id, contact_id, invoice_number, status, issue_date, due_date, currency, notes, subtotal, discount_total, tax_total, total, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+              contact_id=VALUES(contact_id), status=VALUES(status), issue_date=VALUES(issue_date), due_date=VALUES(due_date), 
+              notes=VALUES(notes), subtotal=VALUES(subtotal), discount_total=VALUES(discount_total),
+              tax_total=VALUES(tax_total), total=VALUES(total), updated_at=NOW()
+        ");
+        if (!$stmt) {
+            echo json_encode(['success'=>false,'msg'=>'DB prepare error: '.$link->error]);
+            exit;
+        }
+        $stmt->bind_param(
+            "iissssssdddd",
+            $company_id,
+            $contact_id,
+            $invoice_number,
+            $status,
+            $issue_date,
+            $due_date,
+            $currency,
+            $notes,
+            $subtotal,
+            $discount_total,
+            $tax_total,
+            $total
+        );
+        if (!$stmt->execute()) {
+            echo json_encode(['success'=>false,'msg'=>'DB execute error: '.$stmt->error]);
+            exit;
+        }
+        $invoice_id = $stmt->insert_id ?: $link->query("SELECT id FROM invoices WHERE invoice_number='$invoice_number'")->fetch_assoc()['id'];
+        $stmt->close();
+
+        // Save line items
+        $link->query("DELETE FROM invoice_items WHERE invoice_id=$invoice_id");
+        $items = json_decode($_POST['line_items'], true);
+        if (is_array($items) && count($items)) {
+            $stmt = $link->prepare("
+                INSERT INTO invoice_items
+                    (invoice_id, item_type, reference_id, product_id, description, quantity, unit_price, extra_json, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ");
+            foreach ($items as $item) {
+                $item_type    = $item['item_type'] ?? 'product';
+                $reference_id = $item['reference_id'] ?? null;
+                $product_id   = $item_type === 'product' ? ($item['product_id'] ?? null) : null;
+                $desc         = $item['description'] ?? ($item['reference_label'] ?? '');
+                $qty          = $item['quantity'] ?? 1;
+                $unit         = $item['unit_price'] ?? 0.00;
+                $extra = [];
+                if (!empty($item['reference_label'])) $extra['reference_label'] = $item['reference_label'];
+                if (!empty($item['description'])) $extra['description'] = $item['description'];
+                $extra_json = !empty($extra) ? json_encode($extra) : null;
+                $stmt->bind_param(
+                    "isissids",
+                    $invoice_id,
+                    $item_type,
+                    $reference_id,
+                    $product_id,
+                    $desc,
+                    $qty,
+                    $unit,
+                    $extra_json
+                );
+                $stmt->execute();
+            }
+            $stmt->close();
+        }
+        echo json_encode(['success'=>true,'msg'=>'Draft saved!']);
+        exit;
+    }
+
     // === CONFIRM/SAVE INVOICE ===
     if ($_POST['ajax'] == '1') {
-        // Basic validation
         if (empty($_POST['contact_id'])) {
             echo json_encode(['success'=>false,'msg'=>'Customer is required']);
             exit;
@@ -15,8 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             echo json_encode(['success'=>false,'msg'=>'Invoice number is required']);
             exit;
         }
-
-        // Prepare fields
         $company_id      = 1;
         $currency        = 'PHP';
         $status          = 'confirmed';
@@ -30,7 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         $tax_total       = $_POST['tax_total'];
         $total           = $_POST['total'];
 
-        // Insert or update invoice
         $stmt = $link->prepare("
             INSERT INTO invoices
               (company_id, contact_id, invoice_number, status, issue_date, due_date, currency, notes, subtotal, discount_total, tax_total, total, created_at, updated_at)
@@ -66,8 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         $invoice_id = $stmt->insert_id ?: $link->query("SELECT id FROM invoices WHERE invoice_number='$invoice_number'")->fetch_assoc()['id'];
         $stmt->close();
 
-        // === Insert all invoice line items for this invoice ===
-        $link->query("DELETE FROM invoice_items WHERE invoice_id=$invoice_id"); // Remove previous
+        // Save line items
+        $link->query("DELETE FROM invoice_items WHERE invoice_id=$invoice_id");
         $items = json_decode($_POST['line_items'], true);
         if (is_array($items) && count($items)) {
             $stmt = $link->prepare("
@@ -82,12 +172,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                 $desc         = $item['description'] ?? ($item['reference_label'] ?? '');
                 $qty          = $item['quantity'] ?? 1;
                 $unit         = $item['unit_price'] ?? 0.00;
-
                 $extra = [];
                 if (!empty($item['reference_label'])) $extra['reference_label'] = $item['reference_label'];
                 if (!empty($item['description'])) $extra['description'] = $item['description'];
                 $extra_json = !empty($extra) ? json_encode($extra) : null;
-
                 $stmt->bind_param(
                     "isissids",
                     $invoice_id,
@@ -103,7 +191,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
             }
             $stmt->close();
         }
-
         echo json_encode(['success'=>true,'msg'=>'Invoice confirmed and saved!']);
         exit;
     }
@@ -127,11 +214,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
         exit;
     }
 }
+include 'layouts/session.php'; // Safe, session_start only
+include 'layouts/config.php';  // Safe, doesn't output HTML
+include 'layouts/main.php';    // This starts HTML!
 ?>
-
-<?php include 'layouts/session.php'; ?>
-<?php include 'layouts/main.php'; ?>
-
 <head>
     <title>Invoicing | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
@@ -223,24 +309,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                             <div class="card shadow-sm mb-0">
                                 <div class="card-body">
                                     <form id="invoice-form" autocomplete="off">
+
                                         <div class="row mb-2">
-                                            <div class="col"><h5 class="mb-0 fw-bold">Invoice Editor</h5></div>
-                                                <div class="col text-end d-flex align-items-center justify-content-end gap-2">
-                                                    <button type="button" class="btn btn-outline-secondary action-btn" id="btn-print">
-                                                        Print
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-primary action-btn" id="btn-save-draft">
-                                                        Save Draft
-                                                    </button>
-                                                    <button type="button" class="btn btn-success action-btn" id="btn-confirm">
-                                                        Confirm
-                                                    </button>
-                                                    <!-- If you want to keep other buttons, keep them hidden as before -->
-                                                    <button type="button" id="btn-draft" class="btn btn-outline-secondary d-none action-btn">Revert to Draft</button>
-                                                    <button type="button" id="btn-pay" class="btn btn-success d-none action-btn">Pay</button>
-                                                </div>
+                                          <div class="col">
+                                            <h5 class="mb-0 fw-bold">Invoice Editor</h5>
+                                          </div>
+                                          <div class="col text-end">
+                                            <div class="d-flex justify-content-end gap-2">
+                                              <button type="button" class="btn btn-outline-secondary" id="btn-print">
+                                                </i> Print
+                                              </button>
+                                              <button type="button" class="btn btn-outline-primary" id="btn-save-draft">
+                                                Save Draft
+                                              </button>
+                                              <button type="button" class="btn btn-primary d-none" id="btn-draft">
+                                                Edit
+                                              </button>
+                                              <button type="button" class="btn btn-success d-none" id="btn-pay">
+                                                Pay
+                                              </button>
+                                              <button type="button" class="btn btn-success" id="btn-confirm">
+                                                Confirm
+                                              </button>
+                                            </div>
+                                          </div>
                                         </div>
-                                            <div class="row mb-2 align-items-end">
+                                                                                    <div class="row mb-2 align-items-end">
                                                 <div class="col">
                                                     <label class="form-label">Invoice #</label>
                                                     <input type="text" name="invoice_number" class="form-control bg-light text-muted input-match" id="invoice_number"
@@ -413,17 +507,17 @@ function setFormEditable(editable) {
     $('#btn-print').prop('disabled', false);
 }
 function showActions(state) {
-    if (state === 'confirmed') {
-        $('#btn-confirm').addClass('d-none');
-        $('#btn-draft, #btn-pay').removeClass('d-none');
-        $('#btn-pay').removeClass('d-none');
-    } else if (state === 'paid') {
-        $('#btn-confirm, #btn-draft, #btn-pay').addClass('d-none');
-    } else {
+    if (state === 'draft') {
+        $('#btn-save-draft').removeClass('d-none');
         $('#btn-confirm').removeClass('d-none');
         $('#btn-draft, #btn-pay').addClass('d-none');
+    } else {
+        $('#btn-save-draft').addClass('d-none');
+        $('#btn-confirm, #btn-draft, #btn-pay').addClass('d-none');
     }
 }
+
+
 function showAlert(msg, type='success') {
     $('#alert-area').html(
         `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
@@ -593,7 +687,7 @@ $(function () {
     // Always render preview/table at start
     renderLineItemsTable();
 
-    setFormEditable(true);
+    setFormEditable(true); // fields are editable by default
     showActions('draft');
 
     // Product type filter
@@ -770,6 +864,44 @@ $(function () {
         });
     });
 });
+
+// Save Draft (AJAX)
+$('#btn-save-draft').off('click').on('click', function () {
+    const f = $('#invoice-form');
+    const payload = {
+        ajax: 'draft',
+        invoice_number: f.find('[name="invoice_number"]').val(),
+        issue_date: f.find('[name="issue_date"]').val(),
+        due_date: f.find('[name="due_date"]').val(),
+        contact_id: f.find('[name="contact_id"]').val(),
+        billing_address: f.find('[name="billing_address"]').val(),
+        shipping_address: f.find('[name="shipping_address"]').val(),
+        phone: f.find('[name="phone"]').val(),
+        notes: f.find('[name="notes"]').val(),
+        subtotal: $('#subtotal').val(),
+        discount_total: $('#discount_total').val(),
+        tax_total: $('#tax_total').val(),
+        total: $('#total').val(),
+        line_items: JSON.stringify(lineItems)
+    };
+    $.ajax({
+        url: AJAX_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json'
+    }).done(function(resp) {
+        if (resp.success) {
+            invoiceStatus = 'draft';
+            setFormEditable(false); // fields become locked after saving draft
+            showActions('draft');
+            renderPreview();
+            showAlert('Draft saved!', 'success');
+        } else {
+            showAlert(resp.msg || 'Server error', 'danger');
+        }
+    });
+});
+
 </script>
                 </div>
             </div>

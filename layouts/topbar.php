@@ -39,10 +39,6 @@ if (!empty($user_avatar) && $user_avatar !== 'avatar-default.jpg') {
     ';
 }
 ?>
-
-
-
-
 <div class="navbar-custom">
     <div class="topbar container-fluid">
         <div class="d-flex align-items-center gap-lg-2 gap-1">

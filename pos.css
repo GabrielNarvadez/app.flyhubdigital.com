@@ -1,0 +1,381 @@
+body { background: #f9fafb; overflow-x: hidden; }
+.cart-card {
+  background: rgb(62 96 213);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  min-height: 360px;
+}
+.cart-header { font-size: 1.3rem; }
+.cart-total-bar {
+  border-top: 2px solid #46cfb0;
+  padding: 12px 0 0 0;
+  margin-top: 7px;
+  font-weight: bold;
+  font-size: 1.22rem;
+}
+.cart-item {
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 6px;
+  background: #fff;
+  color: #3c3c3c;
+}
+.cart-item .btn {
+  border-radius: 50%;
+  padding: .2rem .5rem;
+}
+.checkout-btn {
+  background: #46cfb0;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 7px;
+  font-size: 1.13rem;
+  letter-spacing: 1px;
+  margin-top: 18px;
+}
+.checkout-btn:active { background: #2e9988 !important; }
+#product-grid {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+#product-scroll-area {
+  overflow-y: auto;
+  max-height: calc(100vh - 260px);
+  padding-bottom: 110px;
+  width: 100%;
+  overflow-x: hidden;
+}
+.product-card {
+  background: #fff;
+  border: 1.3px solid #e4eceb;
+  border-radius: 5px;
+  min-height: 128px;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 5px 7px 5px;
+  margin-bottom: 0;
+  font-size: .97rem;
+  box-shadow: 0 2px 6px #00000010;
+}
+.product-card:hover {
+  transform: scale(1.02);
+  border-color: rgb(62 96 213);
+  box-shadow: 0 4px 14px #0002;
+}
+.product-icon-wrapper {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-card .text-success { color: rgb(62 96 213) !important; }
+.product-name {
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.98rem;
+  min-height: 2.2em;
+  line-height: 1.1;
+  margin-bottom: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Show up to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  text-align: center;
+}
+@media (min-width: 1200px) {
+  #product-grid > .col {
+    flex: 0 0 16.6667%;   /* 6 per row */
+    max-width: 16.6667%;
+  }
+}
+@media (max-width: 1199.98px) {
+  #product-grid > .col {
+    flex: 0 0 20%;   /* 5 per row */
+    max-width: 20%;
+  }
+}
+@media (max-width: 991.98px) {
+  #product-grid > .col {
+    flex: 0 0 25%;   /* 4 per row */
+    max-width: 25%;
+  }
+}
+@media (max-width: 767.98px) {
+  #product-grid > .col {
+    flex: 0 0 33.3333%;   /* 3 per row */
+    max-width: 33.3333%;
+  }
+}
+@media (max-width: 575.98px) {
+  #product-grid > .col {
+    flex: 0 0 50%;   /* 2 per row */
+    max-width: 50%;
+  }
+}
+.action-footer.fixed-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1030;
+  background: #e5f5f0;
+  border-radius: 0;
+  padding: 1rem 0 0.7rem 0;
+  box-shadow: 0 -2px 12px #0002;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.action-btn {
+  min-width: 90px;
+  margin: 4px 8px 4px 0;
+  font-size: 1.05rem;
+  border-radius: 9px;
+  background: #fff;
+  color: #32796b;
+  border: 2px solid #e4eceb;
+  box-shadow: 0 2px 4px #0001;
+  font-weight: 600;
+  transition: all .13s;
+}
+.action-btn:hover {
+  background: #46cfb0;
+  color: #fff;
+  border-color: #46cfb0;
+}
+.action-btn i {
+  font-size: 1.4rem;
+  display: block;
+}
+#category-filter {
+  border: 2px solid rgb(62 96 213);
+  background: #eafff7;
+  color: #175c43;
+}
+#category-filter:focus {
+  border-color: #175c43;
+  box-shadow: 0 0 0 0.15rem rgb(62 96 213)33;
+}
+.pos-header {
+  box-shadow: 0 2px 8px #0001;
+}
+.pos-header .navbar-toggler {
+  outline: none;
+}
+.pos-header .dropdown-menu {
+  margin-top:10px;
+  min-width:180px;
+}
+@media (max-width: 767.98px) {
+  .pos-header .navbar-brand {
+    font-size: 1.1rem !important;
+  }
+}
+.pos-header {
+  box-shadow: 0 2px 8px #0001;
+}
+.pos-header .btn:focus {
+  outline: none;
+  box-shadow: none;
+}
+.pos-header .dropdown-menu {
+  min-width:180px;
+}
+@media (max-width: 767.98px) {
+  .pos-header .navbar-brand {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* ---- CHECKOUT MODAL STYLES ---- */
+
+/* Modal Size */
+.modal-lg-custom {
+  max-width: 700px !important;
+  min-width: 580px;
+}
+@media (max-width: 800px) {
+  .modal-lg-custom {
+    max-width: 99vw !important;
+    min-width: unset;
+  }
+}
+
+/* Modal Content Padding */
+.modal-content {
+  border-radius: 18px !important;
+  padding: 0 0 4px 0;
+}
+
+/* Amount Due */
+#payAmountDue {
+  font-size: 2.3rem;
+  font-weight: 900;
+  color: #2389ff;
+  margin-bottom: 1.1rem;
+}
+
+/* Change Amount - smaller, always fits */
+#changeAmount {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #222;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  max-width: 95%;
+  word-break: break-word;
+  line-height: 1.15;
+}
+
+/* Payment Methods - close together */
+.payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 6px;
+  margin-bottom: 12px;
+}
+
+.payment-methods .btn {
+  min-width: 96px;
+  padding: 0.6rem 0.7rem;
+  font-size: 1.09rem;
+  margin: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid #d8e1e8;
+  background: #fff;
+  color: #1a755b;
+  transition: all .13s;
+}
+.payment-methods .btn.active,
+.payment-methods .btn.selected {
+  background: rgb(62 96 213) !important;
+  color: #fff !important;
+  border-color: rgb(62 96 213) !important;
+}
+
+/* Bill amount buttons: single line, blue, no big margin/gaps */
+.bills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+  margin-top: 3px;
+}
+.bills-row .btn,
+.bill-btn {
+  background: #eaf5ff;
+  color: #1768d8;
+  border: 2px solid #b7cbe5;
+  font-weight: 700;
+  min-width: 60px;
+  font-size: 1.08rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  margin: 0;
+  transition: all .13s;
+}
+.bills-row .btn:hover,
+.bill-btn:hover {
+  background: #1768d8;
+  color: #fff;
+  border-color: #1768d8;
+}
+.bills-row .btn.btn-outline-warning {
+  color: #b26c00;
+  background: #fff7ea;
+  border-color: #ffe0a8;
+}
+.bills-row .btn.btn-outline-warning:hover {
+  background: #b26c00;
+  color: #fff;
+}
+
+/* Number Keypad: bigger, grid, no big gaps, close together */
+.num-keypad {
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+.num-keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;   /* Try 2px or 3px for the tightest look */
+}
+
+.num-btn {
+  width: 88px;
+  height: 68px;
+  font-size: 2.2rem;
+  font-weight: bold;
+  border-radius: 4px !important; /* LESS ROUNDED */
+  background: #eafff6;
+  border: 2px solid rgb(62 96 213);
+  color: #126d54;
+  transition: all .14s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;  /* No extra spacing */
+}
+
+
+.num-btn:hover, .num-btn:focus {
+  background: rgb(62 96 213) !important;
+  color: #fff !important;
+  border-color: rgb(62 96 213) !important;
+}
+@media (max-width: 991.98px) {
+  .num-btn { width: 60px; height: 50px; font-size: 1.2rem;}
+  .num-keypad-grid { gap: 2px; }
+}
+@media (max-width: 767.98px) {
+  .num-btn { width: 46px; height: 38px; font-size: 1.05rem;}
+  .num-keypad-grid { gap: 2px; }
+}
+
+
+/* Cancel & Confirm Payment - side by side, bottom right */
+.modal-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center;
+  gap: 10px;
+  padding-right: 18px;
+  padding-left: 18px;
+}
+.modal-footer .btn {
+  min-width: 120px;
+  padding: 0.64rem 0;
+  font-size: 1.09rem;
+  font-weight: 700;
+  border-radius: 9px;
+}
+.modal-footer .btn-secondary {
+  background: #6c757d !important;
+  color: #fff !important;
+  border-color: #6c757d !important;
+}
+.modal-footer .btn-success {
+  background: rgb(62 96 213) !important;
+  color: #fff !important;
+  border-color: rgb(62 96 213) !important;
+}
+@media (max-width: 600px) {
+  .modal-footer .btn { min-width: 82px; font-size: 1rem;}
+}
+
+.pay-amount-input {
+  font-size: 1.25rem !important;
+  font-weight: 700;
+  padding: 0.54rem 0.65rem !important;
+  margin-bottom: 7px !important;
+}

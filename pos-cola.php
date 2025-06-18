@@ -465,21 +465,11 @@ if ($stmt = mysqli_prepare($link, $sql)) {
             <main class="flex-grow-1 p-3 p-md-4">
                 <!-- CATEGORIES -->
                 <nav class="coca-category mb-4 d-flex flex-row justify-content-center flex-wrap">
-                    <a class="nav-link active" href="#">
-                      <i class="ri-handbag-line"></i> All Bags
-                    </a>
-                    <a class="nav-link" href="#">
-                      <i class="ri-handbag-line"></i> Backpacks
-                    </a>
-                    <a class="nav-link" href="#">
-                      <i class="ri-shopping-bag-3-line"></i> Shoulder & Crossbody Bags
-                    </a>
-                    <a class="nav-link" href="#">
-                      <i class="ri-briefcase-3-line"></i> Totes & Satchels
-                    </a>
-                    <a class="nav-link" href="#">
-                      <i class="ri-more-2-line"></i> Others
-                    </a>
+                    <a class="nav-link active" href="#"><i class="ri-restaurant-2-line"></i>Main Dishes</a>
+                    <a class="nav-link" href="#"><i class="ri-cup-line"></i>Beverages</a>
+                    <a class="nav-link" href="#"><i class="ri-cake-3-line"></i>Desserts</a>
+                    <a class="nav-link" href="#"><i class="ri-fire-line"></i>Hot Meals</a>
+                    <a class="nav-link" href="#"><i class="ri-leaf-line"></i>Salads</a>
                 </nav>
                 <div class="row">
                     <!-- PRODUCT GRID -->

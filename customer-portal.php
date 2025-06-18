@@ -2,63 +2,628 @@
 <?php include 'layouts/main.php'; ?>
 
 <head>
-    <title>Customer Portal | Flyhub Business Apps</title>
+    <title>Customer Profile | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
-
     <?php include 'layouts/head-css.php'; ?>
+    <style>
+        .profile-avatar {
+            width: 68px;
+            height: 68px;
+            font-size: 2.3rem;
+            background: #f1f3fa;
+        }
+        .profile-header-bar {
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0001;
+        }
+        .profile-section-title {
+            font-size: 1.08rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .card-header.fw-bold {
+            font-size: 1.02rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .table-sm th, .table-sm td {
+            vertical-align: middle;
+        }
+ 
+    /* Light color for nav background */
+        .navbar.client-portal-nav {
+            background: #f6f8fb !important;
+            min-height: 66px;
+            box-shadow: 0 2px 10px #0001;
+        }
+
+        /* Logo text bigger and bold */
+        .navbar.client-portal-nav .navbar-brand span {
+            font-size: 1.23rem;
+            font-weight: 700;
+            color: #385a99;
+            letter-spacing: .5px;
+        }
+
+        /* Bigger, bolder menu items */
+        .navbar.client-portal-nav .nav-link {
+            font-size: 1.15rem;
+            font-weight: 600;
+            padding: 10px 18px;
+            color: #385a99;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .navbar.client-portal-nav .nav-link.active,
+        .navbar.client-portal-nav .nav-link:hover,
+        .navbar.client-portal-nav .nav-link:focus {
+            color: #254680;
+            background: #eaf0fa;
+            border-radius: 6px;
+        }
+
+        /* Greeting and logout button styling */
+        .navbar.client-portal-nav .nav-link.text-primary {
+            font-size: 1.08rem;
+            padding: 10px 16px;
+        }
+
+        .navbar.client-portal-nav .btn-outline-danger {
+            font-size: 1.08rem;
+            padding: 7px 20px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 
-<body>
-    <!-- Begin page -->
-    <div class="wrapper">
+<?php include 'portal-nav.php'; ?>
 
-        <?php include 'layouts/portal-menu.php'; ?>
+<body class="authentication-bg">
 
-        <!-- ============================================================== -->
-        <!-- Start Page Content here -->
-        <!-- ============================================================== -->
+<?php include 'layouts/background.php'; ?>
 
-        <div class="content-page">
-            <div class="content">
+<div class="account-pages pt-2 pt-sm-5 pb-4 pb-sm-5 position-relative">
+    <div class="container">
 
-                <!-- Start Content-->
-                <div class="container-fluid">
-
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="page-title-box">
-                                <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="javascript: void(0);">Customer Portal</a></li>
-                                    </ol>
-                                </div>
-                                <h4 class="page-title">Customer Portal</h4>
-                            </div>
-                        </div>
+        <!-- Profile Header -->
+        <div class="row mb-4">
+            <div class="col-md-12 d-flex align-items-center gap-3 profile-header-bar p-3 bg-white mb-2">
+                <div>
+                    <div class="rounded-circle d-flex justify-content-center align-items-center profile-avatar text-secondary">
+                        <i class="ri-user-3-line"></i>
                     </div>
-
-                </div> <!-- container -->
-
-            </div> <!-- content -->
-
-            <?php include 'layouts/footer.php'; ?>
-
+                </div>
+                <div>
+                    <h3 class="mb-0" id="profileFullName">Del Rosario, Ana M.</h3>
+                    <div class="text-muted" id="profileEmail">ana.rosario@email.com</div>
+                </div>
+                <div class="ms-auto">
+                    <button class="btn btn-outline-primary" id="btn-edit-profile"><i class="ri-edit-2-line"></i> Edit Profile</button>
+                    <button class="btn btn-success d-none" id="btn-save-profile"><i class="ri-save-2-line"></i> Save</button>
+                    <button class="btn btn-outline-secondary d-none" id="btn-cancel-edit"><i class="ri-close-line"></i> Cancel</button>
+                </div>
+            </div>
         </div>
 
-        <!-- ============================================================== -->
-        <!-- End Page content -->
-        <!-- ============================================================== -->
+        <!-- Profile Sections -->
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <!-- Personal Information -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Personal Information</div>
+                    <div class="card-body">
+                        <form id="form-personal">
+                            <div class="mb-2">
+                                <label class="form-label">Client's Name (Last, First, Middle)</label>
+                                <input type="text" class="form-control" id="clientName" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Contact No.</label>
+                                <input type="text" class="form-control" id="clientContact" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="clientEmail" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Civil Status</label>
+                                    <select class="form-select" id="civilStatus" disabled>
+                                        <option>Single</option>
+                                        <option>Married</option>
+                                        <option>Widowed</option>
+                                        <option>Divorced</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="dob" disabled>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Place of Birth</label>
+                                    <input type="text" class="form-control" id="pob" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Age</label>
+                                    <input type="number" class="form-control" id="age" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Nationality</label>
+                                    <input type="text" class="form-control" id="nationality" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Religion</label>
+                                <input type="text" class="form-control" id="religion" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Permanent Address</label>
+                                <input type="text" class="form-control" id="permAddress" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Provincial Address</label>
+                                <input type="text" class="form-control" id="provAddress" disabled>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Spouse Info -->
+                <div class="card shadow-sm mb-4" id="spouseCard" style="display:none">
+                    <div class="card-header bg-white fw-bold">Spouse Information</div>
+                    <div class="card-body">
+                        <form id="form-spouse">
+                            <div class="mb-2">
+                                <label class="form-label">Spouse's Name (Last, First, Middle)</label>
+                                <input type="text" class="form-control" id="spouseName" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Spouse's Contact No.</label>
+                                <input type="text" class="form-control" id="spouseContact" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Spouse's Email</label>
+                                <input type="email" class="form-control" id="spouseEmail" disabled>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Employment Data -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Employment Data</div>
+                    <div class="card-body">
+                        <form id="form-employment">
+                            <div class="mb-2">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="companyName" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Company Address</label>
+                                <input type="text" class="form-control" id="companyAddress" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Length of Employment</label>
+                                    <input type="text" class="form-control" id="lengthEmployment" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Position</label>
+                                    <input type="text" class="form-control" id="position" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Company Contact Person</label>
+                                <input type="text" class="form-control" id="companyContactPerson" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Contact Person Position</label>
+                                    <input type="text" class="form-control" id="contactPersonPosition" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Contact No.</label>
+                                    <input type="text" class="form-control" id="companyContactNo" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="companyEmail" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">SSS/UMID No.</label>
+                                    <input type="text" class="form-control" id="sssNo" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">TIN</label>
+                                    <input type="text" class="form-control" id="tinNo" disabled>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Side -->
+            <div class="col-lg-6">
+                <!-- Property Data -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Property Data</div>
+                    <div class="card-body">
+                        <form id="form-property">
+                            <div class="mb-2">
+                                <label class="form-label">Project Title</label>
+                                <input type="text" class="form-control" id="projectTitle" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Project Site</label>
+                                <input type="text" class="form-control" id="projectSite" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label">Phase No.</label>
+                                    <input type="text" class="form-control" id="phaseNo" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Block No.</label>
+                                    <input type="text" class="form-control" id="blockNo" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Lot No.</label>
+                                    <input type="text" class="form-control" id="lotNo" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Lot Area</label>
+                                    <input type="text" class="form-control" id="lotArea" disabled>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Lot Class</label>
+                                    <input type="text" class="form-control" id="lotClass" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Price per sqm</label>
+                                    <input type="text" class="form-control" id="pricePerSqm" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Agent / Contact No.</label>
+                                <input type="text" class="form-control" id="agentContact" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Manager</label>
+                                    <input type="text" class="form-control" id="manager" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Broker</label>
+                                    <input type="text" class="form-control" id="broker" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Reservation Amount</label>
+                                <input type="text" class="form-control" id="reservationAmount" disabled>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Amortization Schedule Summary -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Amortization Schedule Summary</div>
+                    <div class="card-body">
+                        <form id="form-amort">
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Client’s Name</label>
+                                    <input type="text" class="form-control" id="amortClientName" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Reservation</label>
+                                    <input type="date" class="form-control" id="reservationDate" disabled>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Project Title</label>
+                                <input type="text" class="form-control" id="amortProjectTitle" disabled>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Project Site</label>
+                                <input type="text" class="form-control" id="amortProjectSite" disabled>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label">Lot Area</label>
+                                    <input type="text" class="form-control" id="amortLotArea" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Price per sqm</label>
+                                    <input type="text" class="form-control" id="amortPricePerSqm" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phase, Block, Lot, Class</label>
+                                    <input type="text" class="form-control" id="amortPhaseBlockLotClass" disabled>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Payment Terms (months)</label>
+                                    <input type="text" class="form-control" id="amortTerms" disabled>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Total Contract Price</label>
+                                    <input type="text" class="form-control" id="amortTotalContractPrice" disabled>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Monthly Amortization</label>
+                                    <input type="text" class="form-control" id="amortMonthly" disabled>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Add’l Misc Fee (7%)</label>
+                                    <input type="text" class="form-control" id="amortMiscFee" disabled>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Less Reservation</label>
+                                    <input type="text" class="form-control" id="amortLessReservation" disabled>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Total Amount Payable</label>
+                                    <input type="text" class="form-control" id="amortTotalPayable" disabled>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Net Selling Price</label>
+                                    <input type="text" class="form-control" id="amortNetSellingPrice" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Balance Payable</label>
+                                    <input type="text" class="form-control" id="amortBalancePayable" disabled>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- Payment Schedule -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Payment Schedule</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered" id="paymentScheduleTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Due Date</th>
+                                        <th>Amount Paid</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th class="text-end" colspan="2">Total Amount Paid:</th>
+                                        <th id="totalAmountPaid"></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Notes & Reminders -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white fw-bold">Notes & Reminders</div>
+                    <div class="card-body">
+                        <ul class="mb-2">
+                            <li>Miscellaneous Fee must be paid in full upon turnover.</li>
+                            <li>Late payments are subject to a 2% monthly penalty.</li>
+                            <li>Reservation Fee is non-refundable and non-transferable.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- row end -->
+    </div> <!-- container -->
+</div> <!-- account-pages -->
 
-    </div>
-    <!-- END wrapper -->
+<footer class="footer footer-alt fw-medium">
+    <span class="bg-body"><script>document.write(new Date().getFullYear())</script> © Flyhub Digital Inc.</span>
+</footer>
 
-    <?php include 'layouts/customer-portal-sidebar.php'; ?>
+<?php include 'layouts/footer-scripts.php'; ?>
 
-    <?php include 'layouts/footer-scripts.php'; ?>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+const profileData = {
+    client: {
+        name: "Del Rosario, Ana M.",
+        contact: "09171234567",
+        email: "ana.rosario@email.com",
+        civilStatus: "Married",
+        dob: "1990-02-10",
+        pob: "Quezon City",
+        age: 34,
+        nationality: "Filipino",
+        religion: "Catholic",
+        permAddress: "Blk 2 Lot 5, Sta. Maria Village, San Mateo, Rizal",
+        provAddress: "Barangay Malaya, Pililla, Rizal",
+        spouseName: "Del Rosario, Ben M.",
+        spouseContact: "09179999999",
+        spouseEmail: "ben.rosario@email.com"
+    },
+    employment: {
+        companyName: "Acme Corp",
+        companyAddress: "Makati Ave, Makati City",
+        length: "5 years",
+        position: "Engineer",
+        contactPerson: "Jane Doe",
+        contactPersonPosition: "HR Manager",
+        contactNo: "8822-3000",
+        email: "hr@acme.com",
+        sssNo: "33-1234567-1",
+        tinNo: "123-456-789"
+    },
+    property: {
+        projectTitle: "Parkside Residences",
+        projectSite: "Sta. Maria Village, San Mateo, Rizal",
+        phaseNo: "2",
+        blockNo: "5",
+        lotNo: "8",
+        lotArea: "350",
+        lotClass: "Corner",
+        pricePerSqm: "3000",
+        agentContact: "Liza Manalo / 09181234567",
+        manager: "Ana Cruz",
+        broker: "Ramon Santos",
+        reservationAmount: "20,000"
+    },
+    amort: {
+        clientName: "Ana Del Rosario",
+        reservationDate: "2023-08-01",
+        projectTitle: "Parkside Residences",
+        projectSite: "Sta. Maria Village, San Mateo, Rizal",
+        lotArea: "350",
+        pricePerSqm: "3000",
+        phaseBlockLotClass: "2, 5, 8, Corner",
+        terms: "48",
+        totalContractPrice: "1,050,000",
+        monthly: "22,000",
+        miscFee: "73,500",
+        lessReservation: "20,000",
+        totalPayable: "1,128,500",
+        netSellingPrice: "1,050,000",
+        balancePayable: "1,088,500"
+    },
+    paymentSchedule: [
+        {due: "2023-08-26", paid: "22,000", status: "Paid"},
+        {due: "2023-09-26", paid: "22,000", status: "Paid"},
+        {due: "2023-10-26", paid: "22,000", status: "Paid"},
+        {due: "2023-11-26", paid: "22,000", status: "Unpaid"},
+        {due: "2023-12-26", paid: "0", status: "Unpaid"}
+    ]
+};
 
-    <!-- App js -->
-    <script src="assets/js/app.min.js"></script>
+function populateProfile(data) {
+    // Personal
+    $("#clientName").val(data.client.name);
+    $("#clientContact").val(data.client.contact);
+    $("#clientEmail").val(data.client.email);
+    $("#civilStatus").val(data.client.civilStatus);
+    $("#dob").val(data.client.dob);
+    $("#pob").val(data.client.pob);
+    $("#age").val(data.client.age);
+    $("#nationality").val(data.client.nationality);
+    $("#religion").val(data.client.religion);
+    $("#permAddress").val(data.client.permAddress);
+    $("#provAddress").val(data.client.provAddress);
 
+    // Spouse
+    $("#spouseName").val(data.client.spouseName);
+    $("#spouseContact").val(data.client.spouseContact);
+    $("#spouseEmail").val(data.client.spouseEmail);
+    if(data.client.civilStatus === "Married") {
+        $("#spouseCard").show();
+    } else {
+        $("#spouseCard").hide();
+    }
+
+    // Employment
+    $("#companyName").val(data.employment.companyName);
+    $("#companyAddress").val(data.employment.companyAddress);
+    $("#lengthEmployment").val(data.employment.length);
+    $("#position").val(data.employment.position);
+    $("#companyContactPerson").val(data.employment.contactPerson);
+    $("#contactPersonPosition").val(data.employment.contactPersonPosition);
+    $("#companyContactNo").val(data.employment.contactNo);
+    $("#companyEmail").val(data.employment.email);
+    $("#sssNo").val(data.employment.sssNo);
+    $("#tinNo").val(data.employment.tinNo);
+
+    // Property
+    $("#projectTitle").val(data.property.projectTitle);
+    $("#projectSite").val(data.property.projectSite);
+    $("#phaseNo").val(data.property.phaseNo);
+    $("#blockNo").val(data.property.blockNo);
+    $("#lotNo").val(data.property.lotNo);
+    $("#lotArea").val(data.property.lotArea);
+    $("#lotClass").val(data.property.lotClass);
+    $("#pricePerSqm").val(data.property.pricePerSqm);
+    $("#agentContact").val(data.property.agentContact);
+    $("#manager").val(data.property.manager);
+    $("#broker").val(data.property.broker);
+    $("#reservationAmount").val(data.property.reservationAmount);
+
+    // Amortization
+    $("#amortClientName").val(data.amort.clientName);
+    $("#reservationDate").val(data.amort.reservationDate);
+    $("#amortProjectTitle").val(data.amort.projectTitle);
+    $("#amortProjectSite").val(data.amort.projectSite);
+    $("#amortLotArea").val(data.amort.lotArea);
+    $("#amortPricePerSqm").val(data.amort.pricePerSqm);
+    $("#amortPhaseBlockLotClass").val(data.amort.phaseBlockLotClass);
+    $("#amortTerms").val(data.amort.terms);
+    $("#amortTotalContractPrice").val(data.amort.totalContractPrice);
+    $("#amortMonthly").val(data.amort.monthly);
+    $("#amortMiscFee").val(data.amort.miscFee);
+    $("#amortLessReservation").val(data.amort.lessReservation);
+    $("#amortTotalPayable").val(data.amort.totalPayable);
+    $("#amortNetSellingPrice").val(data.amort.netSellingPrice);
+    $("#amortBalancePayable").val(data.amort.balancePayable);
+
+    // Payment schedule
+    let scheduleRows = data.paymentSchedule.map(p =>
+        `<tr>
+            <td>${p.due}</td>
+            <td>${p.paid}</td>
+            <td>${p.status === "Paid" ? '<span class="text-success">Paid</span>' : '<span class="text-danger">Unpaid</span>'}</td>
+        </tr>`
+    ).join('');
+    $("#paymentScheduleTable tbody").html(scheduleRows);
+    // Total paid
+    let totalPaid = data.paymentSchedule
+        .filter(p => p.status === "Paid")
+        .reduce((sum, p) => sum + parseFloat(p.paid.replace(/,/g, '') || 0), 0);
+    $("#totalAmountPaid").text(totalPaid.toLocaleString());
+    // Profile header
+    $("#profileFullName").text(data.client.name);
+    $("#profileEmail").text(data.client.email);
+}
+
+let fields = [
+    "#clientName", "#clientContact", "#clientEmail", "#civilStatus", "#dob", "#pob", "#age", "#nationality", "#religion", "#permAddress", "#provAddress",
+    "#spouseName", "#spouseContact", "#spouseEmail",
+    "#companyName", "#companyAddress", "#lengthEmployment", "#position", "#companyContactPerson", "#contactPersonPosition", "#companyContactNo", "#companyEmail", "#sssNo", "#tinNo"
+];
+
+function setEditable(editable) {
+    for (let selector of fields) {
+        $(selector).prop("disabled", !editable);
+    }
+    $("#btn-edit-profile").toggleClass("d-none", editable);
+    $("#btn-save-profile, #btn-cancel-edit").toggleClass("d-none", !editable);
+}
+
+$("#btn-edit-profile").on("click", function() {
+    setEditable(true);
+});
+$("#btn-cancel-edit").on("click", function() {
+    setEditable(false);
+    populateProfile(profileData);
+});
+$("#btn-save-profile").on("click", function() {
+    setEditable(false);
+    // Save logic would go here in production
+});
+
+$(function() {
+    populateProfile(profileData);
+    setEditable(false);
+});
+</script>
+
+<script src="assets/js/app.min.js"></script>
 </body>
-
 </html>

@@ -456,7 +456,7 @@ $status_opts = ['draft','sent','paid','void','canceled'];
 <script src="assets/js/app.min.js"></script>
 <script>
 // ====== FILTERS AND LIVE SEARCH ======
-function loadInvoiceTable() {
+function loadInvoiceTable(callback) {
     var params = {
         ajax: 1,
         table: 1,
@@ -468,12 +468,13 @@ function loadInvoiceTable() {
     };
     $.get(window.location.pathname, params, function(html) {
         $('#invoice-table tbody').html(html);
+        if (typeof callback === "function") callback();
     });
 }
-$('#filter-search').on('input', loadInvoiceTable);
-$('#filter-status').on('change', loadInvoiceTable);
-$('#filter-customer').on('change', loadInvoiceTable);
-$('#filter-from, #filter-to').on('change', loadInvoiceTable);
+$('#filter-search').on('input', function() { loadInvoiceTable(); });
+$('#filter-status').on('change', function() { loadInvoiceTable(); });
+$('#filter-customer').on('change', function() { loadInvoiceTable(); });
+$('#filter-from, #filter-to').on('change', function() { loadInvoiceTable(); });
 
 // Row click loads invoice preview and updates actions bar
 $('#invoice-table tbody').on('click', 'tr[data-id]', function(){
@@ -484,7 +485,7 @@ $('#invoice-table tbody').on('click', 'tr[data-id]', function(){
     $.get(window.location.pathname, { ajax: 1, id: id }, function(html){
         $('#invoice-list-preview').html(html);
 
-        // ---- FIX: Re-initialize Bootstrap dropdown after AJAX inject ----
+        // Re-initialize Bootstrap dropdown after AJAX inject
         if (typeof bootstrap !== "undefined" && bootstrap.Dropdown) {
             $('#invoice-list-preview .dropdown-toggle').each(function() {
                 new bootstrap.Dropdown(this);
@@ -514,8 +515,8 @@ function updateInvoiceActionsBar(inv) {
         return;
     }
     let links = '';
-    links += `<a href="app-invoicing.php?id=${inv.id}" class="text-primary" style="text-decoration: underline;" id="edit-link">Edit</a>`;
-    links += `<a href="#" class="text-danger ms-2" style="text-decoration: underline;" data-id="${inv.id}" id="del-link">Delete</a>`;
+links  = `<a href="app-invoicing.php?id=${inv.id}" class="btn btn-outline-primary btn-sm me-2"  style="margin-right: 0px !important; id="edit-link"></i>Edit</a>`;
+links += `<button type="button" class="btn btn-outline-danger btn-sm" data-id="${inv.id}" id="del-link">Delete</button>`;
     bar.html(links).show();
 }
 
@@ -552,11 +553,19 @@ $(document).on('click', '#del-link', function(e){
             try { result = JSON.parse(res); } catch(e) { result = {}; }
             if (result.success) {
                 showAlert('Invoice deleted successfully.', 'success');
-                loadInvoiceTable();
-                $('#invoice-list-preview').html('<div class="text-center text-muted py-5"><i class="ri-file-text-line" style="font-size: 2.5rem;"></i><div class="mt-3">Select an invoice to preview</div></div>');
-                $('#invoice-actions-bar').hide().empty();
+                // After table is reloaded, auto-select the first row if exists
+                loadInvoiceTable(function() {
+                    var $first = $('#invoice-table tbody tr:first');
+                    if ($first.length) {
+                        $first.trigger('click');
+                    } else {
+                        // No more invoices: clear preview and actions bar
+                        $('#invoice-list-preview').html('<div class="text-center text-muted py-5"><i class="ri-file-text-line" style="font-size: 2.5rem;"></i><div class="mt-3">Select an invoice to preview</div></div>');
+                        $('#invoice-actions-bar').hide().empty();
+                    }
+                });
             } else {
-                showAlert('<strong>Invoice has been deleted!</strong>', 'success');
+                showAlert(result.msg || 'Delete failed.', 'danger');
             }
             modal.hide();
         });
@@ -574,5 +583,3 @@ function showAlert(msg, type) {
     setTimeout(function(){ $('.alert-fixed-top').alert('close'); }, 4000);
 }
 </script>
-</body>
-</html>
