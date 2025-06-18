@@ -1,14 +1,21 @@
 <?php
 require_once __DIR__ . '/layouts/config.php';
 
+// If the session tenant_id isn’t set, fall back to your Shopify tenant
+define('DEFAULT_TENANT_ID', 12);
+
+$tenant_id = $_SESSION['tenant_id']
+           ?? DEFAULT_TENANT_ID;
+
 // Auto-generate a SKU with optional prefix, e.g. PROD-20240810-4D6A
 function generateSKU($prefix = 'PROD') {
     return $prefix . '-' . date('Ymd') . '-' . strtoupper(substr(uniqid('', true), -4));
 }
 
+
 // --- Handle Add Product ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
-    $tenant_id = $_SESSION['tenant_id'] ?? 1;
+    $id = intval($_POST['product_id']);
     $name = mysqli_real_escape_string($link, $_POST['name'] ?? '');
     $price = floatval($_POST['price'] ?? 0);
     $category_id = intval($_POST['category_id'] ?? 0);
@@ -42,10 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         } while ($count > 0);
     }
 
-$insert_sql = "INSERT INTO products 
-    (tenant_id, name, price, category_id, sku, description, status, stock, photo_url, lot_area, price_per_sqm, lot_class, color, color_code, material, hardware, size, availability, image)
-    VALUES ($tenant_id, '$name', $price, $category_id, '$sku', '$description', '$status', $stock, '$photo_url', $lot_area, $price_per_sqm, '$lot_class', '$color', '$color_code', '$material', '$hardware', '$size', '$availability', '$image')";
-
+    $insert_sql = "
+    INSERT INTO products
+      (tenant_id,name,price,category_id,sku,description,status,stock,photo_url,
+       lot_area,price_per_sqm,lot_class,color,color_code,material,hardware,size,
+       availability,image,created_at,updated_at)
+    VALUES
+      ($tenant_id,'$name',$price,$category_id,'$sku','$description','$status',
+       $stock,'$photo_url',$lot_area,$price_per_sqm,'$lot_class','$color','$color_code',
+       '$material','$hardware','$size','$availability','$image',NOW(),NOW())
+  ";
     mysqli_query($link, $insert_sql);
     header("Location: " . strtok($_SERVER['REQUEST_URI'], '?'));
     exit;
