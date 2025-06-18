@@ -1,11 +1,267 @@
+<?php
+// Existing config, etc.
+require_once __DIR__ . '/layouts/config.php';
+
+// --- FETCH CONTACTS (for Customer Name) ---
+$contactRows = [];
+$qc = $link->query("SELECT id, first_name, last_name FROM contacts ORDER BY first_name, last_name");
+while ($r = $qc->fetch_assoc()) $contactRows[] = $r;
+
+// --- FETCH UNITS (for Unit select) ---
+$unitRows = [];
+$qu = $link->query("SELECT u.id, CONCAT(p.project_title, ' | ', u.phase, ' | Block ', u.block, ' | Lot ', u.lot) as unit_label FROM units u LEFT JOIN projects p ON u.project_id = p.id ORDER BY p.project_title, u.phase, u.block, u.lot");
+while ($r = $qu->fetch_assoc()) $unitRows[] = $r;
+
+// Adjust table and field names if needed
+$sql = "
+    SELECT 
+        us.id AS sale_id,
+        us.status AS sale_status,
+        us.sale_date,
+        us.sale_price,
+        us.monthly_payment,
+        us.created_at AS sale_created,
+        u.id AS unit_id,
+        u.project_title,
+        u.phase,
+        u.block,
+        u.lot,
+        u.lot_class,
+        u.lot_area,
+        u.price_per_sqm,
+        u.total_price,
+        u.status AS unit_status,
+        u.owner_contact_id,
+        c.id AS contact_id,
+        c.first_name,
+        c.last_name,
+        c.email,
+        c.phone_number,
+        c.city,
+        p.id AS project_id,
+        p.project_title AS project_name,
+        p.location AS project_location
+    FROM unit_sales us
+    LEFT JOIN units u ON us.unit_id = u.id
+    LEFT JOIN contacts c ON us.contact_id = c.id
+    LEFT JOIN projects p ON u.project_id = p.id
+    ORDER BY us.created_at DESC
+";
+
+$result = $link->query($sql);
+
+if (!$result) {
+    die("Database query failed: " . $link->error);
+}
+
+// Prepare arrays to hold cards per Kanban stage
+$kanban = [
+    'task-list-one'   => [], // New Inquiry
+    'task-list-two'   => [], // Reserved
+    'task-list-three' => [], // Sold
+    'task-list-four'  => [], // Turned Over
+];
+
+// Helper to clean output
+function esc($val) { return htmlspecialchars($val ?? ''); }
+
+while ($row = $result->fetch_assoc()) {
+    // Map status to Kanban column
+    $status = strtolower($row['sale_status'] ?? '');
+    if ($status == 'reserved') {
+        $list = 'task-list-two';
+    } elseif ($status == 'sold') {
+        $list = 'task-list-three';
+    } elseif (in_array($status, ['turned over', 'completed'])) {
+        $list = 'task-list-four';
+    } else {
+        $list = 'task-list-one';
+    }
+
+    // Format reservation date
+    $resDate = htmlspecialchars(
+        date('M d, Y', strtotime($row['sale_created'] ?? $row['sale_date'] ?? 'now'))
+    );
+
+    // Now use $resDate in your HEREDOC
+    $kanban[$list][] = <<<CARD
+<div class="card mb-0">
+    <div class="card-body p-3">
+        <span class="float-end badge bg-primary-subtle text-primary">{$status}</span>
+        <small class="text-muted">{$resDate}</small>
+        <h5 class="my-2 fs-16">{$row['first_name']} {$row['last_name']}</h5>
+        <p class="mb-0">
+            <span class="pe-2 text-nowrap mb-2 d-inline-block">
+                <i class="ri-briefcase-2-line text-muted"></i>
+                {$row['project_name']}
+            </span>
+            <span class="pe-2 text-nowrap mb-2 d-inline-block">
+                <i class="ri-map-pin-line text-muted"></i>
+                {$row['phase']} | {$row['block']} | {$row['lot']}
+            </span>
+            <span class="text-nowrap mb-2 d-inline-block">
+                <i class="ri-money-dollar-circle-line text-muted"></i>
+                <b>{$row['total_price']}</b>
+            </span>
+        </p>
+        <div class="dropdown float-end mt-2">
+            <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="ri-more-2-fill fs-18"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+                <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
+                <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
+                <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
+            </div>
+        </div>
+        <div class="avatar-group mt-2">
+            <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" title="{$row['first_name']} {$row['last_name']}">
+                <img src="assets/images/users/avatar-1.jpg" alt="" class="rounded-circle avatar-xs">
+            </a>
+        </div>
+    </div>
+</div>
+CARD;
+}
+
+
+?>
 <?php include 'layouts/session.php'; ?>
 <?php include 'layouts/main.php'; ?>
 
 <head>
     <title>Products Kanban | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
-
     <?php include 'layouts/head-css.php'; ?>
+
+<style>
+/* Kanban Column (Board) Tweaks */
+.board {
+    gap: 12px !important;
+    padding: 6px 0 !important;
+}
+.tasks {
+    margin-right: 8px !important;
+    min-width: 270px !important;
+    max-width: 300px !important;
+    padding: 6px 4px 0 4px !important;
+}
+.task-header {
+    font-size: 13px !important;
+    margin-bottom: 2px !important;
+    padding-left: 2px !important;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: #8b9199;
+}
+
+/* Card Tweaks */
+.task-list-items .card,
+.tasks .card {
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e5e8 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    min-height: 75px !important;
+    /* Remove extra spacing */
+}
+.card-body {
+    padding: 12px 10px 8px 10px !important;
+}
+.card .badge {
+    font-size: 11px !important;
+    padding: 1px 6px !important;
+    border-radius: 8px !important;
+    vertical-align: middle;
+}
+.card small,
+.card .text-muted {
+    font-size: 11px !important;
+    color: #9ba4ad !important;
+}
+.card h5,
+.card .fs-16 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin: 2px 0 3px 0 !important;
+    line-height: 1.3 !important;
+}
+.card p,
+.card .mb-0 {
+    font-size: 12px !important;
+    margin-bottom: 2px !important;
+    margin-top: 2px !important;
+    color: #353942;
+}
+
+/* Reduce icon/text spacing in card details */
+.card-body .pe-2,
+.card-body .mb-2 {
+    padding-right: 5px !important;
+    margin-bottom: 0 !important;
+}
+.card-body i {
+    font-size: 13px !important;
+    vertical-align: middle;
+    margin-right: 2px !important;
+}
+
+/* Avatar group size + margin reduction */
+.avatar-group {
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
+}
+.avatar-group-item .avatar-xs,
+.card .avatar-xs {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+/* Dropdown & icons */
+.dropdown.float-end.mt-2 {
+    margin-top: 0 !important;
+}
+
+/* Responsive tweaks: fit more columns/cards on smaller screens */
+@media (max-width: 1600px) {
+    .tasks { min-width: 220px !important; }
+    .task-list-items .card, .tasks .card { min-height: 60px !important; }
+}
+@media (max-width: 1200px) {
+    .tasks { min-width: 180px !important; }
+    .card h5, .card .fs-16 { font-size: 12px !important; }
+    .card p, .card .mb-0 { font-size: 11px !important; }
+}
+
+/* Board horizontal scroll always visible on desktop */
+.board {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    white-space: nowrap;
+}
+.tasks {
+    display: inline-block;
+    vertical-align: top;
+}
+
+/* Hide any empty whitespace in columns */
+.task-list-items:empty::after {
+    content: 'No Tasks';
+    color: #adb5bd;
+    font-size: 11px;
+    display: block;
+    margin: 14px 0 0 6px;
+}
+
+/* General: reduce all excessive vertical padding */
+[class*="col-"] > .tasks {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+</style>
+
+
 </head>
 
 <body>
@@ -14,997 +270,248 @@
 
         <?php include 'layouts/menu.php'; ?>
 
-        <!-- ============================================================== -->
-        <!-- Start Page Content here -->
-        <!-- ============================================================== -->
+        <div class="content-page">
+            <div class="content">
 
-            <div class="content-page">
-                <div class="content">
+                <div class="container-fluid">
 
-                    <!-- Start Content-->
-                    <div class="container-fluid">
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="page-title-box">
-                                    <div class="page-title-right">
-                                    </div>
-                                    <h4 class="page-title">Sales Dashboard 
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#add-new-task-modal" class="btn btn-success btn-sm ms-3">Add New</a></h4>
-                                </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box">
+                                <div class="page-title-right"></div>
+                                <h4 class="page-title">Sales Dashboard 
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#add-new-task-modal" class="btn btn-success btn-sm ms-3">Add New</a>
+                                </h4>
                             </div>
-                        </div>     
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="board">
-                                    <div class="tasks" data-plugin="dragula" data-containers='["task-list-one", "task-list-two", "task-list-three", "task-list-four"]'>
-                                        <h5 class="mt-0 task-header">NEW INQUIRY</h5>
-                                        
-                                        <div id="task-list-one" class="task-list-items">
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-danger-subtle text-danger">High</span>
-                                                    <small class="text-muted">18 Jul 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">iOS App home page</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            iOS
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>74</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-1.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-3.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-success">
-                                                                    K
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="More +">
-                                                            <div class="avatar-xs">
-                                                                <div class="avatar-title rounded-circle">
-                                                                    9+
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-warning-subtle text-warning">Medium</span>
-                                                    <small class="text-muted">15 Dec 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Topnav layout design</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            Attex
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>28</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-success-subtle text-success">Low</span>
-                                                    <small class="text-muted">11 Jul 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Invite user to a project</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            CRM
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>68</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-6.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-info">
-                                                                    M
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-                                            
-                                        </div> <!-- end company-list-1-->
-                                    </div>
-
-                                    <div class="tasks">
-                                        <h5 class="mt-0 task-header text-uppercase">RESERVED</h5>
-                                        
-                                        <div id="task-list-two" class="task-list-items">
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-warning-subtle text-warning">Medium</span>
-                                                    <small class="text-muted">22 Jun 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Write a release note</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            Attex
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>17</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-7.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-8.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-success-subtle text-success">Low</span>
-                                                    <small class="text-muted">19 Jun 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Enable analytics tracking</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            CRM
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>48</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-warning">
-                                                                    K
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-9.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                        </div> <!-- end company-list-2-->
-                                    </div>
-
-
-                                    <div class="tasks">
-                                        <h5 class="mt-0 task-header text-uppercase">SOLD</h5>
-                                        <div id="task-list-three" class="task-list-items">
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-danger-subtle text-danger">High</span>
-                                                    <small class="text-muted">2 May 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Kanban board design</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            CRM
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>65</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-light">
-                                                                    D
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-warning-subtle text-warning">Medium</span>
-                                                    <small class="text-muted">7 May 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Code HTML email template</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            CRM
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>106</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-1.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-10.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-5.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-warning-subtle text-warning">Medium</span>
-                                                    <small class="text-muted">8 Jul 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Brand logo design</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            Design
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>95</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-primary">
-                                                                    M
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-info">
-                                                                    A
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-1.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-danger-subtle text-danger">High</span>
-                                                    <small class="text-muted">22 Jul 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Improve animation loader</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            CRM
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>39</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-2.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-4.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-
-                                        </div> <!-- end company-list-3-->
-                                    </div>
-
-                                    <div class="tasks">
-                                        <h5 class="mt-0 task-header text-uppercase">TURNED OVER</h5>
-                                        <div id="task-list-four" class="task-list-items">
-
-                                            <!-- Task Item -->
-                                            <div class="card mb-0">
-                                                <div class="card-body p-3">
-                                                    <span class="float-end badge bg-success-subtle text-success">Low</span>
-                                                    <small class="text-muted">16 Jul 2023</small>
-
-                                                    <h5 class="my-2 fs-16">
-                                                        <a href="#" data-bs-toggle="modal" data-bs-target="#task-detail-modal" class="text-body">Dashboard design</a>
-                                                    </h5>
-
-                                                    <p class="mb-0">
-                                                        <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-briefcase-2-line text-muted"></i>
-                                                            Attex
-                                                        </span>
-                                                        <span class="text-nowrap mb-2 d-inline-block">
-                                                            <i class="ri-discuss-line text-muted"></i>
-                                                            <b>287</b> Comments
-                                                        </span>
-                                                    </p>
-
-                                                    <div class="dropdown float-end mt-2">
-                                                        <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <i class="ri-more-2-fill fs-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-delete-bin-line me-1"></i>Delete</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-user-add-line me-1"></i>Add People</a>
-                                                            <!-- item-->
-                                                            <a href="javascript:void(0);" class="dropdown-item"><i class="ri-logout-circle-line me-1"></i>Leave</a>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="avatar-group mt-2">
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-1.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Brain">
-                                                            <img src="assets/images/users/avatar-3.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Tosha">
-                                                            <img src="assets/images/users/avatar-8.jpg" alt=""
-                                                                class="rounded-circle avatar-xs">
-                                                        </a>
-                                                        <a href="javascript: void(0);" class="avatar-group-item"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="Hooker">
-                                                            <div class="avatar-xs">
-                                                                <div
-                                                                    class="avatar-title rounded-circle text-bg-danger">
-                                                                    K
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    </div>
-                                                </div> <!-- end card-body -->
-                                            </div>
-                                            <!-- Task Item End -->
-                                            
-                                        </div> <!-- end company-list-4-->
-                                    </div>
-
-                                </div> <!-- end .board-->
-                            </div> <!-- end col -->
                         </div>
-                        <!-- end row-->
-                        
-                    </div> <!-- container -->
+                    </div>     
 
-                </div> <!-- content -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="board">
+                                <div class="tasks" data-plugin="dragula" data-containers='["task-list-one", "task-list-two", "task-list-three", "task-list-four"]'>
+                                    <h5 class="mt-0 task-header">NEW INQUIRY</h5>
 
-                <?php include 'layouts/footer.php'; ?>
+                                <div id="task-list-one" class="task-list-items">
+                                    <?= implode("\n", $kanban['task-list-one']) ?>
+                                </div>
 
-            </div>
+                                </div>
 
-            <!-- ============================================================== -->
-            <!-- End Page content -->
-            <!-- ============================================================== -->
+                                <div class="tasks">
+                                    <h5 class="mt-0 task-header text-uppercase">RESERVED</h5>
+                                    <div id="task-list-two" class="task-list-items">
+                                        <?= implode("\n", $kanban['task-list-two']) ?>
+                                    </div>
+                                </div>
 
-        </div>
-        <!-- END wrapper -->
-        
+                                <div class="tasks">
+                                    <h5 class="mt-0 task-header text-uppercase">SOLD</h5>
+                                    <div id="task-list-three" class="task-list-items">
+                                        <?= implode("\n", $kanban['task-list-three']) ?>
+                                    </div>
+                                </div>
 
+                                <div class="tasks">
+                                    <h5 class="mt-0 task-header text-uppercase">TURNED OVER</h5>
+                                    <div id="task-list-four" class="task-list-items">
+                                        <?= implode("\n", $kanban['task-list-four']) ?>
+                                    </div>
+                                </div>
+                            </div> <!-- end .board-->
+                        </div> <!-- end col -->
+                    </div>
+                </div> <!-- container -->
 
-        <?php include 'layouts/right-sidebar.php'; ?>
+            </div> <!-- content -->
+            <?php include 'layouts/footer.php'; ?>
+        </div> <!-- content-page -->
 
-        <!--  Add new task modal -->
-        <div class="modal fade task-modal-content" id="add-new-task-modal" tabindex="-1" role="dialog" aria-labelledby="NewTaskModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
+    </div> <!-- wrapper -->
+
+    <?php include 'layouts/right-sidebar.php'; ?>
+
+    <!--  Add new task modal -->
+    <div class="modal fade" id="add-new-task-modal" tabindex="-1" aria-labelledby="AddSaleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <form class="p-2">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="NewTaskModalLabel">Create New Task</h4>
+                        <h4 class="modal-title" id="AddSaleModalLabel">Add New Sale / Reservation</h4>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form class="p-2">
-                            <div class="mb-3">
-                                <label class="form-label">Project</label>
-                                <select class="form-select">
-                                    <option>Select</option>
-                                    <option> - Admin Dashboard</option>
-                                    <option>CRM - Design & Development</option>
-                                    <option>iOS - App Design</option>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sale-contact" class="form-label">Customer Name</label>
+                                <select class="form-select" id="sale-contact" name="contact_id" required>
+                                    <option value="">Select or search contact...</option>
+                                    <?php foreach ($contactRows as $row): ?>
+                                        <option value="<?= htmlspecialchars($row['id']) ?>">
+                                            <?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sale-unit" class="form-label">Unit</label>
+                                <select class="form-select" id="sale-unit" name="unit_id" required>
+                                    <option value="">Select or search unit...</option>
+                                    <?php foreach ($unitRows as $row): ?>
+                                        <option value="<?= htmlspecialchars($row['id']) ?>">
+                                            <?= htmlspecialchars($row['unit_label']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
 
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="mb-3">
-                                        <label for="task-title" class="form-label">Title</label>
-                                        <input type="text" class="form-control" id="task-title" placeholder="Enter title">
-                                    </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sale-date" class="form-label">Date of Reservation</label>
+                                <input type="date" class="form-control" id="sale-date" name="reservation_date" value="<?= date('Y-m-d') ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sale-amount" class="form-label">Reservation Amount (₱)</label>
+                                <input type="number" class="form-control" id="sale-amount" name="reservation_amount" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sale-terms" class="form-label">Payment Terms (months)</label>
+                                <select class="form-select" id="sale-terms" name="payment_terms">
+                                    <option value="12">12 months</option>
+                                    <option value="24">24 months</option>
+                                    <option value="36">36 months</option>
+                                    <option value="48">48 months</option>
+                                    <option value="60">60 months</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Miscellaneous Fee</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="misc_fee" id="fee-upfront" value="upfront" checked>
+                                    <label class="form-check-label" for="fee-upfront">Upfront</label>
                                 </div>
-
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="task-priority2" class="form-label">Priority</label>
-                                        <select class="form-select" id="task-priority2">
-                                            <option>Low</option>
-                                            <option>Medium</option>
-                                            <option>High</option>
-                                        </select>
-                                    </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="misc_fee" id="fee-monthly" value="monthly">
+                                    <label class="form-check-label" for="fee-monthly">Monthly</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="misc_fee" id="fee-end" value="end">
+                                    <label class="form-check-label" for="fee-end">End of Terms</label>
                                 </div>
                             </div>
-
-                            <div class="mb-3">
-                                <label for="task-description" class="form-label">Description</label>
-                                <textarea class="form-control" id="task-description" rows="3"></textarea>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="task-title" class="form-label">Assign To</label>
-                                        <select class="form-select" id="task-priority">
-                                            <option>Coderthemes</option>
-                                            <option>Robert Carlile</option>
-                                            <option>Louis Allen</option>
-                                            <option>Sean White</option>
-                                            <option>Riley Steele</option>
-                                            <option>Zak Turnbull</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="task-priority" class="form-label">Due Date</label>
-                                        <input type="text" class="form-control" id="birthdatepicker" data-toggle="date-picker" data-single-date-picker="true">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="text-end">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary">Create</button>
-                            </div>
-                        </form>
+                        </div>
+                        <!-- No summary box for now as per instruction -->
                     </div>
-                </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
-
-        <!--  Task details modal -->
-        <div class="modal fade task-modal-content" id="task-detail-modal" tabindex="-1" role="dialog" aria-labelledby="TaskDetailModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title" id="TaskDetailModalLabel">iOS App home page <span class="badge bg-danger ms-2">High</span></h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create</button>
                     </div>
-                    <div class="modal-body">
-                    
-                        <div class="p-2">
-                            <h5 class="mt-0">Description:</h5>
-    
-                            <p class="text-muted mb-4">
-                                Voluptates, illo, iste itaque voluptas corrupti ratione reprehenderit magni similique? Tempore, quos delectus asperiores
-                                libero voluptas quod perferendis! Voluptate, quod illo rerum? Lorem ipsum dolor sit amet. With supporting text below
-                                as a natural lead-in to additional contenposuere erat a ante.
-                            </p>
-    
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-4">
-                                        <h5>Create Date</h5>
-                                        <p>17 March 2023 <small class="text-muted">1:00 PM</small></p>
-                                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- /.modal -->
+
+    <!--  Task details modal -->
+    <div class="modal fade task-modal-content" id="task-detail-modal" tabindex="-1" role="dialog" aria-labelledby="TaskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="TaskDetailModalLabel">Sample Task Title <span class="badge bg-danger ms-2">High</span></h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Modal body content unchanged for details/comments/files tabs -->
+                    <div class="p-2">
+                        <h5 class="mt-0">Description:</h5>
+                        <p class="text-muted mb-4">Description goes here.</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-4">
+                                    <h5>Create Date</h5>
+                                    <p>17 March 2023 <small class="text-muted">1:00 PM</small></p>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="mb-4">
-                                        <h5>Due Date</h5>
-                                        <p>22 December 2023 <small class="text-muted">1:00 PM</small></p>
-                                    </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-4">
+                                    <h5>Due Date</h5>
+                                    <p>22 December 2023 <small class="text-muted">1:00 PM</small></p>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="mb-4" id="tooltip-container">
-                                        <h5>Asignee:</h5>
-                                        <div class="avatar-group mt-1">
-                                            <a href="javascript: void(0);" class="avatar-group-item"
-                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                title="Tosha">
-                                                <img src="assets/images/users/avatar-1.jpg" alt=""
-                                                    class="rounded-circle avatar-xs">
-                                            </a>
-                                            <a href="javascript: void(0);" class="avatar-group-item"
-                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                title="Hooker">
-                                                <div class="avatar-xs">
-                                                    <div
-                                                        class="avatar-title rounded-circle text-bg-warning">
-                                                        K
-                                                    </div>
-                                                </div>
-                                            </a>
-                                            <a href="javascript: void(0);" class="avatar-group-item"
-                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                title="Brain">
-                                                <img src="assets/images/users/avatar-9.jpg" alt=""
-                                                    class="rounded-circle avatar-xs">
-                                            </a>
-                                        </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-4" id="tooltip-container">
+                                    <h5>Asignee:</h5>
+                                    <div class="avatar-group mt-1">
+                                        <a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" title="Person A">
+                                            <img src="assets/images/users/avatar-1.jpg" alt="" class="rounded-circle avatar-xs">
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-                            <!-- end row-->
-
-                            <ul class="nav nav-tabs nav-bordered mb-3">
-                                <li class="nav-item">
-                                    <a href="#home-b1" data-bs-toggle="tab" aria-expanded="false" class="nav-link active">
-                                        Comments
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="#profile-b1" data-bs-toggle="tab" aria-expanded="true" class="nav-link">
-                                        Files
-                                    </a>
-                                </li>
-                            </ul>
-
-                            <div class="tab-content">
-                                <div class="tab-pane show active" id="home-b1">
-                                    <textarea class="form-control mb-2" placeholder="Write message" id="example-textarea" rows="3"></textarea>
-                                    <div class="text-end">
-                                        <div class="btn-group mb-2 d-none d-sm-inline-block">
-                                            <button type="button" class="btn btn-link btn-sm text-muted fs-18"><i class="ri-attachment-2"></i></button>
-                                        </div>
-                                        <div class="btn-group mb-2 d-none d-sm-inline-block">
-                                            <button type="button" class="btn btn-primary btn-sm">Submit</button>
-                                        </div>
+                        </div>
+                        <ul class="nav nav-tabs nav-bordered mb-3">
+                            <li class="nav-item">
+                                <a href="#home-b1" data-bs-toggle="tab" aria-expanded="false" class="nav-link active">Comments</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#profile-b1" data-bs-toggle="tab" aria-expanded="true" class="nav-link">Files</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane show active" id="home-b1">
+                                <textarea class="form-control mb-2" placeholder="Write message" id="example-textarea" rows="3"></textarea>
+                                <div class="text-end">
+                                    <div class="btn-group mb-2 d-none d-sm-inline-block">
+                                        <button type="button" class="btn btn-link btn-sm text-muted fs-18"><i class="ri-attachment-2"></i></button>
                                     </div>
-
-                                    <div class="d-flex mt-2">
-                                        <img class="me-3 avatar-sm rounded-circle" src="assets/images/users/avatar-3.jpg" alt="Generic placeholder image">
-                                        <div class="w-100">
-                                            <h5 class="mt-0">Jeremy Tomlinson</h5>
-                                            Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in
-                                            vulputate at, tempus viverra turpis.
-                                    
-                                            <div class="d-flex mt-3">
-                                                <a class="pe-3" href="#">
-                                                    <img src="assets/images/users/avatar-4.jpg" class="avatar-sm rounded-circle" alt="Generic placeholder image">
-                                                </a>
-                                                <div class="w-100">
-                                                    <h5 class="mt-0">Kathleen Thomas</h5>
-                                                    Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in
-                                                    vulputate at, tempus viverra turpis.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-center mt-2">
-                                        <a href="javascript:void(0);" class="text-danger">Load more </a>
+                                    <div class="btn-group mb-2 d-none d-sm-inline-block">
+                                        <button type="button" class="btn btn-primary btn-sm">Submit</button>
                                     </div>
                                 </div>
-                                <div class="tab-pane" id="profile-b1">
-                                    <div class="card mb-1 shadow-none border">
-                                        <div class="p-2">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="avatar-sm">
-                                                        <span class="avatar-title rounded">
-                                                            .ZIP
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="col ps-0">
-                                                    <a href="javascript:void(0);" class="text-muted fw-bold">-admin-design.zip</a>
-                                                    <p class="mb-0">2.3 MB</p>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <!-- Button -->
-                                                    <a href="javascript:void(0);" class="btn btn-link btn-lg text-muted">
-                                                        <i class="ri-download-2-line"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="card mb-1 shadow-none border">
-                                        <div class="p-2">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <img src="assets/images/small/small-1.jpg" class="avatar-sm rounded" alt="file-image" />
-                                                </div>
-                                                <div class="col ps-0">
-                                                    <a href="javascript:void(0);" class="text-muted fw-bold">Dashboard-design.jpg</a>
-                                                    <p class="mb-0">3.25 MB</p>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <!-- Button -->
-                                                    <a href="javascript:void(0);" class="btn btn-link btn-lg text-muted">
-                                                        <i class="ri-download-2-line"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="card mb-0 shadow-none border">
-                                        <div class="p-2">
-                                            <div class="row align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="avatar-sm">
-                                                        <span class="avatar-title bg-secondary rounded">
-                                                            .MP4
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="col ps-0">
-                                                    <a href="javascript:void(0);" class="text-muted fw-bold">Admin-bug-report.mp4</a>
-                                                    <p class="mb-0">7.05 MB</p>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <!-- Button -->
-                                                    <a href="javascript:void(0);" class="btn btn-link btn-lg text-muted">
-                                                        <i class="ri-download-2-line"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <!-- Example comment section, keep for layout -->
+                                <div class="d-flex mt-2">
+                                    <img class="me-3 avatar-sm rounded-circle" src="assets/images/users/avatar-3.jpg" alt="Generic placeholder image">
+                                    <div class="w-100">
+                                        <h5 class="mt-0">Jeremy Tomlinson</h5>
+                                        Comment text here.
                                     </div>
                                 </div>
                             </div>
-
-                        </div> <!-- .p-2 -->
+                            <div class="tab-pane" id="profile-b1">
+                                <div class="card mb-1 shadow-none border">
+                                    <div class="p-2">
+                                        <div class="row align-items-center">
+                                            <div class="col-auto">
+                                                <div class="avatar-sm">
+                                                    <span class="avatar-title rounded">.ZIP</span>
+                                                </div>
+                                            </div>
+                                            <div class="col ps-0">
+                                                <a href="javascript:void(0);" class="text-muted fw-bold">-admin-design.zip</a>
+                                                <p class="mb-0">2.3 MB</p>
+                                            </div>
+                                            <div class="col-auto">
+                                                <a href="javascript:void(0);" class="btn btn-link btn-lg text-muted"><i class="ri-download-2-line"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Example file section, keep for layout -->
+                            </div>
+                        </div>
                     </div>
-                </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
+                </div><!-- /.modal-body -->
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
-        <?php include 'layouts/footer-scripts.php'; ?>
-
-        <!-- dragula js-->
-        <script src="assets/vendor/dragula/dragula.min.js"></script>
-
-        <!-- demo js -->
-        <script src="assets/js/pages/component.dragula.js"></script>
-
-        <!-- App js -->
-        <script src="assets/js/app.min.js"></script>
-
-    </body>
+    <?php include 'layouts/footer-scripts.php'; ?>
+    <script src="assets/vendor/dragula/dragula.min.js"></script>
+    <script src="assets/js/pages/component.dragula.js"></script>
+    <script src="assets/js/app.min.js"></script>
+</body>
 </html>

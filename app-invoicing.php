@@ -136,6 +136,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
     <title>Invoicing | Flyhub Business Apps</title>
     <?php include 'layouts/title-meta.php'; ?>
     <?php include 'layouts/head-css.php'; ?>
+    <style>
+        .input-match {
+            height: 40px !important;       /* Set preferred height */
+            font-size: 1rem !important;    /* Uniform font size */
+            border-radius: 6px !important; /* Optional: for matching corners */
+            padding-top: 0.375rem !important;
+            padding-bottom: 0.375rem !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -169,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
 
                     // Generate a new invoice number if not set
                     $invoice = [
-                        'invoice_number'   => 'INV-'.date('Ymd').rand(1000,9999),
+                        'invoice_number'   => 'INV-' . str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT),
                         'issue_date'       => date('Y-m-d'),
                         'due_date'         => date('Y-m-d', strtotime('+7 days')),
                         'status'           => 'draft',
@@ -216,35 +225,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax'])) {
                                     <form id="invoice-form" autocomplete="off">
                                         <div class="row mb-2">
                                             <div class="col"><h5 class="mb-0 fw-bold">Invoice Editor</h5></div>
-                                            <div class="col text-end d-flex align-items-center justify-content-end gap-2">
-                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-print">
-                                                    <i class="ri-printer-line"></i> Print PDF
-                                                </button>
-                                                <div id="invoice-actions" class="d-inline-flex gap-2">
-                                                    <button type="button" id="btn-confirm" class="btn btn-success">Confirm</button>
-                                                    <button type="button" id="btn-draft" class="btn btn-outline-secondary d-none">Revert to Draft</button>
-                                                    <button type="button" id="btn-pay" class="btn btn-success d-none">Pay</button>
+                                                <div class="col text-end d-flex align-items-center justify-content-end gap-2">
+                                                    <button type="button" class="btn btn-outline-secondary action-btn" id="btn-print">
+                                                        Print
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary action-btn" id="btn-save-draft">
+                                                        Save Draft
+                                                    </button>
+                                                    <button type="button" class="btn btn-success action-btn" id="btn-confirm">
+                                                        Confirm
+                                                    </button>
+                                                    <!-- If you want to keep other buttons, keep them hidden as before -->
+                                                    <button type="button" id="btn-draft" class="btn btn-outline-secondary d-none action-btn">Revert to Draft</button>
+                                                    <button type="button" id="btn-pay" class="btn btn-success d-none action-btn">Pay</button>
+                                                </div>
+                                        </div>
+                                            <div class="row mb-2 align-items-end">
+                                                <div class="col">
+                                                    <label class="form-label">Invoice #</label>
+                                                    <input type="text" name="invoice_number" class="form-control bg-light text-muted input-match" id="invoice_number"
+                                                        value="<?=esc($invoice['invoice_number'])?>" readonly tabindex="-1" required>
+                                                </div>
+                                                <div class="col-auto" style="min-width:180px;">
+                                                    <label class="form-label">Product Type</label>
+                                                    <select id="product-type-filter" class="form-select form-select-sm input-match" style="max-width:180px;">
+                                                        <option value="All">All Types</option>
+                                                        <option value="Goods">Goods</option>
+                                                        <option value="Property">Property</option>
+                                                        <option value="Service">Service</option>
+                                                        <option value="Combo">Combo</option>
+                                                        <option value="Misc">Misc</option>
+                                                    </select>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="row mb-2 align-items-end">
-                                            <div class="col">
-                                                <label class="form-label">Invoice #</label>
-                                                <input type="text" name="invoice_number" class="form-control bg-light text-muted" id="invoice_number"
-                                                    value="<?=esc($invoice['invoice_number'])?>" readonly tabindex="-1" required>
-                                            </div>
-                                            <div class="col-auto" style="min-width:180px;">
-                                                <label class="form-label">Product Type</label>
-                                                <select id="product-type-filter" class="form-select form-select-sm" style="max-width:180px;">
-                                                    <option value="All">All Types</option>
-                                                    <option value="Goods">Goods</option>
-                                                    <option value="Property">Property</option>
-                                                    <option value="Service">Service</option>
-                                                    <option value="Combo">Combo</option>
-                                                    <option value="Misc">Misc</option>
-                                                </select>
-                                            </div>
-                                        </div>
                                         <div class="row">
                                             <div class="col">
                                                 <div class="mb-2">
@@ -500,27 +513,29 @@ function renderPreview() {
     const tot = $('#total').val();
 
     let html = `
+
         <div class="clearfix mb-2">
           <div class="float-start" style="height:30px;display:flex;align-items:center;">
             <i class="bi bi-building" style="font-size:30px; color:#bbb;"></i>
           </div>
           <div class="float-end"><h3 class="m-0">Invoice</h3></div>
         </div>
-        <div class="row align-items-center">
-            <div class="col-8">
-                <p class="mb-1"><b>Hello, ${esc(firstName)}</b></p>
-                <p class="text-muted small mb-1">Please find below a cost-breakdown for your transaction.</p>
-            </div>
-            <div class="col-4 text-end">
-                <div class="mb-1 small">
-                    <strong>Status:</strong>
-                        <span class="badge bg-${status === 'confirmed' ? 'info' : status === 'paid' ? 'success' : 'secondary'}">
-                            ${status === 'confirmed' ? 'Confirmed' : status === 'paid' ? 'Paid' : 'Draft'}
-                        </span>
-                </div>
-                <div class="mb-1 small"><strong>Invoice #:</strong> ${num}</div>
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="text-muted" style="font-size: 1.1rem;">
+                <strong>Invoice #:</strong> ${num}
             </div>
         </div>
+        <div class="row align-items-center">
+            <div class="col-12">
+                <p class="mb-2"><b>Hello ${esc(firstName)},</b></p>
+                <p class="text-muted small mb-1">
+                    Thank you for choosing The Look Officiel for your latest bag purchase. Below you’ll find a detailed breakdown of your order, including all items, pricing, and totals. We appreciate your trust and hope your new bag brings both style and joy to your everyday adventures!
+                </p>
+            </div>
+        </div>
+
+
         <div class="row mt-3 small">
             <div class="col-6">
                 <h6 class="fw-bold">Billing Address</h6>
@@ -547,8 +562,8 @@ function renderPreview() {
                             <td>${esc(products.find(p => p.id == it.product_id)?.name || '')}</td>
                             <td>${esc(it.description)}</td>
                             <td>${it.quantity}</td>
-                            <td>₱${parseFloat(it.unit_price).toFixed(2)}</td>
-                            <td>₱${(it.quantity * it.unit_price).toFixed(2)}</td>
+                            <td>₱ ${Number(it.unit_price).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                            <td>₱ ${Number(it.quantity * it.unit_price).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                         </tr>
                     `).join('')
                 : `<tr><td colspan="6" class="text-center text-muted">No items added</td></tr>`
@@ -559,10 +574,12 @@ function renderPreview() {
         <div class="row mt-3">
             <div class="col-12">
                 <div class="float-end small">
-                    <p><b>Sub-total :</b> <span class="float-end">₱${parseFloat(sub).toFixed(2)}</span></p>
-                    <p><b>Discount:</b> <span class="float-end">₱${parseFloat(dis).toFixed(2)}</span></p>
-                    <p><b>Tax:</b> <span class="float-end">₱${parseFloat(tax).toFixed(2)}</span></p>
-                    <h5 class="mt-2">₱${parseFloat(tot).toFixed(2)}</h5>
+
+                    <p><b>Sub-total :</b> <span class="float-end">₱ ${Number(sub).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span></p>
+                    <p><b>Discount:</b> <<span class="float-end">₱ ${Number(dis).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span></p>
+                    <p><b>Tax:</b> <span class="float-end">₱ ${Number(tax).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span></p>
+                    <h5 class="mt-2">₱ ${Number(tot).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</h5>
+
                 </div>
             </div>
         </div>

@@ -107,8 +107,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         </div>
         <div class="row align-items-center">
             <div class="col-8">
-                <p class="mb-1"><b>Hello, <?=esc(trim($inv['first_name'].' '.$inv['last_name']))?></b></p>
-                <p class="text-muted small mb-1">Please find below a cost-breakdown for your transaction.</p>
+                <p class="mb-1"><b>Hello<?=esc(trim($inv['first_name'].' '.$inv['last_name']))?>,</b></p>
+                <p class="text-muted small mb-1"> find below a cost-breakdown for your transaction.</p>
             </div>
             <div class="col-4 text-end">
                 <div class="mb-1 small"><strong>Status:</strong> <span class="badge bg-<?= $inv['status']=='paid'?'success':($inv['status']=='sent'?'info':($inv['status']=='draft'?'secondary':'warning')) ?>"><?=ucfirst($inv['status'])?></span></div>

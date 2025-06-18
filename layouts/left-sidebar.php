@@ -73,12 +73,41 @@ $stmt->close();
           <span> Real Estate </span>
         </a>
       </li>
+
       <li class="side-nav-item">
-        <a href="products.php" class="side-nav-link">
-          <i class="ri-shopping-bag-line"></i>
-          <span> Products </span>
+        <a href="#ecomSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+          <i class="ri-store-2-line"></i>
+          <span> E-Commerce </span>
+          <span class="menu-arrow"></span>
         </a>
+        <ul class="side-nav-second-level collapse" id="ecomSubmenu" style="padding-left:32px;">
+          <li>
+            <a href="app-ecom-manager.php">
+              <i class="ri-shopping-bag-line"></i>
+              <span> Dashboard </span>
+            </a>
+          </li>
+          <li>
+            <a href="products.php">
+              <i class="ri-shopping-bag-line"></i>
+              <span> Products </span>
+            </a>
+          </li>
+          <li>
+            <a href="invoicing.php">
+              <i class="ri-bill-line"></i>
+              <span> Invoicing </span>
+            </a>
+          </li>
+          <li>
+            <a href="POS.php">
+              <i class="ri-terminal-box-line"></i>
+              <span> POS </span>
+            </a>
+          </li>
+        </ul>
       </li>
+
       <li class="side-nav-item">
         <a href="apps.php" class="side-nav-link">
           <i class="ri-plug-line"></i>
