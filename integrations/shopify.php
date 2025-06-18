@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 /**
- * Shopify two‑way scheduled integration for Flyhub Business Apps
+ * Shopify two-way scheduled integration for Flyhub Business Apps
  * -----------------------------------------------------------------
  * Path   : /integrations/shopify.php
- * Cron   : every 5 minutes:
+ * Cron   : every 5 minutes:
  *            php /home/USERNAME/public_html/integrations/shopify.php --direction=shopify
  *            php /home/USERNAME/public_html/integrations/shopify.php --direction=flyhub
  * Default: tenant ID 12 (constant DEFAULT_TENANT_ID) when none provided.
@@ -15,6 +15,34 @@ ini_set('max_execution_time', '1000');
 ini_set('memory_limit', '512M');
 
 require_once __DIR__ . '/../layouts/config.php'; // $link (mysqli)
+
+
+// If this script is hit over HTTP with ?direction=…, run immediately
+if (php_sapi_name() !== 'cli' && isset($_GET['direction'])) {
+    // sanitize inputs
+    $dir     = in_array($_GET['direction'], ['shopify','flyhub'], true)
+             ? $_GET['direction']
+             : die(json_encode(['error'=>'invalid direction']));
+    $tenant  = isset($_GET['tenant']) ? (int)$_GET['tenant'] : DEFAULT_TENANT_ID;
+    $flag    = "--direction={$dir}";
+    header('Content-Type: application/json');
+
+    try {
+        runForTenant($tenant, $flag);
+        echo json_encode([
+          'message'   => "Sync complete for tenant {$tenant}",
+          'direction' => $dir
+        ]);
+    } catch (\Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+          'error'   => $e->getMessage(),
+          'trace'   => $e->getTraceAsString()
+        ]);
+    }
+    exit;
+}
+
 
 // ───── Constants ────────────────────────────────────────────
 const API_VERSION       = '2024-04';
@@ -40,7 +68,7 @@ function getShopifyCreds(int $tenantId): ?array
     global $link;
     $stmt = $link->prepare(
         'SELECT shop, api_key, api_password, last_shopify_sync, last_flyhub_sync
-         FROM shopify_credentials WHERE tenant_id = ?'
+           FROM shopify_credentials WHERE tenant_id = ?'
     );
     $stmt->bind_param('i', $tenantId);
     $stmt->execute();
@@ -110,7 +138,7 @@ function upsertVariant(int $tenantId, array $product, array $variant): void
         $imgUrl = $product['images'][0]['src'];
     }
 
-    // Download & save image locally
+    // Download & save image locally (not shown here)
     $localImg = $imgUrl;
 
     // Prepare variables
@@ -137,9 +165,9 @@ function upsertVariant(int $tenantId, array $product, array $variant): void
     $stmt = $link->prepare($sql);
     if (!$stmt) {
         die("SQL error: " . $link->error . "\nQuery: " . $sql);
-    }    
+    }
     $stmt->bind_param(
-        'issssdisiii',
+        'issssdissii',
         $tenantId,
         $title,
         $description,
@@ -155,72 +183,197 @@ function upsertVariant(int $tenantId, array $product, array $variant): void
     $stmt->execute();
 }
 
-// ───── Sync Shopify → Flyhub ────────────────────────────────
+// ───── Sync Shopify -> Flyhub ────────────────────────────────
 function syncShopifyToFlyhub(int $tenantId, array $creds): void
 {
     global $link;
-    $since = $creds['last_shopify_sync']
-        ? '&updated_at_min=' . urlencode($creds['last_shopify_sync'])
-        : '';
-    $page = '';
+    $since      = $creds['last_shopify_sync']
+                   ? '&updated_at_min=' . urlencode($creds['last_shopify_sync'])
+                   : '';
+    $sinceId    = 0;
+    $batchCount = 0;
+
     do {
-        $endpoint = "products.json?limit=250{$page}{$since}" .
-                    "&fields=id,title,body_html,status,variants,images";
+        $endpoint = "products.json?limit=250{$since}&since_id={$sinceId}"
+                  . "&fields=id,title,body_html,status,variants,images";
         $resp = shopifyRequest($creds, 'GET', $endpoint);
-        foreach ($resp['products'] ?? [] as $product) {
-            // Only process active products
+        if (empty($resp['products'])) {
+            break;
+        }
+        foreach ($resp['products'] as $product) {
             if ($product['status'] !== 'active') {
                 continue;
             }
             foreach ($product['variants'] as $variant) {
                 upsertVariant($tenantId, $product, $variant);
+                $batchCount++;
             }
+            $sinceId = max($sinceId, (int)$product['id']);
         }
-        $page = isset($resp['next_page']) ? '&page=' . $resp['next_page'] : '';
-    } while ($page);
+    } while (count($resp['products']) === 250);
 
     $link->query(
-        "UPDATE shopify_credentials SET last_shopify_sync = NOW() WHERE tenant_id = {$tenantId}"
+        "UPDATE shopify_credentials 
+            SET last_shopify_sync = NOW() 
+          WHERE tenant_id = {$tenantId}"
     );
-    logSync($tenantId, 'shopify_to_flyhub', 'Pull complete (active only)');
+    logSync(
+        $tenantId,
+        'shopify_to_flyhub',
+        "Pull complete: {$batchCount} variants"
+    );
 }
 
-// ───── Sync Flyhub → Shopify ────────────────────────────────
+// ───── Fetch first active Shopify location ID ────────────────
+function getShopifyLocationId(array $creds): int
+{
+    $resp = shopifyRequest($creds, 'GET', 'locations.json');
+    foreach ($resp['locations'] as $loc) {
+        if (!empty($loc['active'])) {
+            return (int)$loc['id'];
+        }
+    }
+    throw new RuntimeException('No active Shopify location found');
+}
+
+// ───── Sync Flyhub -> Shopify, including inventory_levels ───
 function syncFlyhubToShopify(int $tenantId, array $creds): void
 {
     global $link;
+
+    // 1) Find any products changed since last push
     $stmt = $link->prepare(
-        'SELECT * FROM products
-         WHERE tenant_id = ? AND updated_at > IFNULL(
-               (SELECT last_flyhub_sync FROM shopify_credentials WHERE tenant_id = ?),
-               "1970-01-01")'
+        'SELECT id, sku, barcode, price, stock, shopify_variant_id
+           FROM products
+          WHERE tenant_id = ?
+            AND updated_at > IFNULL(
+                  (SELECT last_flyhub_sync FROM shopify_credentials WHERE tenant_id = ?),
+                  "1970-01-01"
+               )'
     );
     $stmt->bind_param('ii', $tenantId, $tenantId);
     $stmt->execute();
     $rows = $stmt->get_result();
+    $stmt->close();
 
-    while ($p = $rows->fetch_assoc()) {
-        if (!$p['shopify_variant_id']) {
-            continue;
-        }
-        $payload = ['variant' => [
-            'id'      => (int)$p['shopify_variant_id'],
-            'price'   => (string)$p['price'],
-            'sku'     => $p['sku'],
-            'barcode' => $p['barcode'],
-        ]];
-        shopifyRequest(
-            $creds,
-            'PUT',
-            'variants/' . $p['shopify_variant_id'] . '.json',
-            $payload
-        );
+    if ($rows->num_rows === 0) {
+        logSync($tenantId, 'flyhub_to_shopify', 'No changes to push');
+        return;
     }
 
+    // 2) Fetch and log your Shopify location
+    $locationId = getShopifyLocationId($creds);
+    logSync($tenantId, 'flyhub_to_shopify', "Using Shopify location {$locationId}");
+
+    $count = 0;
+    while ($p = $rows->fetch_assoc()) {
+        $variantId = (int)$p['shopify_variant_id'];
+        if (!$variantId) {
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "Skipping product {$p['id']} with missing shopify_variant_id"
+            );
+            continue;
+        }
+
+        // a) Update variant fields
+        try {
+            $payloadVar = ['variant' => [
+                'id'      => $variantId,
+                'price'   => (string)$p['price'],
+                'sku'     => $p['sku'],
+                'barcode' => $p['barcode'],
+            ]];
+            $responseVar = shopifyRequest(
+                $creds,
+                'PUT',
+                "variants/{$variantId}.json",
+                $payloadVar
+            );
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "Updated variant {$variantId}: " . json_encode($responseVar)
+            );
+        } catch (\Exception $e) {
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "Error updating variant {$variantId}: " . $e->getMessage()
+            );
+            continue;
+        }
+
+        // b) Fetch inventory_item_id
+        try {
+            $vr = shopifyRequest($creds, 'GET', "variants/{$variantId}.json");
+            $invItemId = $vr['variant']['inventory_item_id'] ?? null;
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "Fetched inventory_item_id {$invItemId} for variant {$variantId}"
+            );
+        } catch (\Exception $e) {
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "Error fetching variant {$variantId}: " . $e->getMessage()
+            );
+            continue;
+        }
+
+        // c) Set new on-hand quantity
+        if ($invItemId) {
+            try {
+                $newQty = (int)$p['stock'];
+                $invPayload = [
+                    'location_id'       => $locationId,
+                    'inventory_item_id' => $invItemId,
+                    'available'         => $newQty,
+                ];
+                $responseInv = shopifyRequest(
+                    $creds,
+                    'POST',
+                    'inventory_levels/set.json',
+                    $invPayload
+                );
+                logSync(
+                    $tenantId,
+                    'flyhub_to_shopify',
+                    "Set inventory for variant {$variantId} to {$newQty}: "
+                    . json_encode($responseInv)
+                );
+            } catch (\Exception $e) {
+                logSync(
+                    $tenantId,
+                    'flyhub_to_shopify',
+                    "Error setting inventory for variant {$variantId}: "
+                    . $e->getMessage()
+                );
+            }
+        } else {
+            logSync(
+                $tenantId,
+                'flyhub_to_shopify',
+                "No inventory_item_id for variant {$variantId}, skipping inventory set"
+            );
+        }
+
+        $count++;
+    }
+
+    // 4) Mark the sync time & log summary
     $link->query(
-        "UPDATE shopify_credentials SET last_flyhub_sync = NOW() WHERE tenant_id = {$tenantId}"
+        "UPDATE shopify_credentials
+            SET last_flyhub_sync = NOW()
+          WHERE tenant_id = {$tenantId}"
     );
-    logSync($tenantId, 'flyhub_to_shopify', 'Push complete');
+    logSync(
+        $tenantId,
+        'flyhub_to_shopify',
+        "Pushed {$count} variant(s) + inventory levels"
+    );
 }
 
 // ───── Manual trigger (tenant 12) ───────────────────────────
