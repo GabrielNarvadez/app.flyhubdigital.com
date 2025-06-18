@@ -124,7 +124,7 @@ $stmt->close();
       </a>
     </li>
     <li>
-      <a href="customer-portal.php">
+      <a href="portal-dashboard.php">
         <i class="ri-door-open-line"></i>
         <span> Customer Portal </span>
       </a>
@@ -166,6 +166,202 @@ $stmt->close();
           </li>
         </ul>
       </li>
+
+<li class="side-nav-item">
+  <a href="#cateringSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="ri-restaurant-2-line"></i>
+    <span> Catering </span>
+    <span class="menu-arrow"></span>
+  </a>
+  <ul class="side-nav-second-level collapse" id="cateringSubmenu" style="padding-left:32px;">
+    <li>
+      <a href="catering-clients.php">
+        <i class="ri-user-3-line"></i>
+        <span> Clients & Accounts </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-orders.php">
+        <i class="ri-calendar-check-line"></i>
+        <span> Orders & Menu </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-billing.php">
+        <i class="ri-bill-line"></i>
+        <span> Billing & Receivables </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-reports.php">
+        <i class="ri-bar-chart-box-line"></i>
+        <span> Reports </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-users.php">
+        <i class="ri-shield-user-line"></i>
+        <span> User Management </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-delivery.php">
+        <i class="ri-truck-line"></i>
+        <span> Delivery & Schedule </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-docs.php">
+        <i class="ri-file-list-3-line"></i>
+        <span> Docs & Notes </span>
+      </a>
+    </li>
+    <li>
+      <a href="catering-notifications.php">
+        <i class="ri-notification-2-line"></i>
+        <span> Notifications </span>
+      </a>
+    </li>
+  </ul>
+</li>
+
+<li class="side-nav-item">
+  <a href="#fsmSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="ri-tools-line"></i>
+    <span> Field Service </span>
+    <span class="menu-arrow"></span>
+  </a>
+  <ul class="side-nav-second-level collapse" id="fsmSubmenu" style="padding-left:32px;">
+    <li>
+      <a href="fsm-dashboard.php">
+        <i class="ri-dashboard-2-line"></i>
+        <span> Dashboard </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-clients.php">
+        <i class="ri-group-line"></i>
+        <span> Clients & Sites </span>
+      </a>
+    </li>
+    <li>
+      <a href="field-jobs.php">
+        <i class="ri-calendar-check-line"></i>
+        <span> Jobs </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-team.php">
+        <i class="ri-user-settings-line"></i>
+        <span> Team & Users </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-inventory.php">
+        <i class="ri-archive-line"></i>
+        <span> Inventory </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-billing.php">
+        <i class="ri-bill-line"></i>
+        <span> Billing </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-documents.php">
+        <i class="ri-file-list-3-line"></i>
+        <span> Documents </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-reports.php">
+        <i class="ri-bar-chart-2-line"></i>
+        <span> Reports </span>
+      </a>
+    </li>
+    <li>
+      <a href="fsm-notifications.php">
+        <i class="ri-notification-2-line"></i>
+        <span> Notifications </span>
+      </a>
+    </li>
+    <!-- Optional: Customer Portal (admin-only link) -->
+
+    <li>
+      <a href="fsm-portal.php">
+        <i class="ri-door-open-line"></i>
+        <span> Customer Portal </span>
+      </a>
+    </li>
+
+  </ul>
+</li>
+
+<li class="side-nav-item">
+  <a href="#recruitmentSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="ri-user-star-line"></i>
+    <span> Recruitment </span>
+    <span class="menu-arrow"></span>
+  </a>
+  <ul class="side-nav-second-level collapse" id="recruitmentSubmenu" style="padding-left:32px;">
+    <li>
+      <a href="ats-dashboard.php">
+        <i class="ri-dashboard-2-line"></i>
+        <span> Dashboard </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-jobs.php">
+        <i class="ri-briefcase-4-line"></i>
+        <span> Jobs </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-candidates.php">
+        <i class="ri-user-search-line"></i>
+        <span> Candidates </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-pipeline.php">
+        <i class="ri-git-merge-line"></i>
+        <span> Pipeline </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-calendar.php">
+        <i class="ri-calendar-2-line"></i>
+        <span> Calendar/Schedule </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-clients.php">
+        <i class="ri-building-2-line"></i>
+        <span> Clients & Contacts </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-documents.php">
+        <i class="ri-file-list-3-line"></i>
+        <span> Documents </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-reports.php">
+        <i class="ri-bar-chart-2-line"></i>
+        <span> Reports </span>
+      </a>
+    </li>
+    <li>
+      <a href="ats-users.php">
+        <i class="ri-shield-user-line"></i>
+        <span> Users/Settings </span>
+      </a>
+    </li>
+  </ul>
+</li>
+
 
       <li class="side-nav-item">
         <a href="apps.php" class="side-nav-link">

@@ -197,7 +197,7 @@
                                     <span class="badge bg-light text-dark unit-doc-badge"><i class="ri-attachment-2"></i> 2</span>
                                 </div>
                                 <div class="mb-2">
-                                    <img src="https://images.unsplash.com/photo-1465101178521-c1a9136a6a94?fit=crop&w=200&q=80" class="unit-photo-thumb me-2 float-start" alt="Property Photo">
+                                    <img src="assets/images/lot.jpg" class="unit-photo-thumb me-2 float-start" alt="Property Photo">
                                     <span class="fw-bold">Green Meadows</span><br>
                                     <span class="text-muted small">Tagaytay Highlands</span>
                                 </div>
