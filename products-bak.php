@@ -726,29 +726,28 @@ document.addEventListener('DOMContentLoaded', function() {
     drawerBackdrop.addEventListener('click', hideDrawer);
 
     // Edit Product: open drawer with AJAX data
-// ——— Add this instead ———
-$('#datatable tbody').on('click', '.product-link', function(e) {
-  e.preventDefault();
-  var id = this.getAttribute('data-id');
-  fetch('get_product.php?id=' + id)
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        var p = data.product;
-        document.getElementById('editProductId').value    = p.id;
-        document.getElementById('editName').value         = p.name   || '';
-        document.getElementById('editSku').value          = p.sku    || '';
-        document.getElementById('editDescription').value  = p.description || '';
-        document.getElementById('editCategoryId').value   = p.category_id  || '';
-        document.getElementById('editPrice').value        = p.price  || '';
-        document.getElementById('editStock').value        = p.stock  || '';
-        document.getElementById('editStatus').value       = p.status || '';
-        showDrawer();
-      }
+    document.querySelectorAll('.product-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var id = this.getAttribute('data-id');
+            fetch('get_product.php?id=' + id)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        var p = data.product;
+                        document.getElementById('editProductId').value = p.id;
+                        document.getElementById('editName').value = p.name ?? '';
+                        document.getElementById('editSku').value = p.sku ?? '';
+                        document.getElementById('editDescription').value = p.description ?? '';
+                        document.getElementById('editCategoryId').value = p.category_id ?? '';
+                        document.getElementById('editPrice').value = p.price ?? '';
+                        document.getElementById('editStock').value = p.stock ?? '';
+                        document.getElementById('editStatus').value = p.status ?? '';
+                        showDrawer();
+                    }
+                });
+        });
     });
-});
-// ————————————————
-
 
     // Edit Product: submit form AJAX
     document.getElementById('editProductForm').addEventListener('submit', function(e) {
