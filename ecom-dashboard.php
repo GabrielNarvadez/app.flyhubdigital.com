@@ -58,6 +58,21 @@ $stmt->bind_result($unfulfilled_orders);
 $stmt->fetch();
 $stmt->close();
 
+// Get sales totals for the last 7 days
+$sales_trend_dates = [];
+$sales_trend_totals = [];
+for ($i = 6; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-$i days"));
+    $sales_trend_dates[] = date('D', strtotime($date)); // 'Mon', 'Tue', ...
+    $stmt = $link->prepare("SELECT COALESCE(SUM(total),0) FROM sales WHERE DATE(sale_datetime) = ?");
+    $stmt->bind_param("s", $date);
+    $stmt->execute();
+    $stmt->bind_result($total);
+    $stmt->fetch();
+    $sales_trend_totals[] = (float)$total;
+    $stmt->close();
+}
+
 // --- Stat cards now ready for use in HTML ---
 ?>
 
@@ -92,6 +107,7 @@ $stmt->close();
             .stat-card { margin-bottom: 1rem; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -163,7 +179,7 @@ $stmt->close();
                             <h3 class="h3-section"><i class="ri-bar-chart-line text-primary"></i> Sales Trend</h3>
                             <!-- Placeholder for chart -->
                             <div style="height:230px;background:linear-gradient(90deg,#f4f9ff 65%,#e9f4ff 100%);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#b2bac6;">
-                                [Sales Chart Here: Last 7 Days]
+                                <canvas id="salesChart" height="80"></canvas>
                             </div>
                         </div>
                         <div class="row">
@@ -185,7 +201,7 @@ $stmt->close();
                                         <i class="ri-alert-line text-danger"></i> 4 products below minimum stock
                                     </div>
                                     <div class="alert-card warning">
-                                        <i class="ri-cloud-off-line text-warning"></i> Shopee channel: Sync error. <a href="#" class="fw-bold">Retry</a>
+                                        <i class="ri-cloud-off-line text-warning"></i> Shopify channel: Sync error. <a href="#" class="fw-bold">Retry</a>
                                     </div>
                                     <div class="alert-card info">
                                         <i class="ri-inbox-line text-info"></i> 1 overdue invoice: <a href="#" class="fw-bold">View</a>
@@ -241,12 +257,24 @@ $stmt->close();
                 <div class="row my-4">
                     <div class="col-12">
                         <div class="d-flex flex-wrap gap-3">
-                            <button class="btn btn-outline-primary quick-action-btn"><i class="ri-add-line"></i> New Order</button>
-                            <button class="btn btn-outline-success quick-action-btn"><i class="ri-arrow-down-line"></i> Receive Stock</button>
-                            <button class="btn btn-outline-info quick-action-btn"><i class="ri-cash-line"></i><a href="POS.php" target="_blank"> Open POS</a></button>
-                            <button class="btn btn-outline-secondary quick-action-btn"><i class="ri-link"></i> Connect Channel</button>
-                            <button class="btn btn-outline-dark quick-action-btn"><i class="ri-refresh-line"></i> Manual Sync</button>
-                            <button class="btn btn-outline-warning quick-action-btn"><i class="ri-file-list-3-line"></i> Create Invoice</button>
+                            <a href="pos-dashboard.php" class="btn btn-outline-primary quick-action-btn">
+                                <i class="ri-add-line"></i> New Order
+                            </a>
+                            <a href="http://localhost/app.flyhubdigital.com/products.php" class="btn btn-outline-success quick-action-btn">
+                                <i class="ri-arrow-down-line"></i> Receive Stock
+                            </a>
+                            <a href="pos-dashboard.php" class="btn btn-outline-info quick-action-btn" target="_blank">
+                                <i class="ri-cash-line"></i> Open POS
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary quick-action-btn">
+                                <i class="ri-link"></i> Connect Channel
+                            </a>
+                            <a href="#" class="btn btn-outline-dark quick-action-btn">
+                                <i class="ri-refresh-line"></i> Manual Sync
+                            </a>
+                            <a href="ecom-invoicing.php" class="btn btn-outline-warning quick-action-btn">
+                                <i class="ri-file-list-3-line"></i> Create Invoice
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -273,12 +301,6 @@ $stmt->close();
                                         <td><button class="btn btn-outline-secondary btn-sm"><i class="ri-refresh-line"></i> Sync Now</button></td>
                                     </tr>
                                     <tr>
-                                        <td><i class="ri-shopping-bag-2-line text-warning"></i> Shopee</td>
-                                        <td><span class="badge bg-danger">Sync Error</span></td>
-                                        <td>10m ago</td>
-                                        <td><button class="btn btn-outline-danger btn-sm"><i class="ri-refresh-line"></i> Retry</button></td>
-                                    </tr>
-                                    <tr>
                                         <td><i class="ri-terminal-box-line text-info"></i> POS</td>
                                         <td><span class="badge bg-success">OK</span></td>
                                         <td>Just now</td>
@@ -293,20 +315,20 @@ $stmt->close();
                             <h3 class="h3-section"><i class="ri-information-line text-secondary"></i> Quick Stats</h3>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <div class="fw-bold fs-5 text-primary">539</div>
-                                    <div class="small text-muted">Total Products</div>
+                                    <div class="fw-bold fs-5 text-primary"><h4>539</h4></div>
+                                    <div class="small text-muted"><p>Total Products</p></div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="fw-bold fs-5 text-info">5</div>
-                                    <div class="small text-muted">Unfulfilled Orders</div>
+                                    <div class="fw-bold fs-5 text-info"><h4>5</h4></div>
+                                    <div class="small text-muted"><p>Unfulfilled Orders</p></div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="fw-bold fs-5 text-danger">4</div>
-                                    <div class="small text-muted">Low Stock</div>
+                                    <div class="fw-bold fs-5 text-danger"><h4>4</h4></div>
+                                    <div class="small text-muted"><p>Low Stock</p></div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="fw-bold fs-5 text-warning">2</div>
-                                    <div class="small text-muted">Failed Orders</div>
+                                    <div class="fw-bold fs-5 text-warning"><h4>2</h4></div>
+                                    <div class="small text-muted"><p>Failed Orders</p></div>
                                 </div>
                             </div>
                         </div>
@@ -338,6 +360,45 @@ function refreshStats() {
 }
 setInterval(refreshStats, 7000);
 refreshStats();
+
+const salesTrendLabels = <?= json_encode($sales_trend_dates) ?>;
+const salesTrendData = <?= json_encode($sales_trend_totals) ?>;
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: salesTrendLabels,
+            datasets: [{
+                label: 'Sales',
+                data: salesTrendData,
+                fill: true,
+                borderColor: '#3e60d5',
+                backgroundColor: 'rgba(62,96,213,0.09)',
+                tension: 0.4,
+                pointBackgroundColor: '#3e60d5',
+                pointBorderColor: '#fff',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => '₱' + value
+                    }
+                }
+            }
+        }
+    });
+});
 </script>
 </body>
 </html>
