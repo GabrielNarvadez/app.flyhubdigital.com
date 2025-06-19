@@ -141,27 +141,27 @@ $stmt->close();
         </a>
         <ul class="side-nav-second-level collapse" id="ecomSubmenu" style="padding-left:32px;">
           <li>
-            <a href="app-ecom-manager.php">
+            <a href="ecom-dashboard.php">
               <i class="ri-shopping-bag-line"></i>
               <span> Dashboard </span>
             </a>
           </li>
           <li>
-            <a href="products.php">
+            <a href="ecom-inventory.php">
               <i class="ri-shopping-bag-line"></i>
               <span> Products </span>
             </a>
           </li>
           <li>
-            <a href="invoicing.php">
+            <a href="ecom-invoicing.php">
               <i class="ri-bill-line"></i>
-              <span> Invoicing </span>
+              <span> Orders </span>
             </a>
           </li>
           <li>
-            <a href="POS.php">
+            <a href="POS.php" target="_blank">
               <i class="ri-terminal-box-line"></i>
-              <span> POS </span>
+              <span> Open POS </span>
             </a>
           </li>
         </ul>

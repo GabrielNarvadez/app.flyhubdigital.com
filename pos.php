@@ -54,9 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card">
 
                     <!-- Logo -->
-                    <div class="card-header py-4 text-center bg-primary">
+                    <div class="card-header py-4 text-center bg-primary" style="background-color: #ffffff !important;">
                         <a href="pos-login.php">
-                            <img src="assets/images/flyhub_logo.webp" alt="logo" height="50">
+                            <img src="assets/images/the-look-logo.png" alt="logo" height="70">
                         </a>
                     </div>
 
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="row mt-3">
                     <div class="col-12 text-center">
-                        <p class="text-muted"><a href="app-ecom-manager.php" class="text-decoration-underline"><b>Go back to admin</b></a></p>
+                        <p class="text-muted"><a href="ecom-dashboard.php" class="text-decoration-underline"><b>Go back to admin</b></a></p>
                     </div>
                 </div>
             </div> <!-- end col -->

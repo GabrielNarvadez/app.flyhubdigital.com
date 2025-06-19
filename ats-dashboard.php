@@ -197,6 +197,5 @@
     <?php include 'layouts/right-sidebar.php'; ?>
     <?php include 'layouts/footer-scripts.php'; ?>
     <script src="assets/js/app.min.js"></script>
-
 </body>
 </html>

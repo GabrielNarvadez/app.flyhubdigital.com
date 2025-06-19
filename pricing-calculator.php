@@ -20,7 +20,7 @@
         .pricing-price {
             font-size: 2.2rem;
             font-weight: 700;
-            line-height: 1.1;
+            line-height: 18px;
             margin-bottom: .2rem;
         }
         .pricing-currency {
@@ -57,6 +57,111 @@
         .custom-dev-form input, .custom-dev-form textarea {
             font-size: .98rem;
         }
+        .pricing-card {
+            border-radius: 13px;
+            box-shadow: 0 2px 12px #0002;
+            background: #fff;
+            border: 1.5px solid #e6e9f1;
+            min-width: 220px;
+            min-height: 540px;
+            padding: 0 !important;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow .18s;
+        }
+        .pricing-card.featured {
+            border: 2px solid #266ef2 !important;
+            box-shadow: 0 6px 32px #266ef221;
+        }
+        .pricing-card:hover {
+            box-shadow: 0 8px 32px #266ef233;
+        }
+        .pricing-card .icon-avatar {
+            margin-top: 30px;
+            margin-bottom: 1.2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.1rem;
+            background: #f4f8ff;
+            color: #266ef2;
+            border: 2.5px solid #e7eeff;
+        }
+        .pricing-card.free .icon-avatar {
+            background: #eaf8ec;
+            color: #13c06d;
+            border-color: #d8f6e1;
+        }
+        .pricing-card.enterprise .icon-avatar {
+            background: #f8f3ff;
+            color: #8966e1;
+            border-color: #eee7ff;
+        }
+        .pricing-card.custom .icon-avatar {
+            background: #fff9ee;
+            color: #ffb300;
+            border-color: #fff3cd;
+        }
+        .pricing-card .plan-title {
+            font-size: 1.13rem;
+            font-weight: 700;
+            letter-spacing: .01em;
+            margin-bottom: .6rem;
+        }
+        .pricing-card .pricing-price {
+            font-size: 2.15rem;
+            font-weight: 800;
+            margin-bottom: .15rem;
+        }
+        .pricing-card .pricing-currency {
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+        .pricing-card .small {
+            font-size: .94rem !important;
+            color: #97a0b3;
+        }
+        .pricing-card .pricing-features {
+            font-size: .99rem;
+            margin: 1rem 0 .6rem 0;
+            padding-left: 0;
+            list-style: none;
+            line-height: 1.5;
+            min-height: 140px;
+        }
+        .pricing-card .pricing-features li:not(:last-child) {
+            margin-bottom: .4rem;
+        }
+        .pricing-addons label,
+        .pricing-addons .form-label {
+            font-size: .95rem;
+            font-weight: 600;
+        }
+        .pricing-card .btn {
+            font-size: 1rem;
+            padding: .5em 1em;
+        }
+        .pricing-card .savings-badge {
+            font-size: .82rem;
+            background: #eaf8ec;
+            color: #13c06d;
+            border-radius: 7px;
+            padding: .08em .56em;
+            margin-left: .45em;
+        }
+        .pricing-card .plan-footer {
+            margin-top: auto;
+            padding-bottom: 1.2rem;
+        }
+        @media (max-width: 1200px) {
+            .pricing-card { min-height: 600px; }
+        }
+        @media (max-width: 991px) {
+            .pricing-card { min-height: 1px; }
+        }
     </style>
 </head>
 
@@ -69,7 +174,7 @@
         <div class="content">
             <div class="container-fluid">
 
-                <div class="row mb-3">
+                <div class="row mb-3" style="margin-top: 30px;">
                     <div class="col-md-6 d-flex align-items-end gap-3">
                         <h4 class="page-title mb-0">Pricing Calculator</h4>
                     </div>
@@ -88,64 +193,84 @@
                     </div>
                 </div>
 
-                <div class="row g-3 mb-2" id="pricingCards">
-                    <!-- Pricing cards populated by JS -->
+                <div class="row justify-content-center align-items-stretch g-4 mb-2" id="pricingCards">
+                    <!-- Pricing cards populated by JS, will use new styles -->
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-lg-7 mb-3">
-                        <div class="card p-3 h-100">
-                            <h5 class="fw-bold mb-3">Pricing Summary</h5>
-                            <div id="pricingSummary"></div>
-                            <table class="table table-sm mt-2 currency-table" style="max-width: 480px;">
-                                <thead>
-                                    <tr>
-                                        <th>Currency</th>
-                                        <th>Monthly</th>
-                                        <th>Yearly</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="allCurrencyTable">
-                                    <!-- All prices in different currencies shown here -->
-                                </tbody>
-                            </table>
-                            <button class="btn btn-primary btn-lg mt-3" id="contactSalesBtn">
-                                <i class="ri-mail-send-line"></i> Contact Sales
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="card p-3 h-100">
-                            <h5 class="fw-bold mb-3">Request Custom Development</h5>
-                            <form class="custom-dev-form" id="customDevForm">
-                                <div class="mb-2">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" class="form-control" required name="name">
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" required name="email">
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Company</label>
-                                    <input type="text" class="form-control" name="company">
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Project Details / Requirements</label>
-                                    <textarea class="form-control" rows="3" name="details" required></textarea>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label">Desired Timeline</label>
-                                    <input type="text" class="form-control" name="timeline" placeholder="e.g. 2 weeks, ASAP">
-                                </div>
-                                <button class="btn btn-outline-primary mt-2" type="submit">
-                                    <i class="ri-send-plane-line"></i> Submit Inquiry
-                                </button>
-                                <div id="customDevMsg" class="mt-2 text-success" style="display:none">Submitted! Our team will contact you soon.</div>
-                            </form>
-                        </div>
-                    </div>
+
+<div class="row mb-4">
+    <div class="col-lg-4 d-flex align-items-stretch mb-3 mb-lg-0">
+        <div class="card w-100 d-flex flex-column align-items-center justify-content-center py-4">
+            <!-- Place your "Custom" card here, or let JS populate this with the other pricing cards -->
+            <div class="icon-avatar custom mb-2 mx-auto"><i class="ri-settings-3-line"></i></div>
+            <div class="plan-title mb-2">Tier 4 – Custom</div>
+            <span class="pricing-price mb-2">Contact Us</span>
+            <ul class="pricing-features mb-3 text-start mx-auto" style="max-width: 90%;">
+                <li>Unlimited Users</li>
+                <li>Unlimited Modules & Storage</li>
+                <li>Custom Contracts & Support</li>
+                <li>Dedicated Account/Team</li>
+                <li>Custom Integrations</li>
+                <li>Special compliance/on-premise</li>
+            </ul>
+            <a href="#customDevForm" class="btn btn-outline-secondary btn-sm w-75">Request Quote</a>
+        </div>
+    </div>
+    <div class="col-lg-4 d-flex align-items-stretch mb-3 mb-lg-0">
+        <div class="card p-3 w-100">
+            <h5 class="fw-bold mb-3">Pricing Summary</h5>
+            <div id="pricingSummary"></div>
+            <table class="table table-sm mt-2 currency-table" style="max-width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Currency</th>
+                        <th>Monthly</th>
+                        <th>Yearly</th>
+                    </tr>
+                </thead>
+                <tbody id="allCurrencyTable">
+                    <!-- All prices in different currencies shown here -->
+                </tbody>
+            </table>
+            <button class="btn btn-primary btn-lg mt-3 w-100" id="contactSalesBtn">
+                <i class="ri-mail-send-line"></i> Contact Sales
+            </button>
+        </div>
+    </div>
+    <div class="col-lg-4 d-flex align-items-stretch">
+        <div class="card p-3 w-100">
+            <h5 class="fw-bold mb-3">Request Custom Development</h5>
+            <form class="custom-dev-form" id="customDevForm">
+                <div class="mb-2">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" required name="name">
                 </div>
+                <div class="mb-2">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" required name="email">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Company</label>
+                    <input type="text" class="form-control" name="company">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Project Details / Requirements</label>
+                    <textarea class="form-control" rows="3" name="details" required></textarea>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Desired Timeline</label>
+                    <input type="text" class="form-control" name="timeline" placeholder="e.g. 2 weeks, ASAP">
+                </div>
+                <button class="btn btn-outline-primary mt-2 w-100" type="submit">
+                    <i class="ri-send-plane-line"></i> Submit Inquiry
+                </button>
+                <div id="customDevMsg" class="mt-2 text-success" style="display:none">Submitted! Our team will contact you soon.</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 
             </div><!-- container-fluid -->
         </div><!-- content -->
@@ -158,6 +283,7 @@
 <?php include 'layouts/footer-scripts.php'; ?>
 
 <script>
+
 // --- PRICING DATA ---
 const exchangeRates = {
     PHP: 1,
@@ -165,7 +291,6 @@ const exchangeRates = {
     GBP: 0.013,
     AUD: 0.026
 };
-
 const basePrices = {
     Free:    {PHP:0, USD:0, GBP:0, AUD:0},
     Tier1:   {PHP:4990, USD:90, GBP:65, AUD:130},
@@ -257,6 +382,22 @@ const tierDetails = {
     }
 };
 
+// Icon and color classes per plan
+const tierIcons = {
+    Free:       "ri-user-line",
+    Tier1:      "ri-user-2-line",
+    Tier2:      "ri-briefcase-2-line",
+    Tier3:      "ri-community-line",
+    Custom:     "ri-settings-3-line"
+};
+const tierClass = {
+    Free: 'free',
+    Tier1: '',
+    Tier2: 'featured',
+    Tier3: 'enterprise',
+    Custom: 'custom'
+};
+
 // --- INIT UI ---
 let selectedTier = 'Tier1';
 let selectedCurrency = 'PHP';
@@ -265,53 +406,73 @@ let addons = {user: 0, storage: 0, module: 0, branding: false};
 
 function renderPricingCards() {
     let cardsHtml = '';
-    ['Free','Tier1','Tier2','Tier3','Custom'].forEach(tier => {
+    // Order: Free, Tier1, Tier2 (center, featured), Tier3, Custom
+    ['Free','Tier1','Tier2','Tier3','Custom'].forEach((tier, i) => {
         let isPaid = tier !== "Free" && tier !== "Custom";
         let isCustom = tier === "Custom";
         let featured = tier === "Tier2";
+        let colorClass = tierClass[tier];
         let highlights = tierDetails[tier].highlights.map(l => `<li>${l}</li>`).join('');
         let currency = selectedCurrency;
         let base = tierDetails[tier].priceKey ? basePrices[tierDetails[tier].priceKey][currency] : '';
         let displayPrice = "";
         let priceUnit = isYearly && isPaid ? (base * 12 * (1-yearlyDiscount)) : (isPaid ? base : 0);
-        let priceUnitMonthly = isPaid ? base : 0;
         let badge = isYearly && isPaid ? `<span class="savings-badge">Save 16%</span>` : '';
         displayPrice = isCustom ? `<span class="pricing-price">Contact Us</span>` :
-            `<span class="pricing-currency">${currencySymbol(currency)}</span>
-             <span class="pricing-price">${formatPrice(priceUnit, currency)}</span>
-             <span class="small">${isYearly ? '/yr' : '/mo'}</span> ${badge}`;
+displayPrice = isCustom
+  ? `<span class="pricing-price">Contact Us</span>`
+  : `
+    <div class="d-flex align-items-end justify-content-center gap-1 mb-2">
+      <span class="pricing-currency">${currencySymbol(currency)}</span>
+      <span class="pricing-price">${formatPrice(priceUnit, currency)}</span>
+      <span class="small">${isYearly ? '/yr' : '/mo'}</span>
+      ${badge}
+    </div>
+  `;
+        // Main markup for pricing card
         cardsHtml += `
-        <div class="col-md-6 col-lg-2">
-            <div class="pricing-card p-3 ${featured ? 'featured':''} text-center h-100 d-flex flex-column justify-content-between ${selectedTier===tier?'border-primary':''}" style="cursor:pointer;" onclick="selectTier('${tier}')">
-                <div>
-                    <div class="fw-bold fs-5 mb-2">${tierDetails[tier].title}</div>
-                    ${displayPrice}
-                    <ul class="pricing-features mt-3 mb-3 text-start">${highlights}</ul>
-                </div>
+        <div class="col-12 col-sm-6 col-lg-3 d-flex">
+            <div class="pricing-card ${colorClass} ${featured ? 'featured':''}  w-100 h-100 d-flex flex-column align-items-center ${selectedTier===tier?'border-primary':''}" style="cursor:pointer;" onclick="selectTier('${tier}')">
+                <div class="icon-avatar mb-2 mx-auto"><i class="${tierIcons[tier]}"></i></div>
+                <div class="plan-title mb-2">${tierDetails[tier].title}</div>
+                ${displayPrice}
+                <ul class="pricing-features mb-2 mt-3 text-start mx-auto">${highlights}</ul>
                 ${isPaid ? `
-                <div class="pricing-addons mt-auto">
-                  <label class="form-label mb-1 fw-semibold">Add-ons</label>
-                  <div class="mb-2">
-                    <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-user-${tier}" value="${addons.user}" onchange="setAddon('user',this.value)" ${selectedTier!==tier?'disabled':''}>
-                    <span class="small">Extra Users</span>
-                    <span class="text-muted">(@${currencySymbol(currency)}${addOnPrices.user[currency]}/mo)</span>
-                  </div>
-                  <div class="mb-2">
-                    <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-storage-${tier}" value="${addons.storage}" onchange="setAddon('storage',this.value)" ${selectedTier!==tier?'disabled':''}>
-                    <span class="small">Extra Storage (per 20GB)</span>
-                    <span class="text-muted">(@${currencySymbol(currency)}${addOnPrices.storage[currency]}/mo)</span>
-                  </div>
-                  <div class="mb-2">
-                    <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-module-${tier}" value="${addons.module}" onchange="setAddon('module',this.value)" ${selectedTier!==tier?'disabled':''}>
-                    <span class="small">Extra Modules</span>
-                    <span class="text-muted">(@${currencySymbol(currency)}${addOnPrices.module[currency]}/mo)</span>
-                  </div>
-                  <div>
-                    <input type="checkbox" id="addon-branding-${tier}" class="form-check-input me-1" onchange="setAddon('branding',this.checked)" ${addons.branding?'checked':''} ${selectedTier!==tier?'disabled':''}>
-                    <span class="small">Custom Branding/Domain</span>
-                    <span class="text-muted">(@${currencySymbol(currency)}${addOnPrices.branding[currency]}/mo)</span>
-                  </div>
-                </div>` : isCustom ? `<div class="mt-2"><a href="#customDevForm" class="btn btn-outline-secondary btn-sm">Request Quote</a></div>` : ""}
+                <div class="pricing-addons mt-auto w-100 px-3">
+                    <label class="form-label mb-1 fw-semibold">Add-ons</label>
+                    <div class="mb-2">
+                      <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-user-${tier}" value="${addons.user}" onchange="setAddon('user',this.value)" ${selectedTier!==tier?'disabled':''}>
+                      <span class="small">Extra Users</span>
+                      <span class="text-muted">${currencySymbol(currency)}${addOnPrices.user[currency]}/mo)</span>
+                    </div>
+                    <div class="mb-2">
+                      <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-storage-${tier}" value="${addons.storage}" onchange="setAddon('storage',this.value)" ${selectedTier!==tier?'disabled':''}>
+                      <span class="small">Extra Storage (per 20GB)</span>
+                      <span class="text-muted">${currencySymbol(currency)}${addOnPrices.storage[currency]}/mo)</span>
+                    </div>
+                    <div class="mb-2">
+                      <input type="number" min="0" class="form-control form-control-sm add-on-input" id="addon-module-${tier}" value="${addons.module}" onchange="setAddon('module',this.value)" ${selectedTier!==tier?'disabled':''}>
+                      <span class="small">Extra Modules</span>
+                      <span class="text-muted">${currencySymbol(currency)}${addOnPrices.module[currency]}/mo)</span>
+                    </div>
+                    <div>
+                      <input type="checkbox" id="addon-branding-${tier}" class="form-check-input me-1" onchange="setAddon('branding',this.checked)" ${addons.branding?'checked':''} ${selectedTier!==tier?'disabled':''}>
+                      <span class="small">Custom Branding/Domain</span>
+                      <span class="text-muted">${currencySymbol(currency)}${addOnPrices.branding[currency]}/mo)</span>
+                    </div>
+                </div>
+                <div class="plan-footer w-100 px-3">
+                    <button class="btn btn-primary w-100 mt-3" ${tier === selectedTier ? 'disabled' : ''}>${tier === selectedTier ? 'Current Plan' : 'Choose Plan'}</button>
+                </div>
+                ` : isCustom ? `
+                <div class="plan-footer w-100 px-3">
+                    <a href="#customDevForm" class="btn btn-outline-secondary btn-sm w-100 mt-4">Request Quote</a>
+                </div>
+                ` : `
+                <div class="plan-footer w-100 px-3">
+                    <span class="small text-muted d-block mt-2 mb-2">No payment or credit card required.</span>
+                </div>
+                `}
             </div>
         </div>
         `;
@@ -415,6 +576,7 @@ document.getElementById('contactSalesBtn').addEventListener('click',function(e){
 
 // --- INIT ---
 renderPricingCards();
+
 </script>
 
 </body>

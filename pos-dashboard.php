@@ -819,15 +819,41 @@ document.getElementById('amountReceived').oninput = function() {
       ? `<span class="text-success">Change: ₱${(received-total).toLocaleString()}</span>`
       : `<span class="text-danger">Insufficient amount</span>`;
 };
+
 document.getElementById('confirmCheckoutBtn').onclick = () => {
     const total = Number(document.getElementById('total').textContent.replace(/[₱,]/g,''));
     const received = Number(document.getElementById('amountReceived').value);
     if(received < total) return;
-    // TODO: AJAX save to database here
-    document.getElementById('cartPanel').classList.add('locked');
-    document.querySelectorAll('.add-to-cart-btn').forEach(b=>b.disabled=true);
-    bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
-    new bootstrap.Modal(document.getElementById('newTransModal')).show();
+
+    // Gather data for saving
+    let items = cart.map(i => ({
+        id: i.id,
+        name: i.name,
+        price: i.price,
+        qty: i.qty,
+        attrs: i.attrs
+    }));
+    let tax = Number(document.getElementById('tax').textContent.replace(/[₱,]/g,''));
+    let discount = discountPercent || 0;
+    let customerName = customer;
+    let note = document.getElementById('orderNoteInput').value || '';
+    let payment = paymentMethod;
+
+    // Save to DB via AJAX
+    fetch('save-sale.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'items='+encodeURIComponent(JSON.stringify(items))+'&total='+total+'&tax='+tax+'&discount='+discount+'&customer='+encodeURIComponent(customerName)+'&note='+encodeURIComponent(note)+'&payment='+encodeURIComponent(payment)
+    }).then(res=>res.json()).then(data=>{
+        if(data.success) {
+            document.getElementById('cartPanel').classList.add('locked');
+            document.querySelectorAll('.add-to-cart-btn').forEach(b=>b.disabled=true);
+            bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
+            new bootstrap.Modal(document.getElementById('newTransModal')).show();
+        } else {
+            alert('Error saving sale. Please try again.');
+        }
+    });
 };
 
 // Start new transaction logic
