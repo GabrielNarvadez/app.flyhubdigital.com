@@ -610,7 +610,7 @@ function renderPreview() {
 
         <div class="clearfix mb-2">
           <div class="float-start" style="height:30px;display:flex;align-items:center;">
-            <i class="bi bi-building" style="font-size:30px; color:#bbb;"></i>
+                        <div class="float-start"><img src="assets/images/logo-dark.png" alt="logo" height="28"></div>
           </div>
           <div class="float-end"><h3 class="m-0">Invoice</h3></div>
         </div>
