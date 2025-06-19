@@ -3,7 +3,11 @@ session_start();
 require_once __DIR__ . '/layouts/config.php';
 
 $products = [];
-$sql = "SELECT id, name, category, price, stock FROM products WHERE status = 'active' ORDER BY name ASC";
+$sql = "SELECT p.id, p.name, c.name as category, p.price, p.stock
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active' AND p.stock > 0
+        ORDER BY p.name ASC";
 if ($stmt = mysqli_prepare($link, $sql)) {
     mysqli_stmt_execute($stmt);
     mysqli_stmt_bind_result($stmt, $id, $name, $category, $price, $stock);
@@ -18,6 +22,7 @@ if ($stmt = mysqli_prepare($link, $sql)) {
     }
     mysqli_stmt_close($stmt);
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -699,7 +704,6 @@ if ($stmt = mysqli_prepare($link, $sql)) {
 
 <script>
 
-alert('JS Loaded!');
 
 let cart = [];
 let customer = '';
