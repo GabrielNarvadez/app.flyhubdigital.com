@@ -1,5 +1,158 @@
-<?php include 'layouts/session.php'; ?>
-<?php include 'layouts/main.php'; ?>
+<?php
+
+include 'layouts/session.php';
+include 'layouts/main.php';
+require_once __DIR__ . '/layouts/config.php'; // Database connection
+
+// Defaults
+$user_name = "User";
+$user_role = "";
+$user_avatar = "avatar-default.jpg";
+
+// All profile fields
+$contact = [];
+$employment = [];
+
+if (isset($_SESSION['user_id'])) {
+    // 1. Get contact_id from users table
+    $sql = "SELECT contact_id FROM users WHERE id = ?";
+    $stmt = $link->prepare($sql);
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($contact_id);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($contact_id) {
+        // 2. Fetch contact data
+        $sql = "
+            SELECT
+                first_name,
+                last_name,
+                email,
+                phone_number,
+                civil_status,
+                date_of_birth,
+                place_of_birth,
+                age,
+                nationality,
+                religion,
+                permanent_address,
+                provincial_address,
+                spouse_name,
+                spouse_contact_number,
+                spouse_email,
+                profile_image
+            FROM contacts
+            WHERE id = ?
+        ";
+        $stmt = $link->prepare($sql);
+        $stmt->bind_param("i", $contact_id);
+        $stmt->execute();
+        $stmt->bind_result(
+            $first_name,
+            $last_name,
+            $email,
+            $phone_number,
+            $civil_status,
+            $date_of_birth,
+            $place_of_birth,
+            $age,
+            $nationality,
+            $religion,
+            $permanent_address,
+            $provincial_address,
+            $spouse_name,
+            $spouse_contact_number,
+            $spouse_email,
+            $profile_image
+        );
+
+        if ($stmt->fetch()) {
+            $user_name = $first_name;
+            $user_role = $email;
+
+            $contact = [
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email' => $email,
+                'phone_number' => $phone_number,
+                'civil_status' => $civil_status,
+                'date_of_birth' => $date_of_birth,
+                'place_of_birth' => $place_of_birth,
+                'age' => $age,
+                'nationality' => $nationality,
+                'religion' => $religion,
+                'permanent_address' => $permanent_address,
+                'provincial_address' => $provincial_address,
+                'spouse_name' => $spouse_name,
+                'spouse_contact_number' => $spouse_contact_number,
+                'spouse_email' => $spouse_email,
+                'profile_image' => $profile_image
+            ];
+
+            if (!empty($profile_image)) {
+                $user_avatar = $profile_image;
+            }
+        }
+        $stmt->close();
+
+        // 3. Fetch employment data
+        $sql = "
+            SELECT
+                company_name,
+                company_address,
+                position,
+                length_of_employment,
+                company_contact_person,
+                contact_person_position,
+                company_contact_number,
+                company_contact_email,
+                sss_umid_number,
+                tin_number
+            FROM employment_data
+            WHERE contact_id = ?
+            LIMIT 1
+        ";
+        $stmt = $link->prepare($sql);
+        $stmt->bind_param("i", $contact_id);
+        $stmt->execute();
+        $stmt->bind_result(
+            $company_name,
+            $company_address,
+            $position,
+            $length_of_employment,
+            $company_contact_person,
+            $contact_person_position,
+            $company_contact_number,
+            $company_contact_email,
+            $sss_umid_number,
+            $tin_number
+        );
+
+        if ($stmt->fetch()) {
+            $employment = [
+                'company_name' => $company_name,
+                'company_address' => $company_address,
+                'position' => $position,
+                'length_of_employment' => $length_of_employment,
+                'company_contact_person' => $company_contact_person,
+                'contact_person_position' => $contact_person_position,
+                'company_contact_number' => $company_contact_number,
+                'company_contact_email' => $company_contact_email,
+                'sss_umid_number' => $sss_umid_number,
+                'tin_number' => $tin_number
+            ];
+        }
+
+        $stmt->close();
+    }
+}
+?>
+
+
+
+
 
 <head>
     <title>My Account | Client Portal</title>
@@ -54,8 +207,8 @@
                 <div class="account-profile-card p-4 mb-4 d-flex align-items-center gap-4 flex-wrap">
                     <div class="profile-avatar"><i class="ri-user-3-line"></i></div>
                     <div>
-                        <div class="fs-4 fw-bold mb-1" id="accProfileName">Del Rosario, Ana M.</div>
-                        <div class="text-muted" id="accProfileEmail">ana.rosario@email.com</div>
+                        <div class="fs-4 fw-bold mb-1" id="accProfileName"><?= htmlspecialchars($user_name) ?></div>
+                        <div class="text-muted" id="accProfileEmail"><?= htmlspecialchars($email) ?></div>
                     </div>
                     <div class="ms-auto">
                         <button class="btn btn-outline-primary" id="btn-edit-account"><i class="ri-edit-2-line"></i> Edit Account</button>
@@ -73,7 +226,7 @@
                         <div class="section-title">Personal Information</div>
                         <div class="mb-2">
                             <label class="form-label">Contact No.</label>
-                            <input type="text" class="form-control" id="clientContact" disabled value="09171234567">
+                            <input type="text" class="form-control" id="clientContact" disabled value=" <?php echo $contact['phone_number']; ?>">
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-6">
@@ -87,30 +240,30 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control" id="dob" disabled value="1990-02-10">
+                                <input type="date" class="form-control" id="dob" disabled value="<?php echo $contact['date_of_birth']; ?>">
                             </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Place of Birth</label>
-                                <input type="text" class="form-control" id="pob" disabled value="Quezon City">
+                                <input type="text" class="form-control" id="pob" disabled value="<?php echo $contact['place_of_birth']; ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Age</label>
-                                <input type="number" class="form-control" id="age" disabled value="34">
+                                <input type="number" class="form-control" id="age" disabled value="<?php echo $contact['age']; ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Nationality</label>
-                                <input type="text" class="form-control" id="nationality" disabled value="Filipino">
+                                <input type="text" class="form-control" id="nationality" disabled value=" <?php echo $contact['nationality']; ?>">
                             </div>
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Religion</label>
-                            <input type="text" class="form-control" id="religion" disabled value="Catholic">
+                            <input type="text" class="form-control" id="religion" disabled value=" <?php echo $contact['religion']; ?>">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Permanent Address</label>
-                            <input type="text" class="form-control" id="permAddress" disabled value="Blk 2 Lot 5, Sta. Maria Village, San Mateo, Rizal">
+                            <input type="text" class="form-control" id="permAddress" disabled value=" <?php echo $contact['permanent_address']; ?>">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Provincial Address</label>
@@ -125,15 +278,15 @@
                         <div class="section-title">Spouse Information</div>
                         <div class="mb-2">
                             <label class="form-label">Spouse's Name</label>
-                            <input type="text" class="form-control" id="spouseName" disabled value="Del Rosario, Ben M.">
+                            <input type="text" class="form-control" id="spouseName" disabled value="<?php echo $contact['spouse_name']; ?>">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Spouse's Contact No.</label>
-                            <input type="text" class="form-control" id="spouseContact" disabled value="09179999999">
+                            <input type="text" class="form-control" id="spouseContact" disabled value="<?php echo $contact['spouse_contact_number']; ?>">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Spouse's Email</label>
-                            <input type="email" class="form-control" id="spouseEmail" disabled value="ben.rosario@email.com">
+                            <input type="email" class="form-control" id="spouseEmail" disabled value="<?php echo $contact['spouse_email']; ?>">
                         </div>
                     </div>
                     <!-- Employment Info -->
@@ -141,48 +294,48 @@
                         <div class="section-title">Employment Data</div>
                         <div class="mb-2">
                             <label class="form-label">Company Name</label>
-                            <input type="text" class="form-control" id="companyName" disabled value="Acme Corp">
+                            <input type="text" class="form-control" id="companyName" disabled value="<?php echo $employment['company_name']; ?>">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Company Address</label>
-                            <input type="text" class="form-control" id="companyAddress" disabled value="Makati Ave, Makati City">
+                            <input type="text" class="form-control" id="companyAddress" disabled value="<?php echo $employment['company_address']; ?>">
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Length of Employment</label>
-                                <input type="text" class="form-control" id="lengthEmployment" disabled value="5 years">
+                                <input type="text" class="form-control" id="lengthEmployment" disabled value="<?php echo $employment['length_of_employment']; ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Position</label>
-                                <input type="text" class="form-control" id="position" disabled value="Engineer">
+                                <input type="text" class="form-control" id="position" disabled value="<?php echo $employment['position']; ?>">
                             </div>
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Company Contact Person</label>
-                            <input type="text" class="form-control" id="companyContactPerson" disabled value="Jane Doe">
+                            <input type="text" class="form-control" id="companyContactPerson" disabled value="<?php echo $employment['company_contact_person']; ?>">
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Contact Person Position</label>
-                                <input type="text" class="form-control" id="contactPersonPosition" disabled value="HR Manager">
+                                <input type="text" class="form-control" id="contactPersonPosition" disabled value="<?php echo $employment['contact_person_position']; ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contact No.</label>
-                                <input type="text" class="form-control" id="companyContactNo" disabled value="8822-3000">
+                                <input type="text" class="form-control" id="companyContactNo" disabled value="<?php echo $employment['company_contact_number']; ?>">
                             </div>
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" id="companyEmail" disabled value="hr@acme.com">
+                            <input type="email" class="form-control" id="companyEmail" disabled value="<?php echo $employment['company_contact_email']; ?>">
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">SSS/UMID No.</label>
-                                <input type="text" class="form-control" id="sssNo" disabled value="33-1234567-1">
+                                <input type="text" class="form-control" id="sssNo" disabled value="<?php echo $employment['sss_umid_number']; ?>">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">TIN</label>
-                                <input type="text" class="form-control" id="tinNo" disabled value="123-456-789">
+                                <input type="text" class="form-control" id="tinNo" disabled value="<?php echo $employment['tin_number']; ?>">
                             </div>
                         </div>
                     </div>
