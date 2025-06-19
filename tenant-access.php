@@ -6,10 +6,11 @@ require_once 'layouts/session.php';   // sets $_SESSION['user_id'], $_SESSION['t
 require_once 'layouts/config.php';    // defines $link (mysqli)
 include    'layouts/main.php';        // page chrome / header
 
+
 // 2) Determine which tenant we’re managing:
 //    - If you’re super_admin AND you supplied ?tenant_id=XX, use that.
 //    - Otherwise fall back to your session’s tenant.
-$tenant_id = 0;
+$tenant_id = 0; 
 if (
     isset($_SESSION['role'])
     && in_array($_SESSION['role'], ['super_admin','admin'], true)
@@ -227,10 +228,17 @@ $tu = $stmt->get_result();
 while ($row = $tu->fetch_assoc()) {
     $tenant_users[] = $row;
 }
+
 $stmt->close();
 ?>
 <!-- ... rest of your HTML/UI here ... -->
 
+<?php
+  // pick up the “current” tenant_id from the URL if present, otherwise fall back to session
+  $currentTenantId = isset($_GET['tenant_id'])
+                   ? intval($_GET['tenant_id'])
+                   : intval($_SESSION['tenant_id'] ?? 0);
+?>
 
 <head>
     <title>Tenant Access Management | Flyhub Business Apps</title>
@@ -408,7 +416,8 @@ $stmt->close();
                                         </table>
                                     </div>
                                     <div class="p-3">
-                                        <a href="tenant-users.php" class="btn btn-outline-primary">
+                                    <a href="tenant-users.php?tenant_id=<?= intval($currentTenantId ) ?>" class="btn btn-outline-primary">
+
                                             Invite User
                                         </a>
                                     </div>

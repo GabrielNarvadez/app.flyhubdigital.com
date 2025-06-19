@@ -2,54 +2,61 @@
 // tenant-users.php
 
 // 1) Bootstrap session & DB
-require_once 'layouts/session.php';   // sets $_SESSION['user_id'], ['tenant_id'], ['role']
+require_once 'layouts/session.php';   // sets $_SESSION['user_id'], $_SESSION['tenant_id'], $_SESSION['role']
 require_once 'layouts/config.php';    // gives you $link = new mysqli(...)
 include    'layouts/main.php';        // your header, nav, etc.
 
 // 2) Determine which tenant we're managing
-$role            = $_SESSION['role']      ?? '';
-$sessionTenantId = intval($_SESSION['tenant_id'] ?? 0);
+$role             = $_SESSION['role']      ?? '';
+$sessionTenantId  = intval($_SESSION['tenant_id'] ?? 0);
 
-// If a tenant_id is passed via GET, only super_admins may override:
-if (!empty($_GET['tenant_id']) && $role === 'super_admin') {
+if ($role === 'super_admin' && isset($_GET['tenant_id'])) {
+    // super_admin explicitly managing another tenant
     $tenant_id = intval($_GET['tenant_id']);
-}
-// Otherwise fall back to the session’s tenant:
-else {
+} else {
+    // ordinary tenant user: locked to session tenant
     $tenant_id = $sessionTenantId;
 }
 
-// If we still have no tenant_id (and we're not super_admin), redirect back:
-if (!$tenant_id) {
+if ($tenant_id <= 0) {
     header('Location: access-management.php');
     exit;
 }
 
-// 3) Fetch the tenant name (for your header/title)
+// defensive: ensure tenant exists
+$chk = $link->prepare("SELECT 1 FROM tenants WHERE id = ? LIMIT 1");
+$chk->bind_param('i', $tenant_id);
+$chk->execute();
+$chk->store_result();
+if ($chk->num_rows === 0) {
+    die('Tenant not found.');
+}
+$chk->close();
+
+// helper to redirect back to this page (re-appends tenant_id for super_admin)
+function redirect_back() {
+    global $tenant_id, $role;
+    $url = $_SERVER['PHP_SELF'];
+    if ($role === 'super_admin') {
+        $url .= '?tenant_id=' . $tenant_id;
+    }
+    header("Location: $url");
+    exit;
+}
+
+// 3) Fetch the tenant name (for header/title)
 $stmt = $link->prepare("SELECT tenant_name FROM tenants WHERE id = ? LIMIT 1");
 $stmt->bind_param('i', $tenant_id);
 $stmt->execute();
 $tenant = $stmt->get_result()->fetch_assoc();
 $stmt->close();
-if (!$tenant) {
-    die('Tenant not found.');
-}
+// (we already checked existence above)
 
 // 4) ASSIGN A USER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_user'])) {
     $user_id = intval($_POST['user_id']);
     $r       = $_POST['role'];
     $s       = $_POST['status'];
-
-    // defensive: tenant must exist
-    $chk = $link->prepare("SELECT 1 FROM tenants WHERE id = ?");
-    $chk->bind_param('i', $tenant_id);
-    $chk->execute();
-    $chk->store_result();
-    if ($chk->num_rows === 0) {
-        die('Tenant not found for assignment.');
-    }
-    $chk->close();
 
     // prevent dupes
     $chk2 = $link->prepare("SELECT 1 FROM user_tenants WHERE tenant_id = ? AND user_id = ?");
@@ -58,9 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_user'])) {
     $chk2->store_result();
     if ($chk2->num_rows === 0) {
         $ins = $link->prepare("
-            INSERT INTO user_tenants
-              (tenant_id, user_id, role, status)
-            VALUES (?,?,?,?)
+            INSERT INTO user_tenants (tenant_id, user_id, role, status)
+            VALUES (?, ?, ?, ?)
         ");
         $ins->bind_param('iiss', $tenant_id, $user_id, $r, $s);
         $ins->execute();
@@ -68,8 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_user'])) {
     }
     $chk2->close();
 
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit;
+    redirect_back();
 }
 
 // 5) DELETE AN ASSIGNMENT
@@ -84,15 +89,14 @@ if (isset($_GET['action'], $_GET['user_id']) && $_GET['action'] === 'delete') {
     $del->execute();
     $del->close();
 
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit;
+    redirect_back();
 }
 
 // 6) EDIT AN ASSIGNMENT
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_assignment'])) {
-    $u    = intval($_POST['user_id']);
-    $r2   = $_POST['role'];
-    $s2   = $_POST['status'];
+    $u  = intval($_POST['user_id']);
+    $r2 = $_POST['role'];
+    $s2 = $_POST['status'];
 
     $upd = $link->prepare("
         UPDATE user_tenants
@@ -105,19 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_assignment'
     $upd->execute();
     $upd->close();
 
-    header("Location: ".$_SERVER['PHP_SELF']);
-    exit;
+    redirect_back();
 }
 
 // 7) LOAD ASSIGNED USERS
 $stmt = $link->prepare("
-    SELECT
-      u.id, u.name, u.email,
-      ut.role, ut.status
-    FROM users u
-    JOIN user_tenants ut ON u.id = ut.user_id
-   WHERE ut.tenant_id = ?
- ORDER BY u.name
+    SELECT u.id, u.name, u.email, ut.role, ut.status
+      FROM users u
+      JOIN user_tenants ut ON u.id = ut.user_id
+     WHERE ut.tenant_id = ?
+  ORDER BY u.name
 ");
 $stmt->bind_param('i', $tenant_id);
 $stmt->execute();
@@ -130,7 +131,7 @@ $stmt = $link->prepare("SELECT id, name, email FROM users ORDER BY name");
 $stmt->execute();
 $all_users = [];
 foreach ($stmt->get_result() as $u) {
-    if (!in_array($u['id'], $assigned_ids, true)) {
+    if (! in_array($u['id'], $assigned_ids, true)) {
         $all_users[] = $u;
     }
 }
