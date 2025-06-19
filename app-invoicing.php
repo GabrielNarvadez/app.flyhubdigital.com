@@ -244,7 +244,7 @@ include 'layouts/main.php';    // This starts HTML!
                         <div class="col-12">
                             <div class="page-title-box">
                                 <h3 class="page-title">
-                                    <a href="invoicing.php" class="text-decoration-none">Back to all invoices</a>
+                                    <a href="ecom-invoicing.php" class="text-decoration-none">Back to all Orders & Invoices</a>
                                 </h3>
                             </div>
                         </div>

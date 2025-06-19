@@ -8,8 +8,8 @@ $tenant_id = $_SESSION['tenant_id']
            ?? DEFAULT_TENANT_ID;
 
 // Auto-generate a SKU with optional prefix, e.g. PROD-20240810-4D6A
-function generateSKU($prefix = 'PROD') {
-    return $prefix . '-' . date('Ymd') . '-' . strtoupper(substr(uniqid('', true), -4));
+function generateSKU($prefix = 'TLRM-SHW-SP') {
+    return $prefix . '-' . strtoupper(substr(uniqid('', true), -4));
 }
 
 
@@ -38,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     // --- SKU auto-generation logic ---
     if ($sku === '') {
         // Ensure no duplicate SKU!
+        // Always generate new SKU for safety
         do {
             $sku = generateSKU();
             $q = $link->prepare("SELECT COUNT(*) FROM products WHERE sku=?");
@@ -401,10 +402,15 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                                         <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
                                         <th>Product Name</th>
                                         <th>SKU</th>
+                                        <th>Barcode</th>
                                         <th>Price</th>
                                         <th>Stocks</th>
+                                        <th>Variants</th>
                                         <th>Category</th>
+                                        <th>Shopify</th>
+                                        <th>POS</th>
                                         <th>Last Updated</th>
+                                        <th>Sync</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -420,16 +426,47 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                                                 </a>
                                             </td>
                                             <td><?= htmlspecialchars($row['sku'] ?? '-') ?></td>
+                                            <td>
+                                                <?= htmlspecialchars($row['barcode'] ?? '-') ?>
+                                                <button class="btn btn-link btn-sm p-0 ms-2 scan-barcode-btn" data-id="<?= (int)$row['id'] ?>" title="Scan barcode">
+                                                    <i class="ri-barcode-line"></i> Scan
+                                                </button>
+                                            </td>
                                             <td>₱<?= number_format($row['price'], 2) ?></td>
                                             <td><?= (int)$row['stock'] ?></td>
+                                            <td>
+                                                <?php
+                                                // If you have variants, display count, else dash.
+                                                // Placeholder: replace 'variant_count' with your real field.
+                                                echo isset($row['variant_count']) && $row['variant_count'] > 0
+                                                    ? (int)$row['variant_count']
+                                                    : '–';
+                                                ?>
+                                            </td>
                                             <td><?= htmlspecialchars($row['category_name'] ?? '-') ?></td>
+                                            <td>
+                                                <?php
+                                                // Shopify status icon (placeholder: always gray dot)
+                                                echo '<span title="Not on Shopify"><i class="ri-checkbox-blank-circle-fill" style="color:#ccc;font-size:1.15em"></i></span>';
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                // POS status icon (placeholder: always green dot for now)
+                                                echo '<span title="Available on POS"><i class="ri-checkbox-circle-fill" style="color:#23c16b;font-size:1.15em"></i></span>';
+                                                ?>
+                                            </td>
                                             <td><?= htmlspecialchars(date('Y-m-d H:i', strtotime($row['updated_at'] ?? ''))) ?></td>
+                                            <td>
+                                                <button class="btn btn-link btn-sm p-0" title="Sync">
+                                                    <i class="ri-refresh-line"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                         <?php endforeach; ?>
-
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="6" class="text-center">No products found.</td>
+                                            <td colspan="12" class="text-center">No products found.</td>
                                         </tr>
                                     <?php endif; ?>
                                     </tbody>
@@ -459,7 +496,7 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
                 </div>
                 <div class="mb-2">
                     <label class="form-label">SKU</label>
-                    <input type="text" name="sku" class="form-control">
+                    <input type="text" name="sku" id="addSkuField" class="form-control" readonly>
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Description</label>
@@ -514,7 +551,7 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
             </div>
             <div class="mb-2">
                 <label class="form-label">SKU</label>
-                <input type="text" name="sku" id="editSku" class="form-control">
+                <input type="text" name="sku" id="editSku" class="form-control" readonly>
             </div>
             <div class="mb-2">
                 <label class="form-label">Description</label>
@@ -626,6 +663,32 @@ while ($cat = mysqli_fetch_assoc($cat_res)) {
     </div>
   </div>
 </div>
+
+<!-- Barcode Scanner Modal -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barcodeScannerModalLabel">Scan Barcode</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- Placeholder for barcode scanner -->
+        <div id="barcode-scanner-area" style="height:200px; background:#f9fafb; display:flex; align-items:center; justify-content:center; border-radius:10px; border:1px dashed #d1d7e6; margin-bottom:16px;">
+          <span class="text-muted">[ Barcode scanner area ]</span>
+        </div>
+        <div>
+          <input type="text" class="form-control mb-2" id="scannedBarcodeInput" placeholder="Scanned value" readonly>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="useBarcodeBtn" disabled>Use Barcode</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <?php include 'layouts/right-sidebar.php'; ?>
 <?php include 'layouts/footer-scripts.php'; ?>
@@ -890,6 +953,54 @@ $('#datatable tbody').on('click', '.product-link', function(e) {
                 var exportModal = new bootstrap.Modal(document.getElementById('exportProductsModal'));
                 exportModal.show();
             });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for scan button clicks
+            document.querySelectorAll('.scan-barcode-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Optionally, get product ID: btn.dataset.id
+                    document.getElementById('scannedBarcodeInput').value = '';
+                    document.getElementById('useBarcodeBtn').disabled = true;
+                    var modal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
+                    modal.show();
+
+                    // -- In the real app, initialize your scanner here --
+                    // For demo, simulate scan after 2s
+                    setTimeout(function() {
+                        let demoBarcode = 'DEMO123456789';
+                        document.getElementById('scannedBarcodeInput').value = demoBarcode;
+                        document.getElementById('useBarcodeBtn').disabled = false;
+                    }, 2000);
+                });
+            });
+
+            // Use scanned barcode (for demo, just alert and close)
+            document.getElementById('useBarcodeBtn').addEventListener('click', function() {
+                var code = document.getElementById('scannedBarcodeInput').value;
+                alert('Scanned barcode: ' + code);
+                var modalEl = document.getElementById('barcodeScannerModal');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();   
+                // In real use: Save barcode, update product, etc.
+            });
+        });
+
+        function generateSKU_JS() {
+            const prefix = "TLRM-SHW-SP";
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+            return `${prefix}-${random}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-generate SKU when Add Product Modal is shown
+            var addProductModal = document.getElementById('addProductModal');
+            if (addProductModal) {
+                addProductModal.addEventListener('show.bs.modal', function () {
+                    document.getElementById('addSkuField').value = generateSKU_JS();
+                });
+            }
         });
         </script>
 

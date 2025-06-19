@@ -20,6 +20,26 @@ if ($stmt->fetch() && !empty($db_logo_url)) {
 $stmt->close();
 ?>
 
+<style>
+  #master-admin-bottom {
+  position: absolute;
+  bottom: 60px;  /* Space from bottom, adjust as needed */
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: #2a3042; /* Match your sidebar bg color */
+  border-top: 1px solid #222533;
+  padding: 10px 0 8px 0;
+}
+#master-admin-bottom .side-nav-link {
+  color: #fff;  /* Optional: ensure visible on dark bg */
+  font-weight: 600;
+}
+#master-admin-bottom .side-nav-link i {
+  font-size: 1.25rem;
+}
+</style>
+
 <div class="leftside-menu" id="leftside-menu">
   <!-- LOGO always uses white version -->
   <div id="sidebarLogoContainer" style="height:60px;">
@@ -147,7 +167,7 @@ $stmt->close();
             </a>
           </li>
           <li>
-            <a href="ecom-inventory.php">
+            <a href="products.php">
               <i class="ri-shopping-bag-line"></i>
               <span> Products </span>
             </a>
@@ -375,10 +395,20 @@ $stmt->close();
           <span> Settings </span>
         </a>
       </li>
+        <!-- Pinned Master Admin Console at Bottom -->
+      <div class="side-nav-item" id="master-admin-bottom">
+        <a href="super-admin-dashboard.php" class="side-nav-link">
+          <i class="ri-shield-star-line"></i>
+          <span> Master Admin Console </span>
+        </a>
+      </div>
+
     </ul>
     <div class="clearfix"></div>
   </div>
 </div>
+
+
 
 <script>
 let sidebarLogoCollapsed = false;

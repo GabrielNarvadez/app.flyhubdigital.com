@@ -698,6 +698,9 @@ if ($stmt = mysqli_prepare($link, $sql)) {
 </div>
 
 <script>
+
+alert('JS Loaded!');
+
 let cart = [];
 let customer = '';
 let discountPercent = 0;

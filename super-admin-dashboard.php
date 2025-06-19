@@ -1,5 +1,23 @@
-<?php include 'layouts/session.php'; ?>
-<?php include 'layouts/main.php'; ?>
+<?php
+include 'layouts/session.php'; // session_start() is already in here
+include 'layouts/main.php';
+
+// Safe: Check if tenant_id is set in GET or SESSION
+$tenant_id = 0;
+
+// If super admin, use switched tenant or fallback
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    if (isset($_SESSION['admin_switched_tenant_id'])) {
+        $tenant_id = intval($_SESSION['admin_switched_tenant_id']);
+    }
+    // Optional: allow override via URL
+    if (isset($_GET['tenant_id'])) {
+        $tenant_id = intval($_GET['tenant_id']);
+    }
+} else {
+    $tenant_id = isset($_SESSION['tenant_id']) ? intval($_SESSION['tenant_id']) : 0;
+}
+?>
 
 <head>
     <title>Super Admin Dashboard | Flyhub Business Apps</title>
@@ -126,6 +144,7 @@
                 <div class="container-fluid">
 
                     <!-- PAGE TITLE + PROFILE + TENANT SWITCH -->
+
                     <div class="row align-items-center mb-2" style="margin-top: 15px;">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center gap-2">
@@ -136,26 +155,30 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                            <select class="form-select w-auto d-inline-block" style="min-width:220px;">
-                                <option>Switch to Tenant/Company...</option>
-                                <option>Green Meadows Realty</option>
-                                <option>Jane's Catering</option>
-                                <option>Breeze Aircon Solutions</option>
-                                <option>...</option>
-                            </select>
+                        <div class="col-md-4 text-end">
+                            <form method="get" action="switch-tenant.php" class="d-inline">
+                                <select name="tenant_id" class="form-select w-auto d-inline-block" style="min-width:220px;" onchange="this.form.submit()">
+                                    <option value="">Switch to Tenant/Company...</option>
+                                    <?php
+                                    $result = mysqli_query($link, "SELECT id, tenant_name FROM tenants ORDER BY tenant_name");
+                                    while ($row = mysqli_fetch_assoc($result)) {
+                                        echo '<option value="'.$row['id'].'">'.htmlspecialchars($row['tenant_name']).'</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </form>
                             <a href="#" class="btn btn-outline-secondary btn-sm ms-2"><i class="ri-user-search-line"></i> Impersonate</a>
                         </div>
                     </div>
-
                     <!-- METRICS & STATS CARDS -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-2">
                             <div class="card text-center">
-                                <div class="card-body">
-                                    <div class="fs-5 text-primary fw-bold">143</div>
-                                    <div class="text-muted small">Active Clients</div>
-                                </div>
+                                <a href="tenant-management.php"> 
+                                    <div class="card-body">
+                                        <div class="fs-5 text-primary fw-bold"> 10 </div>
+                                        <div class="text-muted small">Active Clients</div>
+                                </div></a>
                             </div>
                         </div>
                         <div class="col-md-2">

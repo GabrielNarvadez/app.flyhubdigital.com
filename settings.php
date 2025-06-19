@@ -1,3 +1,66 @@
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+require_once 'layouts/config.php';
+
+// Get current tenant id (replace with your logic if needed)
+$tenant_id = $_SESSION['tenant_id'] ?? 1;
+
+// === 1. Process FORM POST FIRST ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tenant_name = $_POST['tenant_name'] ?? '';
+    $contact_email = $_POST['contact_email'] ?? '';
+    $address = $_POST['address'] ?? '';
+    $tax_id = $_POST['tax_id'] ?? '';
+
+    // Handle logo upload if provided
+    $new_logo_url = null;
+    if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $uploads_dir = 'uploads/logos';
+        if (!is_dir($uploads_dir)) mkdir($uploads_dir, 0777, true);
+        $tmp_name = $_FILES['logo']['tmp_name'];
+        $filename = 'tenant_' . $tenant_id . '_' . basename($_FILES['logo']['name']);
+        $destination = $uploads_dir . '/' . $filename;
+        move_uploaded_file($tmp_name, $destination);
+        $new_logo_url = $destination;
+    }
+
+    // If no new logo, keep the previous logo
+    if (!$new_logo_url) {
+        $sql = "SELECT logo_url FROM tenants WHERE id = ?";
+        $stmt = $link->prepare($sql);
+        $stmt->bind_param("i", $tenant_id);
+        $stmt->execute();
+        $stmt->bind_result($existing_logo_url);
+        $stmt->fetch();
+        $stmt->close();
+        $new_logo_url = $existing_logo_url;
+    }
+
+    // Update the DB
+    $sql = "UPDATE tenants SET tenant_name=?, contact_email=?, address=?, tax_id=?, logo_url=? WHERE id=?";
+    $stmt = $link->prepare($sql);
+    $stmt->bind_param("sssssi", $tenant_name, $contact_email, $address, $tax_id, $new_logo_url, $tenant_id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Redirect to the same page (best practice for form handling)
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit;
+}
+
+// === 2. FETCH tenant info AFTER processing any POST ===
+$sql = "SELECT tenant_name, contact_email, address, tax_id, logo_url FROM tenants WHERE id = ?";
+$stmt = $link->prepare($sql);
+$stmt->bind_param("i", $tenant_id);
+$stmt->execute();
+$stmt->bind_result($tenant_name, $contact_email, $address, $tax_id, $logo_url);
+$stmt->fetch();
+$stmt->close();
+?>
+
 <?php include 'layouts/session.php'; ?>
 <?php include 'layouts/main.php'; ?>
 
@@ -64,32 +127,38 @@
                                     <!-- Company Info -->
                                     <div class="settings-form-section">
                                         <div class="settings-section-title">Company Information</div>
-                                        <form>
+
+                                        <form method="POST" enctype="multipart/form-data">
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
                                                     <label class="settings-form-label">Company Name</label>
-                                                    <input type="text" class="form-control" placeholder="e.g. Flyhub Digital" />
+                                                    <input type="text" class="form-control" name="tenant_name" value="<?= htmlspecialchars($tenant_name ?? '') ?>" placeholder="e.g. Flyhub Digital" />
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="settings-form-label">Primary Contact Email</label>
-                                                    <input type="email" class="form-control" placeholder="info@company.com" />
+                                                    <input type="email" class="form-control" name="contact_email" value="<?= htmlspecialchars($contact_email ?? '') ?>" placeholder="info@company.com" />
                                                 </div>
                                             </div>
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
                                                     <label class="settings-form-label">Business Address</label>
-                                                    <input type="text" class="form-control" placeholder="Address" />
+                                                    <input type="text" class="form-control" name="address" value="<?= htmlspecialchars($address ?? '') ?>" placeholder="Address" />
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="settings-form-label">Tax ID / Registration #</label>
-                                                    <input type="text" class="form-control" placeholder="TIN / Reg #" />
+                                                    <input type="text" class="form-control" name="tax_id" value="<?= htmlspecialchars($tax_id ?? '') ?>" placeholder="TIN / Reg #" />
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="settings-form-label">Company Logo</label>
-                                                    <input type="file" class="form-control" />
+                                                    <input type="file" class="form-control" name="logo" />
+                                                    <?php if (!empty($logo_url)): ?>
+                                                        <img src="<?= htmlspecialchars($logo_url) ?>" alt="Logo" style="max-height:40px;margin-top:4px;" />
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
+                                            <button type="submit" class="btn btn-primary">Save</button>
                                         </form>
+
                                     </div>
                                     <!-- Branches -->
                                     <div class="settings-form-section">
