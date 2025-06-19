@@ -5,7 +5,7 @@ require_once __DIR__ . '/../layouts/config.php';
 $tenant_id = 1;
 
 // Default to white logo
-$default_white_logo = '/assets/images/flyhub-white-logo.png';
+$default_white_logo = 'assets/images/flyhub-white-logo.png';
 $logo_url = $default_white_logo;
 
 // Try to fetch custom logo from tenants table

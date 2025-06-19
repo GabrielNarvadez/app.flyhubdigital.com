@@ -1,162 +1,243 @@
 <?php
-include 'layouts/session.php';
-include 'layouts/main.php';
-require_once 'layouts/config.php';
+// tenant-access.php
 
-// Always get tenant_id from URL (and keep it everywhere)
-$tenant_id = isset($_GET['tenant_id']) ? intval($_GET['tenant_id']) : 0;
-if (!$tenant_id) {
-    header("Location: access-management.php");
+// 1) Bootstrap session & DB
+require_once 'layouts/session.php';   // sets $_SESSION['user_id'], $_SESSION['tenant_id'], $_SESSION['role']
+require_once 'layouts/config.php';    // defines $link (mysqli)
+include    'layouts/main.php';        // page chrome / header
+
+
+// 2) Determine which tenant we’re managing:
+//    - If you’re super_admin AND you supplied ?tenant_id=XX, use that.
+//    - Otherwise fall back to your session’s tenant.
+$tenant_id = 0; 
+if (
+    isset($_SESSION['role'])
+    && in_array($_SESSION['role'], ['super_admin','admin'], true)
+    && isset($_GET['tenant_id'])
+) {
+    // super admin explicitly wants to manage a different tenant
+    $tenant_id = intval($_GET['tenant_id']);
+} else {
+    // ordinary tenant user: lock down to your own
+    $tenant_id = intval($_SESSION['tenant_id'] ?? 0);
+}
+if ($tenant_id <= 0) {
+    die('Invalid or missing tenant.');
+}
+// defensive check that this tenant actually exists
+$chk = $link->prepare("SELECT 1 FROM tenants WHERE id = ?");
+$chk->bind_param('i', $tenant_id);
+$chk->execute();
+$chk->store_result();
+if ($chk->num_rows === 0) {
+    die('Tenant not found.');
+}
+$chk->close();
+
+// helper to build a redirect back to this page with the proper tenant_id
+function redirect_back($path = null) {
+    global $tenant_id;
+    $url = $path ?: $_SERVER['PHP_SELF'];
+    // only append tenant_id if super_admin is managing someone else
+    if (
+        isset($_SESSION['role'])
+        && in_array($_SESSION['role'], ['super_admin','admin'], true)
+    ) {
+        $url .= '?tenant_id=' . $tenant_id;
+    }
+    header("Location: $url");
     exit;
 }
-
-$tenant_id = isset($_GET['tenant_id']) ? intval($_GET['tenant_id']) : 0;
 
 // --- Handle Assign User to Tenant ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_user'])) {
     $user_id = intval($_POST['user_id']);
-    $role = $_POST['role'];
-    $status = $_POST['status'];
+    $role    = $_POST['role'];
+    $status  = $_POST['status'];
 
-    // Check if tenant exists (defensive)
-    $chk = mysqli_query($link, "SELECT id FROM tenants WHERE id = $tenant_id");
-    if (mysqli_num_rows($chk) == 0) die("Tenant not found for assignment.");
-
-    // Prevent duplicate assignment (user cannot be assigned to same tenant twice)
-    $exist_q = mysqli_query($link, "SELECT * FROM user_tenants WHERE tenant_id=$tenant_id AND user_id=$user_id");
-    if (mysqli_num_rows($exist_q) == 0) {
-        $sql = "INSERT INTO user_tenants (tenant_id, user_id, role, status) VALUES (?, ?, ?, ?)";
-        $stmt = $link->prepare($sql);
-        $stmt->bind_param("iiss", $tenant_id, $user_id, $role, $status);
-        $stmt->execute();
-        $stmt->close();
+    // prevent duplicate
+    $exist = $link->prepare("SELECT 1 FROM user_tenants WHERE tenant_id = ? AND user_id = ?");
+    $exist->bind_param('ii', $tenant_id, $user_id);
+    $exist->execute();
+    $exist->store_result();
+    if ($exist->num_rows === 0) {
+        $insert = $link->prepare("
+            INSERT INTO user_tenants (tenant_id, user_id, role, status)
+            VALUES (?, ?, ?, ?)
+        ");
+        $insert->bind_param("iiss", $tenant_id, $user_id, $role, $status);
+        $insert->execute();
+        $insert->close();
     }
-    // Redirect to THIS PAGE (stay in the same tenant)
-    header("Location: ".$_SERVER['PHP_SELF']."?tenant_id=$tenant_id");
-    exit;
+    $exist->close();
+
+    redirect_back();
 }
 
-// 1. Remove user from tenant
+// --- Handle Remove User from Tenant ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_user_id'])) {
     $remove_user_id = intval($_POST['remove_user_id']);
-    $sql = "DELETE FROM user_tenants WHERE tenant_id=? AND user_id=?";
-    $stmt = $link->prepare($sql);
-    $stmt->bind_param("ii", $tenant_id, $remove_user_id);
-    $stmt->execute();
-    $stmt->close();
-    header("Location: ".$_SERVER['PHP_SELF']."?tenant_id=$tenant_id");
-    exit;
+    $del = $link->prepare("
+        DELETE FROM user_tenants
+         WHERE tenant_id = ?
+           AND user_id   = ?
+    ");
+    $del->bind_param("ii", $tenant_id, $remove_user_id);
+    $del->execute();
+    $del->close();
+
+    redirect_back();
 }
 
-// 2. Edit user role or status
+// --- Handle Edit User Role/Status ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
     $edit_user_id = intval($_POST['edit_user_id']);
-    $new_role = $_POST['edit_role'];
-    $new_status = $_POST['edit_status'];
-    $sql = "UPDATE user_tenants SET role=?, status=? WHERE tenant_id=? AND user_id=?";
-    $stmt = $link->prepare($sql);
-    $stmt->bind_param("ssii", $new_role, $new_status, $tenant_id, $edit_user_id);
-    $stmt->execute();
-    $stmt->close();
-    header("Location: ".$_SERVER['PHP_SELF']."?tenant_id=$tenant_id");
-    exit;
-}
+    $new_role     = $_POST['edit_role'];
+    $new_status   = $_POST['edit_status'];
+    $upd = $link->prepare("
+        UPDATE user_tenants
+           SET role   = ?,
+               status = ?
+         WHERE tenant_id = ?
+           AND user_id   = ?
+    ");
+    $upd->bind_param("ssii", $new_role, $new_status, $tenant_id, $edit_user_id);
+    $upd->execute();
+    $upd->close();
 
+    redirect_back();
+}
 
 // --- Handle Delete Tenant ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_tenant'])) {
-    $tenant_id_to_delete = $tenant_id;
+    // only super_admin should be able to delete across tenants
+    if (! in_array($_SESSION['role'], ['super_admin','admin'], true)) {
+        die('Unauthorized');
+    }
+
     mysqli_query($link, "SET FOREIGN_KEY_CHECKS=0");
-    mysqli_query($link, "DELETE FROM user_tenants WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM companies WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM files WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM petty_cash WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM products WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM tenant_addons WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM tenant_module_access WHERE tenant_id = $tenant_id_to_delete");
-    mysqli_query($link, "DELETE FROM tenants WHERE id = $tenant_id_to_delete");
+    $tables = [
+        'user_tenants',
+        'companies',
+        'files',
+        'petty_cash',
+        'products',
+        'tenant_addons',
+        'tenant_module_access',
+        'tenants'
+    ];
+    foreach ($tables as $tbl) {
+        $link->query("DELETE FROM `$tbl` WHERE tenant_id = $tenant_id" . ($tbl==='tenants' ? " OR id = $tenant_id" : ""));
+    }
     mysqli_query($link, "SET FOREIGN_KEY_CHECKS=1");
+
+    // after deletion, go back to management list
     header("Location: tenant-management.php");
     exit;
 }
 
 // --- Handle Edit Tenant ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_tenant'])) {
-    $name = trim($_POST['tenant_name']);
+    $name    = trim($_POST['tenant_name']);
     $plan_id = intval($_POST['plan_id']);
-    $status = $_POST['billing_status'];
-    $email = trim($_POST['contact_email']);
+    $status  = $_POST['billing_status'];
+    $email   = trim($_POST['contact_email']);
 
-    $sql = "UPDATE tenants SET tenant_name=?, plan_id=?, billing_status=?, contact_email=? WHERE id=?";
-    $stmt = $link->prepare($sql);
-    $stmt->bind_param("sissi", $name, $plan_id, $status, $email, $tenant_id);
-    $stmt->execute();
-    $stmt->close();
+    $upd = $link->prepare("
+        UPDATE tenants
+           SET tenant_name   = ?,
+               plan_id       = ?,
+               billing_status= ?,
+               contact_email = ?
+         WHERE id = ?
+    ");
+    $upd->bind_param("sissi", $name, $plan_id, $status, $email, $tenant_id);
+    $upd->execute();
+    $upd->close();
 
-    header("Location: ".$_SERVER['PHP_SELF']."?tenant_id=$tenant_id");
-    exit;
+    redirect_back();
 }
 
-// --- Fetch tenant info + plan ---
-$sql = "
+// --- Fetch Tenant Info + Plan ---
+$stmt = $link->prepare("
     SELECT t.*, p.plan_name
-    FROM tenants t
-    LEFT JOIN plans p ON t.plan_id = p.id
-    WHERE t.id = $tenant_id
-    LIMIT 1
-";
-$tenant = mysqli_fetch_assoc(mysqli_query($link, $sql));
-if (!$tenant) die("Tenant not found");
+      FROM tenants t
+ LEFT JOIN plans p ON t.plan_id = p.id
+     WHERE t.id = ?
+     LIMIT 1
+");
+$stmt->bind_param('i', $tenant_id);
+$stmt->execute();
+$tenant = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+if (! $tenant) {
+    die("Tenant not found");
+}
 
-// --- Get plan limits (optional) ---
+// --- Plan Limits & Counts ---
 $plan_id = intval($tenant['plan_id']);
 
-// --- Count users for tenant ---
-$user_count = 0; $user_limit = 0;
-$res = mysqli_query($link, "SELECT COUNT(*) AS total FROM users WHERE tenant_id = $tenant_id");
-if ($row = mysqli_fetch_assoc($res)) $user_count = $row['total'];
-$plan_user_limits = [1=>1, 2=>5, 3=>20, 4=>60, 5=>999];
-$user_limit = $plan_user_limits[$plan_id] ?? 0;
+// user count
+$res = $link->query("SELECT COUNT(*) AS total FROM users WHERE tenant_id = $tenant_id");
+$user_count = $res->fetch_assoc()['total'] ?? 0;
+$user_limits = [1=>1,2=>5,3=>20,4=>60,5=>999];
+$user_limit  = $user_limits[$plan_id] ?? 0;
 
-// --- Count companies for tenant ---
-$company_count = 0; $company_limit = 0;
-$res = mysqli_query($link, "SELECT COUNT(*) AS total FROM companies WHERE tenant_id = $tenant_id");
-if ($row = mysqli_fetch_assoc($res)) $company_count = $row['total'];
-$plan_company_limits = [1=>1, 2=>3, 3=>30, 4=>999, 5=>999];
-$company_limit = $plan_company_limits[$plan_id] ?? 0;
+// company count
+$res = $link->query("SELECT COUNT(*) AS total FROM companies WHERE tenant_id = $tenant_id");
+$company_count = $res->fetch_assoc()['total'] ?? 0;
+$company_limits = [1=>1,2=>3,3=>30,4=>999,5=>999];
+$company_limit  = $company_limits[$plan_id] ?? 0;
 
-// --- Storage (demo, static for now) ---
-$storage_used = '1.2GB';
+// storage & API (static demo)
+$storage_used  = '1.2GB';
 $storage_limit = [1=>'100MB',2=>'5GB',3=>'30GB',4=>'200GB',5=>'∞'][$plan_id] ?? '-';
+$api_limit     = [1=>0,2=>1,3=>3,4=>99,5=>999][$plan_id] ?? 0;
 
-// --- API integrations (demo, static for now) ---
-$api_limit = [1=>0, 2=>1, 3=>3, 4=>99, 5=>999][$plan_id] ?? 0;
-
-// --- Modules for plan ---
+// modules included in plan
 $modules = [];
-$res = mysqli_query($link, "
+$res = $link->query("
     SELECT m.id, m.module_name
-    FROM plan_modules pm
-    JOIN modules m ON m.id = pm.module_id
-    WHERE pm.plan_id = $plan_id
+      FROM plan_modules pm
+      JOIN modules m ON m.id = pm.module_id
+     WHERE pm.plan_id = $plan_id
 ");
-while ($row = mysqli_fetch_assoc($res)) $modules[$row['id']] = $row['module_name'];
+while ($row = $res->fetch_assoc()) {
+    $modules[$row['id']] = $row['module_name'];
+}
 
-// --- All modules (for table) ---
+// all modules for UI
 $all_modules = [];
-$res = mysqli_query($link, "SELECT id, module_name FROM modules");
-while ($row = mysqli_fetch_assoc($res)) $all_modules[$row['id']] = $row['module_name'];
+$res = $link->query("SELECT id, module_name FROM modules");
+while ($row = $res->fetch_assoc()) {
+    $all_modules[$row['id']] = $row['module_name'];
+}
 
-// --- Users for this tenant (join user_tenants and users) ---
+// users assigned to this tenant
 $tenant_users = [];
-$sql = "
-    SELECT u.*, ut.role, ut.status
-    FROM user_tenants ut
-    JOIN users u ON ut.user_id = u.id
-    WHERE ut.tenant_id = $tenant_id
-";
-$res = mysqli_query($link, $sql);
-while ($row = mysqli_fetch_assoc($res)) $tenant_users[] = $row;
+$stmt = $link->prepare("
+    SELECT u.id, u.name, u.email, ut.role, ut.status
+      FROM user_tenants ut
+      JOIN users u ON ut.user_id = u.id
+     WHERE ut.tenant_id = ?
+");
+$stmt->bind_param('i', $tenant_id);
+$stmt->execute();
+$tu = $stmt->get_result();
+while ($row = $tu->fetch_assoc()) {
+    $tenant_users[] = $row;
+}
+
+$stmt->close();
+?>
+<!-- ... rest of your HTML/UI here ... -->
+
+<?php
+  // pick up the “current” tenant_id from the URL if present, otherwise fall back to session
+  $currentTenantId = isset($_GET['tenant_id'])
+                   ? intval($_GET['tenant_id'])
+                   : intval($_SESSION['tenant_id'] ?? 0);
 ?>
 
 <head>
@@ -335,7 +416,8 @@ while ($row = mysqli_fetch_assoc($res)) $tenant_users[] = $row;
                                         </table>
                                     </div>
                                     <div class="p-3">
-                                        <a href="tenant-users.php?tenant_id=<?= $tenant_id ?>" class="btn btn-outline-primary">
+                                    <a href="tenant-users.php?tenant_id=<?= intval($currentTenantId ) ?>" class="btn btn-outline-primary">
+
                                             Invite User
                                         </a>
                                     </div>
