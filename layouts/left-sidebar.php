@@ -42,51 +42,73 @@ $stmt->close();
 
 <div class="leftside-menu" id="leftside-menu">
   <!-- LOGO always uses white version -->
-  <div id="sidebarLogoContainer" style="height:60px;">
-    <a href="index.php" class="logo logo-light">
-      <span class="logo-lg">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
-      </span>
-      <span class="logo-sm">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
-      </span>
+<div id="sidebarLogoContainer" style="height:60px;">
+  <a href="index.php" class="logo logo-light">
+    <span class="logo-lg">
+      <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
+    </span>
+    <span class="logo-sm">
+      <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
+    </span>
+  </a>
+  <!-- If you use a different logo for dark theme, change src here, otherwise use same -->
+  <a href="index.php" class="logo logo-dark">
+    <span class="logo-lg">
+      <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
+    </span>
+    <span class="logo-sm">
+      <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
+    </span>
+  </a>
+</div>
+<div class="button-sm-hover" data-bs-toggle="tooltip" data-bs-placement="right" title="Show Full Sidebar" onclick="toggleSidebarLogo()">
+  <i class="ri-checkbox-blank-circle-line align-middle"></i>
+</div>
+<div class="button-close-fullsidebar">
+  <i class="ri-close-fill align-middle"></i>
+</div>
+<div class="h-100" id="leftside-menu-container" data-simplebar>
+  <div class="leftbar-user">
+    <a href="pages-profile.php">
+      <img src="assets/images/users/avatar-1.jpg" alt="user-image" height="42" class="rounded-circle shadow-sm"/>
+      <span class="leftbar-user-name mt-2">Tosha Minner</span>
     </a>
-    <!-- If you use a different logo for dark theme, change src here, otherwise use same -->
-    <a href="index.php" class="logo logo-dark">
-      <span class="logo-lg">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="logo" style="height: 42px;" />
-      </span>
-      <span class="logo-sm">
-        <img src="<?= htmlspecialchars($logo_url) ?>" alt="small logo" style="height: 42px;" />
-      </span>
+  </div>
+  <ul class="side-nav">
+
+<li class="side-nav-item">
+    <a href="#crmSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+        <i class="ri-user-3-line"></i>
+        <span> CRM </span>
+        <span class="menu-arrow"></span>
     </a>
-  </div>
-  <div class="button-sm-hover" data-bs-toggle="tooltip" data-bs-placement="right" title="Show Full Sidebar" onclick="toggleSidebarLogo()">
-    <i class="ri-checkbox-blank-circle-line align-middle"></i>
-  </div>
-  <div class="button-close-fullsidebar">
-    <i class="ri-close-fill align-middle"></i>
-  </div>
-  <div class="h-100" id="leftside-menu-container" data-simplebar>
-    <div class="leftbar-user">
-      <a href="pages-profile.php">
-        <img src="assets/images/users/avatar-1.jpg" alt="user-image" height="42" class="rounded-circle shadow-sm"/>
-        <span class="leftbar-user-name mt-2">Tosha Minner</span>
-      </a>
-    </div>
-    <ul class="side-nav">
-      <li class="side-nav-item">
-        <a href="index.php" class="side-nav-link">
-          <i class="ri-dashboard-line"></i>
-          <span> Dashboard </span>
-        </a>
-      </li>
-      <li class="side-nav-item">
-        <a href="contacts.php" class="side-nav-link">
-          <i class="ri-user-line"></i>
-          <span> Contacts </span>
-        </a>
-      </li>
+    <ul class="side-nav-second-level collapse" id="crmSubmenu" style="padding-left:32px;">
+        <li>
+            <a href="crm-dashboard.php">
+                <i class="ri-dashboard-line"></i>
+                <span> CRM Dashboard </span>
+            </a>
+        </li>
+        <li>
+            <a href="contacts.php">
+                <i class="ri-contacts-book-2-line"></i>
+                <span> Contacts </span>
+            </a>
+        </li>
+        <li>
+            <a href="companies.php">
+                <i class="ri-building-line"></i>
+                <span> Companies </span>
+            </a>
+        </li>
+        <li>
+            <a href="deals.php">
+                <i class="ri-hand-coin-line"></i>
+                <span> Deals </span>
+            </a>
+        </li>
+    </ul>
+</li>
 
 <li class="side-nav-item">
   <a href="#realEstateMenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
@@ -153,39 +175,39 @@ $stmt->close();
 </li>
 
 
-      <li class="side-nav-item">
-        <a href="#ecomSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
-          <i class="ri-store-2-line"></i>
-          <span> E-Commerce </span>
-          <span class="menu-arrow"></span>
-        </a>
-        <ul class="side-nav-second-level collapse" id="ecomSubmenu" style="padding-left:32px;">
-          <li>
+<li class="side-nav-item">
+    <a href="#ecomSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">
+    <i class="ri-store-2-line"></i>
+    <span> E-Commerce </span>
+    <span class="menu-arrow"></span>
+</a>
+    <ul class="side-nav-second-level collapse" id="ecomSubmenu" style="padding-left:32px;">
+        <li>
             <a href="ecom-dashboard.php">
-              <i class="ri-shopping-bag-line"></i>
-              <span> Dashboard </span>
+            <i class="ri-shopping-bag-line"></i>
+            <span> Dashboard </span>
             </a>
-          </li>
-          <li>
+        </li>
+        <li>
             <a href="products.php">
-              <i class="ri-shopping-bag-line"></i>
-              <span> Products </span>
+            <i class="ri-shopping-bag-line"></i>
+            <span> Products </span>
             </a>
-          </li>
-          <li>
+        </li>
+        <li>
             <a href="ecom-invoicing.php">
-              <i class="ri-bill-line"></i>
-              <span> Orders </span>
+            <i class="ri-bill-line"></i>
+            <span> Orders </span>
             </a>
-          </li>
-          <li>
+        </li>
+        <li>
             <a href="POS.php" target="_blank">
-              <i class="ri-terminal-box-line"></i>
-              <span> Open POS </span>
+            <i class="ri-terminal-box-line"></i>
+            <span> Open POS </span>
             </a>
-          </li>
-        </ul>
-      </li>
+        </li>
+    </ul>
+</li>
 
 <li class="side-nav-item">
   <a href="#cateringSubmenu" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false">

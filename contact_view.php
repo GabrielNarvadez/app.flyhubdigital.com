@@ -219,7 +219,9 @@ $contact_id = $id;
                 <div class="row">
                     <!-- Contact Profile (3 columns) -->
                     <div class="page-title-box">
-                        <h4 class="page-title"><a href="contacts.php">Back to Contacts</a></h4>
+                        <a href="contacts.php" class="btn btn-outline-secondary btn-sm" style="margin: 25px 0;">
+                            <i class="ri-arrow-go-back-line"></i> Back to Contacts
+                        </a>
                     </div>
                     <div class="col-md-3 mb-3">
 
