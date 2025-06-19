@@ -1,106 +1,140 @@
 <?php
-include 'layouts/session.php';
-include 'layouts/main.php';
-require_once 'layouts/config.php';
+// tenant-users.php
 
-// Get tenant_id from URL
-$tenant_id = isset($_GET['tenant_id']) ? intval($_GET['tenant_id']) : 0;
+// 1) Bootstrap session & DB
+require_once 'layouts/session.php';   // sets $_SESSION['user_id'], ['tenant_id'], ['role']
+require_once 'layouts/config.php';    // gives you $link = new mysqli(...)
+include    'layouts/main.php';        // your header, nav, etc.
+
+// 2) Determine which tenant we're managing
+$role            = $_SESSION['role']      ?? '';
+$sessionTenantId = intval($_SESSION['tenant_id'] ?? 0);
+
+// If a tenant_id is passed via GET, only super_admins may override:
+if (!empty($_GET['tenant_id']) && $role === 'super_admin') {
+    $tenant_id = intval($_GET['tenant_id']);
+}
+// Otherwise fall back to the session’s tenant:
+else {
+    $tenant_id = $sessionTenantId;
+}
+
+// If we still have no tenant_id (and we're not super_admin), redirect back:
 if (!$tenant_id) {
-    header("Location: access-management.php");
+    header('Location: access-management.php');
     exit;
 }
 
-// Fetch tenant info for header
-$sql = "SELECT tenant_name FROM tenants WHERE id = $tenant_id LIMIT 1";
-$tenant = mysqli_fetch_assoc(mysqli_query($link, $sql));
-if (!$tenant) die("Tenant not found");
+// 3) Fetch the tenant name (for your header/title)
+$stmt = $link->prepare("SELECT tenant_name FROM tenants WHERE id = ? LIMIT 1");
+$stmt->bind_param('i', $tenant_id);
+$stmt->execute();
+$tenant = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+if (!$tenant) {
+    die('Tenant not found.');
+}
 
-// Handle assign user form submission
+// 4) ASSIGN A USER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_user'])) {
     $user_id = intval($_POST['user_id']);
-    $role = $_POST['role'];
-    $status = $_POST['status'];
+    $r       = $_POST['role'];
+    $s       = $_POST['status'];
 
-    // Check if user is already assigned to tenant
-    $check_sql = "SELECT COUNT(*) as cnt FROM user_tenants WHERE tenant_id = ? AND user_id = ?";
-    $stmt = $link->prepare($check_sql);
-    $stmt->bind_param("ii", $tenant_id, $user_id);
-    $stmt->execute();
-    $stmt->bind_result($cnt);
-    $stmt->fetch();
-    $stmt->close();
-
-    if ($cnt == 0) {
-        $insert_sql = "INSERT INTO user_tenants (tenant_id, user_id, role, status) VALUES (?, ?, ?, ?)";
-        $stmt = $link->prepare($insert_sql);
-        $stmt->bind_param("iiss", $tenant_id, $user_id, $role, $status);
-        $stmt->execute();
-        $stmt->close();
+    // defensive: tenant must exist
+    $chk = $link->prepare("SELECT 1 FROM tenants WHERE id = ?");
+    $chk->bind_param('i', $tenant_id);
+    $chk->execute();
+    $chk->store_result();
+    if ($chk->num_rows === 0) {
+        die('Tenant not found for assignment.');
     }
+    $chk->close();
 
-    header("Location: tenant-users.php?tenant_id=$tenant_id");
+    // prevent dupes
+    $chk2 = $link->prepare("SELECT 1 FROM user_tenants WHERE tenant_id = ? AND user_id = ?");
+    $chk2->bind_param('ii', $tenant_id, $user_id);
+    $chk2->execute();
+    $chk2->store_result();
+    if ($chk2->num_rows === 0) {
+        $ins = $link->prepare("
+            INSERT INTO user_tenants
+              (tenant_id, user_id, role, status)
+            VALUES (?,?,?,?)
+        ");
+        $ins->bind_param('iiss', $tenant_id, $user_id, $r, $s);
+        $ins->execute();
+        $ins->close();
+    }
+    $chk2->close();
+
+    header("Location: ".$_SERVER['PHP_SELF']);
     exit;
 }
 
-// Handle delete user assignment
-if (isset($_GET['action'], $_GET['tenant_id'], $_GET['user_id']) &&
-    $_GET['action'] === 'delete') {
+// 5) DELETE AN ASSIGNMENT
+if (isset($_GET['action'], $_GET['user_id']) && $_GET['action'] === 'delete') {
+    $delUser = intval($_GET['user_id']);
+    $del = $link->prepare("
+        DELETE FROM user_tenants
+         WHERE tenant_id = ?
+           AND user_id   = ?
+    ");
+    $del->bind_param('ii', $tenant_id, $delUser);
+    $del->execute();
+    $del->close();
 
-    $tenant_id = intval($_GET['tenant_id']);
-    $user_id = intval($_GET['user_id']);
-
-    $sql = "DELETE FROM user_tenants WHERE tenant_id = ? AND user_id = ?";
-    $stmt = $link->prepare($sql);
-    $stmt->bind_param("ii", $tenant_id, $user_id);
-    $stmt->execute();
-    $stmt->close();
-
-    header("Location: tenant-users.php?tenant_id=$tenant_id");
+    header("Location: ".$_SERVER['PHP_SELF']);
     exit;
 }
 
-// Handle edit user assignment form submission
+// 6) EDIT AN ASSIGNMENT
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_assignment'])) {
-    $tenant_id = intval($_POST['tenant_id']);
-    $user_id = intval($_POST['user_id']);
-    $role = $_POST['role'];
-    $status = $_POST['status'];
+    $u    = intval($_POST['user_id']);
+    $r2   = $_POST['role'];
+    $s2   = $_POST['status'];
 
-    $sql = "UPDATE user_tenants SET role = ?, status = ? WHERE tenant_id = ? AND user_id = ?";
-    $stmt = $link->prepare($sql);
-    $stmt->bind_param("ssii", $role, $status, $tenant_id, $user_id);
-    $stmt->execute();
-    $stmt->close();
+    $upd = $link->prepare("
+        UPDATE user_tenants
+           SET role   = ?,
+               status = ?
+         WHERE tenant_id = ?
+           AND user_id   = ?
+    ");
+    $upd->bind_param('ssii', $r2, $s2, $tenant_id, $u);
+    $upd->execute();
+    $upd->close();
 
-    header("Location: tenant-users.php?tenant_id=$tenant_id");
+    header("Location: ".$_SERVER['PHP_SELF']);
     exit;
 }
 
-
-// Fetch users assigned to this tenant
-$sql = "
-    SELECT u.id, u.name, u.email, ut.role, ut.status
+// 7) LOAD ASSIGNED USERS
+$stmt = $link->prepare("
+    SELECT
+      u.id, u.name, u.email,
+      ut.role, ut.status
     FROM users u
     JOIN user_tenants ut ON u.id = ut.user_id
-    WHERE ut.tenant_id = $tenant_id
-    ORDER BY u.name
-";
-$result = mysqli_query($link, $sql);
-$tenant_users = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $tenant_users[] = $row;
-}
+   WHERE ut.tenant_id = ?
+ ORDER BY u.name
+");
+$stmt->bind_param('i', $tenant_id);
+$stmt->execute();
+$tenant_users = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
-// Fetch all users NOT assigned to this tenant for the dropdown
-$assigned_user_ids = array_column($tenant_users, 'id');
+// 8) LOAD ALL OTHER USERS
+$assigned_ids = array_column($tenant_users, 'id');
+$stmt = $link->prepare("SELECT id, name, email FROM users ORDER BY name");
+$stmt->execute();
 $all_users = [];
-$user_sql = "SELECT id, name, email FROM users";
-$res = mysqli_query($link, $user_sql);
-while ($user = mysqli_fetch_assoc($res)) {
-    if (!in_array($user['id'], $assigned_user_ids)) {
-        $all_users[] = $user;
+foreach ($stmt->get_result() as $u) {
+    if (!in_array($u['id'], $assigned_ids, true)) {
+        $all_users[] = $u;
     }
 }
+$stmt->close();
 ?>
 <head>
     <title>Tenant Users | Flyhub Business Apps</title>
