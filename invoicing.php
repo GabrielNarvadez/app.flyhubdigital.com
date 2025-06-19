@@ -29,7 +29,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         // Fetch line items
         $items = [];
         $stmt2 = $link->prepare("SELECT ii.*, p.name as product_name, p.description as product_desc 
-            FROM invoice_items ii LEFT JOIN products p ON ii.product_id = p.id WHERE ii.invoice_id=?");
+            FROM invoice_items ii LEFT JOIN products p ON ii.product_id = p.id WHERE ii.invoice_id=? AND ii.quantity > 0");
         $stmt2->bind_param("i", $inv_id);
         $stmt2->execute();
         $res2 = $stmt2->get_result();
@@ -147,6 +147,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                 </thead>
                 <tbody>
                     <?php foreach ($items as $i=>$item): ?>
+                        <?php if (($item['quantity'] ?? 0) > 0): ?>
+
                     <tr>
                         <td><?=($i+1)?></td>
                         <td><?=esc($item['product_name'])?></td>
@@ -155,6 +157,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                         <td>₱<?=number_format($item['unit_price']??0,2)?></td>
                         <td>₱<?=number_format(($item['quantity']??1)*($item['unit_price']??0),2)?></td>
                     </tr>
+                    <?php endif?>
+
                     <?php endforeach; ?>
                 </tbody>
             </table>
