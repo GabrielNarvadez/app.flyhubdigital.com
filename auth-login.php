@@ -74,6 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endif; ?>
 
                         <form method="post" action="">
+
+
                             <div class="mb-3">
                                 <label for="emailaddress" class="form-label">Email address</label>
                                 <input name="email" type="email" class="form-control" id="emailaddress" required placeholder="Enter your email">
@@ -100,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-0 text-center">
                                 <button class="btn btn-primary" type="submit">Log In</button>
                             </div>
+                            <a href="https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URL&scope=email%20profile&response_type=code">Login with Google</a>
                         </form>
                     </div> <!-- end card-body -->
                 </div> <!-- end card -->
