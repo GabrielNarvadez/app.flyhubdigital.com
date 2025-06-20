@@ -207,6 +207,163 @@ $contact_id = $id;
             list-style-type: none !important;
         }
 
+        /* Timeline notification style */
+        .timeline-list {
+            list-style: none;
+            margin: 0;
+            padding: 5px 40px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-icon {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35em;
+            margin-right: 14px;
+            margin-top: 2px;
+        }
+
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #2474e5;
+            font-size: 1.05em;
+            margin-bottom: 2px;
+            display: block;
+            text-decoration: none;
+        }
+
+        .timeline-message {
+            color: #444;
+            font-size: 0.97em;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
+
+        .timeline-time {
+            color: #a0a0a0;
+            font-size: 0.93em;
+            margin-top: 1px;
+            font-weight: 400;
+        }
+        /* Make the tab headers sticky inside the timeline card */
+        #activity-timeline-tabs-sticky {
+            position: sticky;
+            top: 0;
+            background: #f7fafd;
+            border-bottom: 1px solid #ececec;
+            z-index: 2;
+            /* padding-bottom: 5px; */
+        }
+
+        /* Scrollable area stretches to card bottom (no gap) */
+        #activity-timeline-scrollable {
+            height: 100%;
+            min-height: 0;
+            max-height: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Timeline activity item layout */
+        .timeline-list {
+            list-style: none;
+            margin: 0;
+            padding: 5px 24px 40px 24px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 20px 0 16px 0;
+            border-bottom: 1px solid #f0f1f3;
+            position: relative;
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .timeline-icon {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35em;
+            margin-right: 14px;
+            margin-top: 2px;
+        }
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .timeline-title {
+            font-weight: 600;
+            color: #2474e5;
+            font-size: 1.05em;
+            margin-bottom: 2px;
+            display: block;
+            text-decoration: none;
+        }
+        .timeline-message {
+            color: #444;
+            font-size: 0.97em;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
+        /* Date & Time top-right */
+        .timeline-time {
+            color: #a0a0a0;
+            font-size: 0.93em;
+            font-weight: 400;
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+        }
+        .tab-custom .nav-link {
+            color: #40516a;
+            font-weight: 500;
+            border: none;
+            background: #fff;     /* was transparent */
+            margin-right: 20px;
+            padding-bottom: 8px;
+        }
+        .tab-custom .nav-link.active {
+            color: #32475b;
+            border-bottom: 4px solid #3d5a80;
+            background: #fff;     /* was transparent */
+        }
+        #activity-timeline-tabs-sticky {
+            position: sticky;
+            top: 0;
+            background: #fff;     /* was #f7fafd */
+            border-bottom: 1px solid #ececec;
+            z-index: 2;
+        }
     </style>
 
 </head>
@@ -216,78 +373,91 @@ $contact_id = $id;
     <div class="content-page">
         <div class="content">
             <div class="container-fluid">
-                <div class="row">
+                <div class="row" style="padding-top: 20px;">
                     <!-- Contact Profile (3 columns) -->
-                    <div class="page-title-box">
-                        <a href="contacts.php" class="btn btn-outline-secondary btn-sm" style="margin: 25px 0;">
-                            <i class="ri-arrow-go-back-line"></i> Back to Contacts
-                        </a>
-                    </div>
                     <div class="col-md-3 mb-3">
 
                         <div class="card h-100" id="profileCard">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
+                            <div class="card-body pb-2 pt-3">
+                                <div>
+                                    <a href="contacts.php" style="font-size:1rem;text-decoration:none;font-weight:700;display:inline-block;margin-bottom:25px;">
+                                        &lt; Contacts
+                                    </a>
+                                </div>
+                                <div class="d-flex align-items-start mb-2" style="gap: 12px;">
+                                    <!-- Avatar -->
                                     <div id="profileAvatar" class="rounded-circle bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
-                                         style="width:60px;height:60px;font-size:2rem;user-select:none;cursor:pointer;">
+                                         style="width:63px;height:63px;font-size:1.6rem;user-select:none;cursor:pointer;">
                                         <?= strtoupper(substr($row['first_name'],0,1).substr($row['last_name'],0,1)) ?>
                                     </div>
-                                        <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
-                                    <div class="ms-3 flex-grow-1">
-                                        <span class="fw-bold fs-5" id="profileName"><?= htmlspecialchars(($row['first_name'] ?? '').' '.($row['last_name'] ?? '')) ?></span>
-                                        <button class="btn btn-outline-secondary btn-sm float-end" id="editProfileBtn">
-                                            <i class="bi bi-pencil"></i> Edit
-                                        </button>
+                                    <!-- Name, Company, Position -->
+
+                                    <hr>
+
+                                        <div class="flex-grow-1">
+                                            <form id="topProfileForm" class="w-100" style="display:flex;flex-direction:column;gap:2px;">
+                                                <!-- DISPLAY VIEW -->
+                                                <div id="topProfileDisplay" class="d-flex align-items-center">
+                                                    <h5 class="fw-bold mb-0" id="profileName" style="font-size:30px;">
+                                                        <?= htmlspecialchars(($row['first_name'] ?? '').' '.($row['last_name'] ?? '')) ?>
+                                                    </h5>
+                                                    <span class="mx-2 text-secondary" id="editTopProfileBtn" style="cursor:pointer;"><i class="bi bi-pencil"></i></span>
+                                                </div>
+                                                <!-- EDIT VIEW -->
+
+                                                <div id="topProfileEdit" style="display:none;">
+                                                    <input type="text" class="form-control form-control-sm mb-1" name="full_name" value="<?= htmlspecialchars(($row['first_name'] ?? '').' '.($row['last_name'] ?? '')) ?>" style="max-width:180px;display:inline-block;">
+                                                    <input type="text" class="form-control form-control-sm mb-1" name="company_name" value="<?= htmlspecialchars($row['company_name'] ?? '') ?>" placeholder="Company" style="max-width:180px;display:inline-block;">
+                                                    <input type="text" class="form-control form-control-sm mb-1" name="position" value="<?= htmlspecialchars($row['position'] ?? '') ?>" placeholder="Position" style="max-width:180px;display:inline-block;">
+                                                    <button type="submit" class="btn btn-success btn-sm">Save</button>
+                                                    <button type="button" class="btn btn-link btn-sm text-secondary" id="cancelTopProfileEdit">Cancel</button>
+                                                </div>
+                                                <!-- Company & Position Display -->
+                                                <div id="topProfileCompanyDisplay">
+                                                    <a href="company-profile.php?name=<?= urlencode($row['company_name']) ?>" class="fw-semibold text-primary text-decoration-none" style="font-size:1rem;">
+                                                        <?= htmlspecialchars($row['company_name']) ?>
+                                                    </a>
+                                                </div>
+                                                <div class="text-muted" style="font-size:13px;" id="topProfilePositionDisplay">
+                                                    <?= htmlspecialchars($row['position']) ?>
+                                                </div>
+                                            </form>
+                                        </div>
+                                </div>
+
+                                <!-- Other Details Below, unchanged -->
+                                <div id="profileDetailsView" class="pt-2">
+                                    <div class="profile-field mb-2" data-field="email">
+                                        <strong>Email:</strong>
+                                        <span class="profile-value"><?= htmlspecialchars($row['email'] ?? '') ?></span>
+                                        <i class="bi bi-pencil-square ms-2 text-secondary edit-icon" style="cursor:pointer;font-size:1em;"></i>
+                                    </div>
+                                    <div class="profile-field mb-2" data-field="phone_number">
+                                        <strong>Phone:</strong>
+                                        <span class="profile-value"><?= htmlspecialchars($row['phone_number'] ?? '') ?></span>
+                                        <i class="bi bi-pencil-square ms-2 text-secondary edit-icon" style="cursor:pointer;font-size:1em;"></i>
+                                    </div>
+                                    <div class="profile-field mb-2" data-field="city">
+                                        <strong>City:</strong>
+                                        <span class="profile-value"><?= htmlspecialchars($row['city'] ?? '') ?></span>
+                                        <i class="bi bi-pencil-square ms-2 text-secondary edit-icon" style="cursor:pointer;font-size:1em;"></i>
+                                    </div>
+                                    <div class="profile-field mb-2" data-field="contact_type">
+                                        <strong>Type:</strong>
+                                        <span class="profile-value"><?= htmlspecialchars($row['contact_type'] ?? '') ?></span>
+                                        <i class="bi bi-pencil-square ms-2 text-secondary edit-icon" style="cursor:pointer;font-size:1em;"></i>
+                                    </div>
+                                    <div class="profile-field mb-2">
+                                        <strong>Created At:</strong>
+                                        <span class="profile-value"><?= htmlspecialchars($row['created_at'] ?? '') ?></span>
                                     </div>
                                 </div>
-                                <div id="profileDetailsView">
-                                    <p>Email: <span id="profileEmail"><?= htmlspecialchars($row['email'] ?? '') ?></span></p>
-                                    <p>Phone: <span id="profilePhone"><?= htmlspecialchars($row['phone_number'] ?? '') ?></span></p>
-                                    <p>Position: <span id="profilePosition"><?= htmlspecialchars($row['position'] ?? '') ?></span></p>
-                                    <p>City: <span id="profileCity"><?= htmlspecialchars($row['city'] ?? '') ?></span></p>
-                                    <p>Company: <span id="profileCompany"><?= htmlspecialchars($row['company_name'] ?? '') ?></span></p>
-                                    <p>Type: <span id="profileType"><?= htmlspecialchars($row['contact_type'] ?? '') ?></span></p>
-                                    <p>Created At: <span id="profileCreated"><?= htmlspecialchars($row['created_at'] ?? '') ?></span></p>
-                                </div>
-                                <form id="profileEditForm" class="d-none">
-                                    <input type="hidden" name="contact_id" value="<?= $contact_id ?>">
-                                    <div class="mb-2">
-                                        <label class="form-label">First Name</label>
-                                        <input type="text" class="form-control" name="first_name" value="<?= htmlspecialchars($row['first_name'] ?? '') ?>" required>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" name="last_name" value="<?= htmlspecialchars($row['last_name']) ?>" required>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($row['email']) ?>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Phone Number</label>
-                                        <input type="text" class="form-control" name="phone_number" value="<?= htmlspecialchars($row['phone_number']) ?>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Position</label>
-                                        <input type="text" class="form-control" name="position" value="<?= htmlspecialchars($row['position']) ?>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">City</label>
-                                        <input type="text" class="form-control" name="city" value="<?= htmlspecialchars($row['city']) ?>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Company Name</label>
-                                        <input type="text" class="form-control" name="company_name" value="<?= htmlspecialchars($row['company_name']) ?>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Type</label>
-                                        <input type="text" class="form-control" name="contact_type" value="<?= htmlspecialchars($row['contact_type']) ?>">
-                                    </div>
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <button type="button" class="btn btn-light" id="cancelEditBtn">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </div>
-                                </form>
+                                <!-- Success Alert (add just below the profile card, outside the card if you want floating style) -->
+                                <div id="saveAlert" class="alert alert-success" style="display:none;position:fixed;top:20px;right:35px;z-index:1050;">Saved successfully!</div>
+
+                                <!-- (Your edit form and file input stays the same as your previous code, just below here if you use it) -->
+                                <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
+                                <!-- Your form goes here if needed -->
                             </div>
                         </div>
 
@@ -295,11 +465,15 @@ $contact_id = $id;
 
                     <!-- Activity Timeline (6 columns) -->
                     <div class="col-md-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body p-0" style="padding-left:30px; padding-right:30px; height: 700px; display: flex; flex-direction: column;">
+                        <div class="card h-100" style="display: flex; flex-direction: column;">
+                            <div class="card-body p-0 d-flex flex-column" style="flex: 1 1 auto; min-height: 0;">
                                 <h4 class="pt-3 px-3">Activity Timeline</h4>
-                                <div id="activity-timeline-root" 
-                                     style="flex: 1 1 auto; overflow-y: auto; min-height:0; padding: 0 16px 16px 16px;">
+                                <!-- Sticky tab headers -->
+                                <div id="activity-timeline-tabs-sticky" style="z-index:2;"></div>
+                                <!-- The scrollable timeline panel (fills remaining height, scrolls to footer) -->
+                                <div id="activity-timeline-scrollable"
+                                     style="flex:1 1 auto; overflow-y:auto; min-height:0; padding:0;">
+                                    <!-- Will be populated by JS -->
                                 </div>
                             </div>
                         </div>
@@ -406,70 +580,6 @@ $contact_id = $id;
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- SOA -->
-                                    <div class="accordion-item mb-2">
-                                        <h2 class="accordion-header" id="headingSOA">
-                                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSOA" aria-expanded="false" aria-controls="collapseSOA">
-                                                Statement of Accounts (SOA)
-                                            </button>
-                                        </h2>
-                                        <div id="collapseSOA" class="accordion-collapse collapse" aria-labelledby="headingSOA" data-bs-parent="#associationAccordion">
-                                            <div class="accordion-body">
-                                                <ul class="list-group list-group-flush">
-                                                    <li class="list-group-item py-1 px-0">
-                                                        <strong>#SOA-023</strong> - ₱8,000 <br>
-                                                        <span class="text-success">Settled</span> | <small>Created: 2025-06-10</small>
-                                                    </li>
-                                                    <li class="list-group-item py-1 px-0">
-                                                        <strong>#SOA-024</strong> - ₱10,500 <br>
-                                                        <span class="text-danger">Overdue</span> | <small>Created: 2025-07-02</small>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Bookings -->
-                                    <div class="accordion-item mb-2">
-                                        <h2 class="accordion-header" id="headingBookings">
-                                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBookings" aria-expanded="false" aria-controls="collapseBookings">
-                                                Bookings
-                                            </button>
-                                        </h2>
-                                        <div id="collapseBookings" class="accordion-collapse collapse" aria-labelledby="headingBookings" data-bs-parent="#associationAccordion">
-                                            <div class="accordion-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span><strong>Room 201</strong> | <small>From 2025-06-20 to 2025-07-10</small></span>
-                                                    <button class="btn btn-outline-primary btn-sm">Add</button>
-                                                </div>
-                                                <div>
-                                                    <small class="text-muted">Status: Reserved</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Subscriptions -->
-                                    <div class="accordion-item mb-2">
-                                        <h2 class="accordion-header" id="headingSubscriptions">
-                                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSubscriptions" aria-expanded="false" aria-controls="collapseSubscriptions">
-                                                Subscriptions
-                                            </button>
-                                        </h2>
-                                        <div id="collapseSubscriptions" class="accordion-collapse collapse" aria-labelledby="headingSubscriptions" data-bs-parent="#associationAccordion">
-                                            <div class="accordion-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span><strong>Premium Plan</strong> | <small>Active</small></span>
-                                                    <button class="btn btn-outline-primary btn-sm">Add</button>
-                                                </div>
-                                                <div>
-                                                    <small class="text-muted">Renewal: 2025-12-31</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <!-- Add more association cards as needed -->
                                 </div>
                             </div>
@@ -487,8 +597,12 @@ $contact_id = $id;
     <script>
     $(document).ready(function() {
         // Build the Timeline UI
-        $('#activity-timeline-root').html(`
-            <ul class="nav nav-tabs tab-custom mb-0" id="activityTabs" role="tablist">
+
+        $(document).ready(function() {
+    // Insert tab headers into sticky header container
+$('#activity-timeline-tabs-sticky').html(`
+    <div class="d-flex align-items-center justify-content-between" style="padding-left:16px;padding-right:16px;background:#fff;">
+        <ul class="nav nav-tabs tab-custom mb-0 flex-grow-1" id="activityTabs" role="tablist" style="background:#fff;">
                 <li class="nav-item" role="presentation"><button class="nav-link active" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">Activity</button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">Notes</button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="emails-tab" data-bs-toggle="tab" data-bs-target="#emails" type="button" role="tab">Emails</button></li>
@@ -496,74 +610,168 @@ $contact_id = $id;
                 <li class="nav-item" role="presentation"><button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab">Tasks</button></li>
                 <li class="nav-item" role="presentation"><button class="nav-link" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">Meetings</button></li>
             </ul>
-            <div class="row mb-3">
-                <div class="col-12 d-flex justify-content-end">
-                    <button class="btn btn-primary create-btn" id="createBtn" style="margin-top:20px;">New Activity</button>
-                </div>
+        <a href="#" id="createBtn" style="color:#2474e5;font-weight:500;font-size:1rem;margin-left:10px;text-decoration:none;white-space:nowrap;padding-top:2px;padding-right:12px;">+Note</a>
+    </div>
+    `);
+
+    // The scrollable timeline area
+    $('#activity-timeline-scrollable').html(`
+        <div class="tab-content" id="activityTabsContent" style="background:#f7fafd;min-height:250px;">
+            <div class="tab-pane fade show active" id="activity" role="tabpanel">
+                <div class="activity-timeline" id="timeline-activity"></div>
             </div>
-            <div class="tab-content" id="activityTabsContent">
-                <div class="tab-pane fade show active" id="activity" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-activity"></div>
-                </div>
-                <div class="tab-pane fade" id="notes" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-notes"></div>
-                </div>
-                <div class="tab-pane fade" id="emails" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-emails"></div>
-                </div>
-                <div class="tab-pane fade" id="calls" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-calls"></div>
-                </div>
-                <div class="tab-pane fade" id="tasks" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-tasks"></div>
-                </div>
-                <div class="tab-pane fade" id="meetings" role="tabpanel">
-                    <div class="activity-timeline" id="timeline-meetings"></div>
-                </div>
+            <div class="tab-pane fade" id="notes" role="tabpanel">
+                <div class="activity-timeline" id="timeline-notes"></div>
             </div>
-            <!-- Modal for Creating Activity -->
-            <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
-              <div class="modal-dialog">
-                <form id="activityForm" class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="activityModalLabel">New Activity</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                      <input type="hidden" id="activity_type" name="activity_type" value="note">
-                      <input type="hidden" name="entity_type" value="contact">
-                      <input type="hidden" name="entity_id" value="<?= $contact_id ?>">
-                      <div class="mb-3">
-                        <label for="activity_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="activity_title" name="title" required>
-                      </div>
-                      <div class="mb-3">
-                        <label for="activity_details" class="form-label">Details</label>
-                        <textarea class="form-control" id="activity_details" name="details" rows="4" required></textarea>
-                      </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Save Activity</button>
-                  </div>
-                </form>
-              </div>
+            <div class="tab-pane fade" id="emails" role="tabpanel">
+                <div class="activity-timeline" id="timeline-emails"></div>
             </div>
-        `);
+            <div class="tab-pane fade" id="calls" role="tabpanel">
+                <div class="activity-timeline" id="timeline-calls"></div>
+            </div>
+            <div class="tab-pane fade" id="tasks" role="tabpanel">
+                <div class="activity-timeline" id="timeline-tasks"></div>
+            </div>
+            <div class="tab-pane fade" id="meetings" role="tabpanel">
+                <div class="activity-timeline" id="timeline-meetings"></div>
+            </div>
+        </div>
+        <!-- Modal for Creating Activity (leave your modal code as is) -->
+    `);
+
+    // Tab/label logic
+    const labels = {
+        'activity': '+Activity',
+        'notes': '+Note',
+        'emails': '+Email',
+        'calls': '+Log Call',
+        'tasks': '+Task',
+        'meetings': '+Meeting'
+    };
+
+    function updateButtonLabel() {
+        let activeTab = $('.tab-custom .nav-link.active').attr('id').replace('-tab','');
+        $('#createBtn').text(labels[activeTab] || '+Activity');
+        $('#activityModalLabel').text(labels[activeTab].replace('+','Create '));
+        let atype = (activeTab === 'activity') ? 'note' : activeTab.slice(0, -1);
+        $('#activity_type').val(atype);
+    }
+    $('.tab-custom .nav-link').on('shown.bs.tab', function () { updateButtonLabel(); });
+    updateButtonLabel();
+
+    // Fetch and render timeline
+    function loadTimeline(callback) {
+        $.get('', { fetch_timeline: 1, entity_id: <?= $contact_id ?> }, function(data) {
+            callback(data);
+        }, 'json');
+    }
+
+    function iconForType(type) {
+        switch(type) {
+            case 'note': return `<span class="timeline-icon" style="background:#e3f0fd;color:#1a74e5;"><i class="bi bi-journal-text"></i></span>`;
+            case 'email': return `<span class="timeline-icon" style="background:#eafcf4;color:#25b676;"><i class="bi bi-envelope-at"></i></span>`;
+            case 'call': return `<span class="timeline-icon" style="background:#e8f5fa;color:#20a6e6;"><i class="bi bi-telephone"></i></span>`;
+            case 'task': return `<span class="timeline-icon" style="background:#fff6e1;color:#f3a01a;"><i class="bi bi-list-task"></i></span>`;
+            case 'meeting': return `<span class="timeline-icon" style="background:#fae7f7;color:#e357c6;"><i class="bi bi-calendar-event"></i></span>`;
+            default: return `<span class="timeline-icon" style="background:#ededed;color:#aaa;"><i class="bi bi-dot"></i></span>`;
+        }
+    }
+
+    function timelineCard(item) {
+        // Main label (Note, Email, etc.)
+        let mainTitle = '';
+        switch(item.activity_type) {
+            case 'note': mainTitle = 'Note'; break;
+            case 'email': mainTitle = 'Email'; break;
+            case 'call': mainTitle = 'Call'; break;
+            case 'task': mainTitle = 'Task'; break;
+            case 'meeting': mainTitle = 'Meeting'; break;
+            default: mainTitle = (item.activity_type || 'Activity').replace('_',' ');
+        }
+        let msgTitle = (item.title ? `<span class="timeline-title">${item.title}</span>` : '');
+        let msgDetail = (item.details ? `<div class="timeline-message">${item.details}</div>` : '');
+        let timeStr = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+        // TOP RIGHT timestamp, then the rest
+        return `
+            <li class="timeline-item">
+                ${iconForType(item.activity_type)}
+                <div class="timeline-content">
+                    <span class="timeline-time">${timeStr}</span>
+                    <span class="timeline-title">${mainTitle}</span>
+                    ${msgTitle}
+                    ${msgDetail}
+                </div>
+            </li>
+        `;
+    }
+
+    function renderTimeline(timelineData) {
+        function render(filterType, containerId) {
+            let items = (filterType === 'all') ? timelineData : timelineData.filter(item => item.activity_type === filterType);
+            let html = (items.length > 0)
+              ? `<ul class="timeline-list">` + items.map(timelineCard).join('') + `</ul>`
+              : '<div class="text-center text-muted pt-4 pb-5">No activities yet.</div>';
+            $(containerId).html(html);
+        }
+        render('all', '#timeline-activity');
+        render('note', '#timeline-notes');
+        render('email', '#timeline-emails');
+        render('call', '#timeline-calls');
+        render('task', '#timeline-tasks');
+        render('meeting', '#timeline-meetings');
+    }
+
+    function reloadTimeline() {
+        loadTimeline(renderTimeline);
+    }
+    loadTimeline(renderTimeline);
+
+    // Modal logic
+    $('#createBtn').on('click', function(e) {
+        e.preventDefault();
+        $('#activity_title').val('');
+        $('#activity_details').val('');
+        $('#activityModal').modal('show');
+        updateButtonLabel();
+    });
+
+    // Handle Activity Form Submission (AJAX)
+    $('#activityForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '', // post to same page
+            type: 'POST',
+            data: $(this).serialize() + '&action=add_activity',
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    $('#activityModal').modal('hide');
+                    reloadTimeline();
+                } else {
+                    alert(res.message || 'Could not save activity. Please try again.');
+                }
+            },
+            error: function() {
+                alert('Error while saving. Please try again.');
+            }
+        });
+    });
+});
 
         // Tab/label logic
         const labels = {
-            'activity': 'New Activity',
-            'notes': 'Create Note',
-            'emails': 'Log Email',
-            'calls': 'Log Call',
-            'tasks': 'Create Task',
-            'meetings': 'Log Meeting'
+            'activity': '+Activity',
+            'notes': '+Note',
+            'emails': '+Email',
+            'calls': '+Log Call',
+            'tasks': '+Task',
+            'meetings': '+Meeting'
         };
 
         function updateButtonLabel() {
             let activeTab = $('.tab-custom .nav-link.active').attr('id').replace('-tab','');
-            $('#createBtn').text(labels[activeTab]);
-            $('#activityModalLabel').text(labels[activeTab]);
+            $('#createBtn').text(labels[activeTab] || '+Activity');
+            $('#activityModalLabel').text(labels[activeTab].replace('+','Create '));
             let atype = (activeTab === 'activity') ? 'note' : activeTab.slice(0, -1);
             $('#activity_type').val(atype);
         }
@@ -588,39 +796,70 @@ $contact_id = $id;
                 default: return '<span class="me-2"><i class="bi bi-dot text-muted"></i></span>';
             }
         }
-        function timelineCard(item) {
-            let type = item.activity_type.replace('_', ' ');
-            return `
-            <div class="activity-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="activity-type">${iconForType(item.activity_type)}${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-                    <div class="activity-time text-end">${item.created_at ? new Date(item.created_at).toLocaleString() : ''}</div>
-                </div>
-                <div class="activity-title">${item.title ? item.title : ''}</div>
-                <div class="activity-details">${item.details ? item.details : ''}</div>
-            </div>
-            `;
-        }
-        function renderTimeline(timelineData) {
-            function render(filterType, containerId) {
-                let items = (filterType === 'all') ? timelineData : timelineData.filter(item => item.activity_type === filterType);
-                let html = (items.length > 0) ? items.map(timelineCard).join('') : '<div class="text-center text-muted pt-4 pb-5">No activities yet.</div>';
-                $(containerId).html(html);
+            function iconForType(type) {
+                switch(type) {
+                    case 'note': return `<span class="timeline-icon" style="background:#e3f0fd;color:#1a74e5;"><i class="bi bi-journal-text"></i></span>`;
+                    case 'email': return `<span class="timeline-icon" style="background:#eafcf4;color:#25b676;"><i class="bi bi-envelope-at"></i></span>`;
+                    case 'call': return `<span class="timeline-icon" style="background:#e8f5fa;color:#20a6e6;"><i class="bi bi-telephone"></i></span>`;
+                    case 'task': return `<span class="timeline-icon" style="background:#fff6e1;color:#f3a01a;"><i class="bi bi-list-task"></i></span>`;
+                    case 'meeting': return `<span class="timeline-icon" style="background:#fae7f7;color:#e357c6;"><i class="bi bi-calendar-event"></i></span>`;
+                    default: return `<span class="timeline-icon" style="background:#ededed;color:#aaa;"><i class="bi bi-dot"></i></span>`;
+                }
             }
-            render('all', '#timeline-activity');
-            render('note', '#timeline-notes');
-            render('email', '#timeline-emails');
-            render('call', '#timeline-calls');
-            render('task', '#timeline-tasks');
-            render('meeting', '#timeline-meetings');
-        }
+
+            function timelineCard(item) {
+                // Title: use 'Note', 'Email', etc. as title (same as screenshot)
+                let mainTitle = '';
+                switch(item.activity_type) {
+                    case 'note': mainTitle = 'Note'; break;
+                    case 'email': mainTitle = 'Email'; break;
+                    case 'call': mainTitle = 'Call'; break;
+                    case 'task': mainTitle = 'Task'; break;
+                    case 'meeting': mainTitle = 'Meeting'; break;
+                    default: mainTitle = (item.activity_type || 'Activity').replace('_',' ');
+                }
+                let msgTitle = (item.title ? `<span class="timeline-title">${item.title}</span>` : '');
+                let msgDetail = (item.details ? `<div class="timeline-message">${item.details}</div>` : '');
+                let timeStr = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+                return `
+                    <li class="timeline-item">
+                        ${iconForType(item.activity_type)}
+                        <div class="timeline-content">
+                            <span class="timeline-title">${mainTitle}</span>
+                            ${msgTitle}
+                            ${msgDetail}
+                            <div class="timeline-time">${timeStr}</div>
+                        </div>
+                    </li>
+                `;
+            }
+
+
+            function renderTimeline(timelineData) {
+                function render(filterType, containerId) {
+                    let items = (filterType === 'all') ? timelineData : timelineData.filter(item => item.activity_type === filterType);
+                    let html = (items.length > 0)
+                      ? `<ul class="timeline-list">` + items.map(timelineCard).join('') + `</ul>`
+                      : '<div class="text-center text-muted pt-4 pb-5">No activities yet.</div>';
+                    $(containerId).html(html);
+                }
+                render('all', '#timeline-activity');
+                render('note', '#timeline-notes');
+                render('email', '#timeline-emails');
+                render('call', '#timeline-calls');
+                render('task', '#timeline-tasks');
+                render('meeting', '#timeline-meetings');
+            }
+
+
         function reloadTimeline() {
             loadTimeline(renderTimeline);
         }
         loadTimeline(renderTimeline);
 
         // Modal logic
-        $('#createBtn').on('click', function() {
+        $('#createBtn').on('click', function(e) {
+            e.preventDefault();
             $('#activity_title').val('');
             $('#activity_details').val('');
             $('#activityModal').modal('show');
@@ -860,6 +1099,114 @@ $(function() {
 
 });
 
+$(function() {
+    // Inline editing logic for profile fields
+    $('.profile-field').each(function() {
+        var $row = $(this);
+        var $value = $row.find('.profile-value');
+        var $icon = $row.find('.edit-icon');
+        var field = $row.data('field');
+        if (!field) return; // Skip static fields (e.g., Created At)
+
+        function makeEditable() {
+            var origText = $value.text().trim();
+            var $input = $('<input type="text" class="form-control form-control-sm" style="display:inline;width:auto;min-width:120px;">').val(origText);
+            $value.replaceWith($input);
+            $input.focus().select();
+
+            $input.on('blur', saveValue);
+            $input.on('keydown', function(e) {
+                if (e.key === 'Enter') $input.blur();
+                if (e.key === 'Escape') $input.replaceWith('<span class="profile-value">'+origText+'</span>');
+            });
+        }
+        function saveValue() {
+            var $input = $row.find('input');
+            var newValue = $input.val();
+            var origValue = $input.attr('value');
+            if (newValue === origValue) {
+                $input.replaceWith('<span class="profile-value">'+origValue+'</span>');
+                return;
+            }
+            // AJAX save to backend
+            $.ajax({
+                url: 'update-contact-inline.php', // You'll create this file below
+                type: 'POST',
+                data: {
+                    contact_id: <?= $contact_id ?>,
+                    field: field,
+                    value: newValue
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        $input.replaceWith('<span class="profile-value">'+newValue+'</span>');
+                        $('#saveAlert').fadeIn(100).delay(800).fadeOut(300);
+                    } else {
+                        alert(res.message || 'Failed to save');
+                        $input.replaceWith('<span class="profile-value">'+origValue+'</span>');
+                    }
+                },
+                error: function() {
+                    alert('Error saving. Try again.');
+                    $input.replaceWith('<span class="profile-value">'+origValue+'</span>');
+                }
+            });
+        }
+        $icon.on('click', function(e) {
+            e.stopPropagation();
+            if ($row.find('input').length) return;
+            makeEditable();
+        });
+    });
+});
+
+$(function(){
+    // Show edit fields
+    $('#editTopProfileBtn').on('click', function() {
+        $('#topProfileDisplay, #topProfileCompanyDisplay, #topProfilePositionDisplay').hide();
+        $('#topProfileEdit').show();
+    });
+    // Cancel edit
+    $('#cancelTopProfileEdit').on('click', function(){
+        $('#topProfileEdit').hide();
+        $('#topProfileDisplay, #topProfileCompanyDisplay, #topProfilePositionDisplay').show();
+    });
+    // Save top profile fields
+    $('#topProfileForm').on('submit', function(e){
+        e.preventDefault();
+        var $form = $(this);
+        var fullName = $form.find('[name="full_name"]').val().trim();
+        var company = $form.find('[name="company_name"]').val().trim();
+        var position = $form.find('[name="position"]').val().trim();
+        // Split full name
+        var arr = fullName.split(' ');
+        var fname = arr.shift();
+        var lname = arr.join(' ');
+
+        $.ajax({
+            url: 'update-contact-inline.php',
+            type: 'POST',
+            data: {
+                contact_id: <?= $contact_id ?>,
+                field: 'top_profile',
+                first_name: fname,
+                last_name: lname,
+                company_name: company,
+                position: position
+            },
+            dataType: 'json',
+            success: function(res){
+                if (res.status === 'success') {
+                    location.reload();
+                } else {
+                    alert(res.message || 'Failed to save');
+                }
+            },
+            error: function(){ alert('Failed to save'); }
+        });
+    });
+});
 </script>
 
 </body>
