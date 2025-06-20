@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-0 text-center">
                                 <button class="btn btn-primary" type="submit">Log In</button>
                             </div>
-                            <a href="https://accounts.google.com/o/oauth2/auth?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URL&scope=email%20profile&response_type=code">Login with Google</a>
+                            <a href="/app.flyhubdigital.com/auth/google-login.php">Login with Google</a>
                         </form>
                     </div> <!-- end card-body -->
                 </div> <!-- end card -->

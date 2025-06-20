@@ -4,7 +4,7 @@ import os
 ALLOWED_EXTENSIONS = {'.php', '.html',}
 
 # Folders to exclude
-EXCLUDED_DIRS = {'.git'}
+EXCLUDED_DIRS = {'.git','vendor'}
 
 def tree(dir_path='.', prefix=''):
     try:
