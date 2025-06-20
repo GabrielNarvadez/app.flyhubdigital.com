@@ -1,42 +1,60 @@
 <?php
+require_once __DIR__ . '/config.php';   // Adjust path to your config
 
-require_once __DIR__ . '/config.php'; // Adjust path to your config
-
-$user_name = "User";
-$user_role = "";
-$user_avatar = "avatar-default.jpg"; // fallback if empty
+$user_name   = 'User';
+$user_role   = '';
+$user_avatar = 'avatar-default.jpg';    // fallback if empty
 
 if (isset($_SESSION['user_id'])) {
-    $sql = "SELECT name, role, avatar FROM users WHERE id = ?";
+
+    $sql  = 'SELECT name, role, avatar FROM users WHERE id = ?';
     $stmt = $link->prepare($sql);
-    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->bind_param('i', $_SESSION['user_id']);
     $stmt->execute();
     $stmt->bind_result($name, $role, $avatar);
+
     if ($stmt->fetch()) {
         $user_name = $name;
-        $user_role = $role;
-        if ($avatar) $user_avatar = $avatar;
+
+        /* ---- friendly-name mapping for roles ------------------------- */
+        $roleLabels = [
+            'super_admin' => 'Super Admin',
+            // 'manager'   => 'Manager',  // add more if needed
+            // 'agent'     => 'Agent',
+        ];
+        $user_role = $roleLabels[$role] ?? ucfirst(str_replace('_', ' ', $role));
+
+        if ($avatar) {
+            $user_avatar = $avatar;
+        }
     }
     $stmt->close();
 }
 
-// Build the avatar image or icon
-$user_avatar_img = '';
+/* ---- build avatar markup -------------------------------------------- */
 if (!empty($user_avatar) && $user_avatar !== 'avatar-default.jpg') {
-    // Use uploaded avatar image
-    $user_avatar_img = '<img src="assets/images/users/' . htmlspecialchars($user_avatar) . '" alt="user-image" width="32" class="rounded-circle">';
+    // uploaded avatar
+    $user_avatar_img = '<img src="assets/images/users/' .
+                       htmlspecialchars($user_avatar) .
+                       '" alt="user-image" width="32" class="rounded-circle">';
 } else {
-    // Use SVG icon as default
+    // default SVG icon
     $user_avatar_img = '
-    <span class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width:32px; height:32px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#adb5bd" class="bi bi-person" viewBox="0 0 16 16">
-            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
-            <path fill-rule="evenodd" d="M14 14s-1-1.5-6-1.5S2 14 2 14v1h12v-1zm-1.5-.5c.276 0 .5.224.5.5v.5H3v-.5c0-.276.224-.5.5-.5 1.306 0 2.417.835 2.83 2h2.34c.413-1.165 1.524-2 2.83-2z"/>
-        </svg>
-    </span>
-    ';
+        <span class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
+              style="width:32px; height:32px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                 fill="#adb5bd" viewBox="0 0 16 16">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
+                <path fill-rule="evenodd"
+                      d="M14 14s-1-1.5-6-1.5S2 14 2 14v1h12v-1zm-1.5-.5c.276 0
+                         .5.224.5.5v.5H3v-.5c0-.276.224-.5.5-.5
+                         1.306 0 2.417.835 2.83 2h2.34c.413-1.165
+                         1.524-2 2.83-2z"/>
+            </svg>
+        </span>';
 }
 ?>
+
 <div class="navbar-custom">
     <div class="topbar container-fluid">
         <div class="d-flex align-items-center gap-lg-2 gap-1">
