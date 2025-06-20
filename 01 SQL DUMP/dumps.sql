@@ -1,0 +1,3 @@
+ALTER TABLE users
+  ADD COLUMN google_id VARCHAR(64),
+  ADD COLUMN is_verified TINYINT(1) DEFAULT 0;
