@@ -1,0 +1,84 @@
+@echo off
+setlocal
+
+rem ------------------------------------------------------------
+rem 0. move to the folder where this script lives
+rem ------------------------------------------------------------
+cd /d "%~dp0"
+
+rem ------------------------------------------------------------
+rem 1. make sure PHP is reachable (Laragon adds it to PATH)
+rem ------------------------------------------------------------
+where php >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: PHP was not found on PATH. Is Laragon running?
+    pause
+    goto :eof
+)
+
+rem ------------------------------------------------------------
+rem 2. install Composer only if missing
+rem ------------------------------------------------------------
+where composer >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Composer not found. Downloading composer-setup.phar...
+    curl -sS -o "%TEMP%\composer-setup.phar" https://getcomposer.org/installer
+    echo Installing Composer...
+    php "%TEMP%\composer-setup.phar" --install-dir=%SystemDrive%\bin --filename=composer
+    del "%TEMP%\composer-setup.phar"
+    set "PATH=%SystemDrive%\bin;%PATH%"
+)
+
+rem ------------------------------------------------------------
+rem 3. install project dependencies
+rem ------------------------------------------------------------
+echo Running composer install...
+composer install --no-interaction --prefer-dist
+
+rem ------------------------------------------------------------
+rem 4. create or overwrite .env with your secrets
+rem ------------------------------------------------------------
+if exist ".env" (
+    echo Backing up existing .env -> .env.bak
+    copy /Y ".env" ".env.bak" >nul
+)
+
+echo Writing .env...
+(
+    echo # Google OAuth
+    echo GOOGLE_CLIENT_ID=593808163256-i79saaj5h0ir4egd8p1qv16id9qelgc2.apps.googleusercontent.com
+    echo GOOGLE_CLIENT_SECRET=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
+    echo GOOGLE_REDIRECT_URI=http://localhost/app.flyhubdigital.com/auth/google-callback.php
+    echo.
+    echo # Database
+    echo DB_SERVER=localhost
+    echo DB_USERNAME=flyhubapp
+    echo DB_PASSWORD=KatieBruha_02   # comment needs a preceding space
+    echo DB_NAME=apps-flyhub
+    echo.
+    echo # Gmail
+    echo GMAIL_ID=gab.narvadez@gmail.com
+    echo GMAIL_PASSWORD=Masterpassword1
+    echo GMAIL_USERNAME=GabrielNarvadez
+) > ".env"
+
+rem ------------------------------------------------------------
+rem 5. write .gitignore exactly as requested
+rem ------------------------------------------------------------
+if exist ".gitignore" (
+    echo Backing up existing .gitignore -> .gitignore.bak
+    copy /Y ".gitignore" ".gitignore.bak" >nul
+)
+
+echo Writing .gitignore...
+(
+    echo /vendor/
+    echo .env
+    echo ".env"
+) > ".gitignore"
+
+echo.
+echo Setup complete. Close and reopen the terminal so any PATH changes take effect.
+pause
+endlocal
+
