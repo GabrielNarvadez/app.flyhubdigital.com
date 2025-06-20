@@ -862,6 +862,14 @@ $('#activity-timeline-tabs-sticky').html(`
             e.preventDefault();
             $('#activity_title').val('');
             $('#activity_details').val('');
+
+                // NEW: choose default based on active tab
+    const tab = $('.tab-custom .nav-link.active')
+                .attr('id').replace('-tab','');   // notes / emails / …
+    const defaultType = (tab === 'activity') ? 'note'
+                     : (tab.endsWith('s') ? tab.slice(0,-1) : tab); // emails→email
+    $('#activity_type_select').val(defaultType);
+    
             $('#activityModal').modal('show');
             updateButtonLabel();
         });
@@ -1208,6 +1216,64 @@ $(function(){
     });
 });
 </script>
+
+<!-- Begin: Activity / Note / Email / Call / Task / Meeting Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1"
+     aria-labelledby="activityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <form id="activityForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="activityModalLabel">Create Activity</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- hidden values that JS will fill in -->
+          <input type="hidden" name="action"        value="add_activity">
+          <input type="hidden" name="entity_id"     value="<?= $contact_id ?>">
+          <input type="hidden" name="activity_type" id="activity_type"  value="note">
+
+          <!-- Title --><!-- Activity Type selector -->
+<div class="mb-3">
+  <label class="form-label">Activity type</label>
+  <select class="form-select" id="activity_type_select" name="activity_type" required>
+    <option value="note">Note</option>
+    <option value="email">Email</option>
+    <option value="call">Call</option>
+    <option value="task">Task</option>
+    <option value="meeting">Meeting</option>
+  </select>
+</div>
+
+
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" name="title" id="activity_title"
+                   type="text" required>
+          </div>
+
+          <!-- Details -->
+          <div class="mb-3">
+            <label class="form-label">Details</label>
+            <textarea class="form-control" name="details" id="activity_details"
+                      rows="4" required></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <button class="btn btn-light"   type="button"
+                  data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+<!-- End: Activity Modal -->
+
 
 </body>
 </html>
