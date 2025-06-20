@@ -1,30 +1,8 @@
 <?php
-<<<<<<< HEAD
 /* 1. Composer autoloader */
 $vendorAutoload = dirname(__DIR__) . '/vendor/autoload.php';
 if (file_exists($vendorAutoload)) {
     require $vendorAutoload;
-=======
-
-$vendorAutoload = dirname(__DIR__) . '/vendor/autoload.php';
-if (file_exists($vendorAutoload)) {
-    require_once $vendorAutoload;
-}
-
-/* Database credentials. Assuming you are running MySQL
-server with default setting (user 'root' with no password) */
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'flyhubapp');
-define('DB_PASSWORD', 'KatieBruha_02');
-define('DB_NAME', 'apps-flyhub');
-
-/* Attempt to connect to MySQL database */
-$link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
-
-// Check connection
-if($link === false){
-    die("ERROR: Could not connect. " . mysqli_connect_error());
->>>>>>> 4b2c63115e716a24c849473c7eb09ea277a18027
 }
 
 /* 2. Load .env */
