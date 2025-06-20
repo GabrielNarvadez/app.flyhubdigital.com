@@ -1,14 +1,14 @@
 <?php
 require_once __DIR__ . '/../layouts/config.php';
 
-// Set your actual logic for $tenant_id (e.g., from session)
-$tenant_id = 1;
+// Get current tenant ID from session or default
+$tenant_id = $_SESSION['tenant_id'] ?? 1;
 
-// Default to white logo
+// Default logo
 $default_white_logo = 'assets/images/flyhub-white-logo.png';
 $logo_url = $default_white_logo;
 
-// Try to fetch custom logo from tenants table
+// Try fetch tenant custom logo
 $sql = "SELECT logo_url FROM tenants WHERE id = ?";
 $stmt = $link->prepare($sql);
 $stmt->bind_param("i", $tenant_id);
@@ -18,9 +18,30 @@ if ($stmt->fetch() && !empty($db_logo_url)) {
     $logo_url = $db_logo_url;
 }
 $stmt->close();
+
+// Fetch enabled modules for tenant
+$enabled_modules = [];
+$stmt = $link->prepare("SELECT module_id, enabled FROM tenant_module_access WHERE tenant_id = ?");
+$stmt->bind_param("i", $tenant_id);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    // Store module_id => enabled (bool)
+    $enabled_modules[$row['module_id']] = (bool)$row['enabled'];
+}
+$stmt->close();
+
+// For convenience, create a mapping from module names to IDs
+// This query gets all modules so we can map name => id
+$module_name_to_id = [];
+$res = $link->query("SELECT id, LOWER(module_name) AS name FROM modules");
+while ($row = $res->fetch_assoc()) {
+    $module_name_to_id[$row['name']] = $row['id'];
+}
 ?>
 
 <style>
+/* Preserve your existing styles */
 #master-admin-bottom {
   position: absolute;
   bottom: 60px;
@@ -123,44 +144,68 @@ $stmt->close();
       </a>
     </div>
     <ul class="side-nav">
-      <!-- Parent Menus with flyout (show chevron) -->
+
+      <!-- CRM menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['crm']]) || $enabled_modules[$module_name_to_id['crm']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="crm">
           <span><i class="ri-user-3-line"></i> <span>CRM</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
+      <?php endif; ?>
+
+      <!-- Real Estate menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['real estate']]) || $enabled_modules[$module_name_to_id['real estate']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="realestate">
           <span><i class="ri-home-8-line"></i> <span>Real Estate</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
+      <?php endif; ?>
+
+      <!-- E-Commerce menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['e-commerce']]) || $enabled_modules[$module_name_to_id['e-commerce']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="ecommerce">
           <span><i class="ri-store-2-line"></i> <span>E-Commerce</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
+      <?php endif; ?>
+
+      <!-- Catering menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['catering']]) || $enabled_modules[$module_name_to_id['catering']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="catering">
           <span><i class="ri-restaurant-2-line"></i> <span>Catering</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
+      <?php endif; ?>
+
+      <!-- Field Service menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['field service']]) || $enabled_modules[$module_name_to_id['field service']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="fieldservice">
           <span><i class="ri-tools-line"></i> <span>Field Service</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
+      <?php endif; ?>
+
+      <!-- Recruitment menu -->
+      <?php if (!isset($enabled_modules[$module_name_to_id['recruitment']]) || $enabled_modules[$module_name_to_id['recruitment']]): ?>
       <li class="side-nav-item">
         <a href="#" class="side-nav-link" data-flyout="recruitment">
           <span><i class="ri-user-star-line"></i> <span>Recruitment</span></span>
           <span class="chevron">&gt;</span>
         </a>
       </li>
-      <!-- Single-link Menus (no chevron, no flyout) -->
+      <?php endif; ?>
+
+      <!-- Single-link menus always visible -->
       <li class="side-nav-item">
         <a href="apps.php" class="side-nav-link">
           <span><i class="ri-plug-line"></i> <span>Apps</span></span>
@@ -171,6 +216,7 @@ $stmt->close();
           <span><i class="ri-settings-3-line"></i> <span>Settings</span></span>
         </a>
       </li>
+
       <!-- Master Admin pinned to bottom -->
       <div class="side-nav-item" id="master-admin-bottom">
         <a href="super-admin-dashboard.php" class="side-nav-link">
